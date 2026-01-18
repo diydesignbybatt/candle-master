@@ -1,5 +1,5 @@
-import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { Calculator, AlertTriangle, TrendingUp, TrendingDown, DollarSign, Percent, Target, Shield, Info, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import React, { useState, useMemo, useRef } from 'react';
+import { Calculator, AlertTriangle, TrendingUp, TrendingDown, DollarSign, Percent, Target, Shield, Info, X, ChevronLeft, ChevronRight, ArrowLeft } from 'lucide-react';
 
 const TRADING_GUIDES = [
   {
@@ -52,6 +52,98 @@ const TRADING_GUIDES = [
   }
 ];
 
+const SCALE_IN_OUT_GUIDES = [
+  {
+    id: 1,
+    icon: '📈',
+    title: 'What & Why',
+    subtitle: 'Scale In/Scale Out Explained',
+    content: null,
+    scaleExplanation: {
+      scaleIn: { label: 'Scale In', desc: 'Building positions gradually', visual: 'Buy → Buy → Buy (on the way down)' },
+      scaleOut: { label: 'Scale Out', desc: 'Taking profits gradually', visual: 'Sell → Sell → Sell (on the way up)' }
+    },
+    benefits: [
+      'No need to time the perfect entry',
+      'Average cost smooths out volatility',
+      'Lock profits while staying in trend',
+      'Less emotional stress',
+      'Better risk management'
+    ]
+  },
+  {
+    id: 2,
+    icon: '🎯',
+    title: 'When to Scale In',
+    subtitle: 'Build Your Position Smart',
+    content: 'Scale In when you see:',
+    bullets: [
+      'Strong trend but price is ranging',
+      'Approaching key support zone',
+      'High conviction, medium confidence',
+      'Volatile market conditions'
+    ],
+    scaleExample: {
+      title: 'Target stock at $50',
+      steps: [
+        { action: '1st buy', percent: '30%', price: '$51' },
+        { action: '2nd buy', percent: '40%', price: '$49' },
+        { action: '3rd buy', percent: '30%', price: '$47' }
+      ],
+      result: 'Average entry: $49 ✓'
+    }
+  },
+  {
+    id: 3,
+    icon: '🎢',
+    title: 'Trend Follower Pro Tips',
+    subtitle: 'Scale In on Pullbacks',
+    content: null,
+    pullbackInfo: {
+      intro: "Why pullbacks are opportunities:",
+      reasons: [
+        "Healthy trends don't go straight up",
+        "They move in waves",
+        "Pullbacks let you add at better prices"
+      ]
+    },
+    qualityChecklist: [
+      'Trend structure still intact',
+      'Pullback 30-50% of last move',
+      'Volume decreases on pullback',
+      'Bullish pattern forms at support',
+      'Key support level holds'
+    ],
+    redFlags: [
+      'Trend line broken',
+      'Heavy selling volume',
+      'No bullish reversal pattern',
+      'Breaks below major support'
+    ]
+  },
+  {
+    id: 4,
+    icon: '⚠️',
+    title: 'Critical Rules',
+    subtitle: 'Avoid These Mistakes',
+    content: null,
+    rules: {
+      never: [
+        'Scale into a losing position',
+        '"Averaging down" on bad trades',
+        'Add more when trend breaks'
+      ],
+      always: [
+        'Plan scale points BEFORE entry',
+        'Keep total position size in check',
+        'Follow your original strategy',
+        'Cut losses, not add to them'
+      ]
+    },
+    keyPoint: 'Scale in = Building winners, NOT = Saving losers'
+  }
+];
+
 interface CalculatorInputs {
   portfolioValue: number;
   maxLossType: 'amount' | 'percent';
@@ -73,10 +165,29 @@ interface WarningState {
   message: string;
 }
 
+type GuideCategory = 'sizing' | 'scaling' | null;
+
 const PositionSizeCalculator: React.FC = () => {
   const [showInfo, setShowInfo] = useState(false);
+  const [activeGuideCategory, setActiveGuideCategory] = useState<GuideCategory>(null);
   const [activeGuideIndex, setActiveGuideIndex] = useState(0);
   const carouselRef = useRef<HTMLDivElement>(null);
+
+  const currentGuides = activeGuideCategory === 'sizing' ? TRADING_GUIDES : SCALE_IN_OUT_GUIDES;
+
+  const handleCategorySelect = (category: GuideCategory) => {
+    setActiveGuideCategory(category);
+    setActiveGuideIndex(0);
+    // Reset scroll position
+    if (carouselRef.current) {
+      carouselRef.current.scrollTo({ left: 0, behavior: 'auto' });
+    }
+  };
+
+  const handleBackToCategories = () => {
+    setActiveGuideCategory(null);
+    setActiveGuideIndex(0);
+  };
 
   const scrollToGuide = (index: number) => {
     if (carouselRef.current) {
@@ -94,7 +205,7 @@ const PositionSizeCalculator: React.FC = () => {
       const cardWidth = carouselRef.current.offsetWidth;
       const scrollLeft = carouselRef.current.scrollLeft;
       const newIndex = Math.round(scrollLeft / cardWidth);
-      if (newIndex !== activeGuideIndex && newIndex >= 0 && newIndex < TRADING_GUIDES.length) {
+      if (newIndex !== activeGuideIndex && newIndex >= 0 && newIndex < currentGuides.length) {
         setActiveGuideIndex(newIndex);
       }
     }
@@ -319,106 +430,238 @@ const PositionSizeCalculator: React.FC = () => {
           </div>
         )}
 
-        {/* Educational Guides Carousel */}
+        {/* Educational Guides Section */}
         <div className="guides-section">
           <div className="guides-header">
             <span className="guides-icon">📖</span>
             <h3>Quick Guides</h3>
           </div>
 
-          <div className="carousel-container">
-            <button
-              className="carousel-arrow left"
-              onClick={() => scrollToGuide(Math.max(0, activeGuideIndex - 1))}
-              disabled={activeGuideIndex === 0}
-            >
-              <ChevronLeft size={20} />
-            </button>
-
-            <div
-              className="carousel-track"
-              ref={carouselRef}
-              onScroll={handleScroll}
-            >
-              {TRADING_GUIDES.map((guide) => (
-                <div key={guide.id} className="guide-card">
-                  <span className="guide-icon">{guide.icon}</span>
-                  <h4 className="guide-title">{guide.title}</h4>
-                  <p className="guide-content">{guide.content}</p>
-
-                  {guide.bullets && (
-                    <ul className="guide-bullets">
-                      {guide.bullets.map((bullet, i) => (
-                        <li key={i}>{bullet}</li>
-                      ))}
-                    </ul>
-                  )}
-
-                  {guide.dosDonts && (
-                    <div className="guide-dos-donts">
-                      <p className="dont">❌ Never: {guide.dosDonts.dont}</p>
-                      <p className="do">✓ Always: {guide.dosDonts.do}</p>
-                    </div>
-                  )}
-
-                  {guide.examples && (
-                    <div className="guide-examples">
-                      {guide.examples.map((ex, i) => (
-                        <div key={i} className="example-row">
-                          <span className="ratio">{ex.ratio}</span>
-                          <span className="desc">{ex.winRate}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {guide.leverageExamples && (
-                    <div className="guide-leverage">
-                      {guide.leverageExamples.map((ex, i) => (
-                        <div key={i} className="leverage-row">
-                          <span className="lev">{ex.leverage}</span>
-                          <span className="impact">{ex.impact}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {guide.warnings && (
-                    <div className="guide-warnings">
-                      {guide.warnings.map((w, i) => (
-                        <p key={i}>{i === 0 ? '⚠️' : '💡'} {w}</p>
-                      ))}
-                    </div>
-                  )}
-
-                  {guide.keyPoint && (
-                    <div className="guide-keypoint">
-                      <strong>Key Rule:</strong> {guide.keyPoint}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-
-            <button
-              className="carousel-arrow right"
-              onClick={() => scrollToGuide(Math.min(TRADING_GUIDES.length - 1, activeGuideIndex + 1))}
-              disabled={activeGuideIndex === TRADING_GUIDES.length - 1}
-            >
-              <ChevronRight size={20} />
-            </button>
-          </div>
-
-          <div className="carousel-dots">
-            {TRADING_GUIDES.map((_, index) => (
+          {/* Category Selection */}
+          {activeGuideCategory === null ? (
+            <div className="category-selection">
               <button
-                key={index}
-                className={`dot ${index === activeGuideIndex ? 'active' : ''}`}
-                onClick={() => scrollToGuide(index)}
-              />
-            ))}
-          </div>
-          <p className="swipe-hint">Swipe for more tips</p>
+                className="category-card"
+                onClick={() => handleCategorySelect('sizing')}
+              >
+                <span className="category-icon">📊</span>
+                <div className="category-info">
+                  <h4>Position Sizing</h4>
+                  <p>Learn proper position sizing</p>
+                </div>
+                <span className="category-count">{TRADING_GUIDES.length} tips</span>
+              </button>
+
+              <button
+                className="category-card"
+                onClick={() => handleCategorySelect('scaling')}
+              >
+                <span className="category-icon">📈</span>
+                <div className="category-info">
+                  <h4>Scale In/Out</h4>
+                  <p>Build & exit positions smartly</p>
+                </div>
+                <span className="category-count">{SCALE_IN_OUT_GUIDES.length} tips</span>
+              </button>
+            </div>
+          ) : (
+            <>
+              {/* Back Button & Title */}
+              <div className="carousel-header">
+                <button className="back-btn" onClick={handleBackToCategories}>
+                  <ArrowLeft size={18} />
+                  <span>Back</span>
+                </button>
+                <span className="carousel-title">
+                  {activeGuideCategory === 'sizing' ? 'Position Sizing' : 'Scale In/Out'}
+                </span>
+              </div>
+
+              {/* Carousel */}
+              <div className="carousel-container">
+                <button
+                  className="carousel-arrow left"
+                  onClick={() => scrollToGuide(Math.max(0, activeGuideIndex - 1))}
+                  disabled={activeGuideIndex === 0}
+                >
+                  <ChevronLeft size={20} />
+                </button>
+
+                <div
+                  className="carousel-track"
+                  ref={carouselRef}
+                  onScroll={handleScroll}
+                >
+                  {currentGuides.map((guide: any) => (
+                    <div key={guide.id} className="guide-card">
+                      <span className="guide-icon">{guide.icon}</span>
+                      <h4 className="guide-title">{guide.title}</h4>
+                      {guide.subtitle && <p className="guide-subtitle">{guide.subtitle}</p>}
+                      {guide.content && <p className="guide-content">{guide.content}</p>}
+
+                      {/* Position Sizing Guides */}
+                      {guide.bullets && (
+                        <ul className="guide-bullets">
+                          {guide.bullets.map((bullet: string, i: number) => (
+                            <li key={i}>{bullet}</li>
+                          ))}
+                        </ul>
+                      )}
+
+                      {guide.dosDonts && (
+                        <div className="guide-dos-donts">
+                          <p className="dont">❌ Never: {guide.dosDonts.dont}</p>
+                          <p className="do">✓ Always: {guide.dosDonts.do}</p>
+                        </div>
+                      )}
+
+                      {guide.examples && (
+                        <div className="guide-examples">
+                          {guide.examples.map((ex: any, i: number) => (
+                            <div key={i} className="example-row">
+                              <span className="ratio">{ex.ratio}</span>
+                              <span className="desc">{ex.winRate}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {guide.leverageExamples && (
+                        <div className="guide-leverage">
+                          {guide.leverageExamples.map((ex: any, i: number) => (
+                            <div key={i} className="leverage-row">
+                              <span className="lev">{ex.leverage}</span>
+                              <span className="impact">{ex.impact}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {guide.warnings && (
+                        <div className="guide-warnings">
+                          {guide.warnings.map((w: string, i: number) => (
+                            <p key={i}>{i === 0 ? '⚠️' : '💡'} {w}</p>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Scale In/Out Guides */}
+                      {guide.scaleExplanation && (
+                        <div className="scale-explanation">
+                          <div className="scale-item scale-in">
+                            <span className="scale-label">{guide.scaleExplanation.scaleIn.label}</span>
+                            <span className="scale-desc">{guide.scaleExplanation.scaleIn.desc}</span>
+                            <span className="scale-visual">{guide.scaleExplanation.scaleIn.visual}</span>
+                          </div>
+                          <div className="scale-item scale-out">
+                            <span className="scale-label">{guide.scaleExplanation.scaleOut.label}</span>
+                            <span className="scale-desc">{guide.scaleExplanation.scaleOut.desc}</span>
+                            <span className="scale-visual">{guide.scaleExplanation.scaleOut.visual}</span>
+                          </div>
+                        </div>
+                      )}
+
+                      {guide.benefits && (
+                        <div className="guide-benefits">
+                          <p className="benefits-title">Why it works:</p>
+                          {guide.benefits.map((b: string, i: number) => (
+                            <p key={i} className="benefit-item">✓ {b}</p>
+                          ))}
+                        </div>
+                      )}
+
+                      {guide.scaleExample && (
+                        <div className="scale-example">
+                          <p className="example-title">{guide.scaleExample.title}</p>
+                          <div className="example-steps">
+                            {guide.scaleExample.steps.map((step: any, i: number) => (
+                              <div key={i} className="step-row">
+                                <span className="step-action">{step.action}</span>
+                                <span className="step-percent">{step.percent}</span>
+                                <span className="step-price">{step.price}</span>
+                              </div>
+                            ))}
+                          </div>
+                          <p className="example-result">{guide.scaleExample.result}</p>
+                        </div>
+                      )}
+
+                      {guide.pullbackInfo && (
+                        <div className="pullback-info">
+                          <p className="pullback-intro">{guide.pullbackInfo.intro}</p>
+                          <div className="pullback-reasons">
+                            {guide.pullbackInfo.reasons.map((r: string, i: number) => (
+                              <p key={i} className="pullback-reason">→ {r}</p>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {guide.qualityChecklist && (
+                        <div className="quality-checklist">
+                          <p className="checklist-title">Quality pullback checklist:</p>
+                          {guide.qualityChecklist.map((item: string, i: number) => (
+                            <p key={i} className="checklist-item good">✓ {item}</p>
+                          ))}
+                        </div>
+                      )}
+
+                      {guide.redFlags && (
+                        <div className="red-flags">
+                          <p className="flags-title">Red flags - DON'T add:</p>
+                          {guide.redFlags.map((item: string, i: number) => (
+                            <p key={i} className="flag-item">✗ {item}</p>
+                          ))}
+                        </div>
+                      )}
+
+                      {guide.rules && (
+                        <div className="guide-rules">
+                          <div className="rules-never">
+                            <p className="rules-label">❌ NEVER:</p>
+                            {guide.rules.never.map((r: string, i: number) => (
+                              <p key={i} className="rule-item">{r}</p>
+                            ))}
+                          </div>
+                          <div className="rules-always">
+                            <p className="rules-label">✓ ALWAYS:</p>
+                            {guide.rules.always.map((r: string, i: number) => (
+                              <p key={i} className="rule-item">{r}</p>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {guide.keyPoint && (
+                        <div className="guide-keypoint">
+                          <strong>Key Rule:</strong> {guide.keyPoint}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                <button
+                  className="carousel-arrow right"
+                  onClick={() => scrollToGuide(Math.min(currentGuides.length - 1, activeGuideIndex + 1))}
+                  disabled={activeGuideIndex === currentGuides.length - 1}
+                >
+                  <ChevronRight size={20} />
+                </button>
+              </div>
+
+              <div className="carousel-dots">
+                {currentGuides.map((_: any, index: number) => (
+                  <button
+                    key={index}
+                    className={`dot ${index === activeGuideIndex ? 'active' : ''}`}
+                    onClick={() => scrollToGuide(index)}
+                  />
+                ))}
+              </div>
+              <p className="swipe-hint">Swipe for more tips</p>
+            </>
+          )}
         </div>
       </div>
 
@@ -1019,6 +1262,346 @@ const PositionSizeCalculator: React.FC = () => {
           font-size: 0.7rem;
           color: var(--color-text-tertiary);
           margin: 8px 0 0 0;
+        }
+
+        /* Category Selection */
+        .category-selection {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+        }
+
+        .category-card {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          background: var(--bg-primary);
+          border: 1px solid var(--color-border);
+          border-radius: 12px;
+          padding: 16px;
+          cursor: pointer;
+          transition: all 0.2s;
+          text-align: left;
+        }
+
+        .category-card:active {
+          transform: scale(0.98);
+          background: var(--bg-tertiary);
+        }
+
+        .category-icon {
+          font-size: 2rem;
+          flex-shrink: 0;
+        }
+
+        .category-info {
+          flex: 1;
+        }
+
+        .category-info h4 {
+          font-size: 0.95rem;
+          font-weight: 800;
+          color: var(--color-text);
+          margin: 0 0 4px 0;
+        }
+
+        .category-info p {
+          font-size: 0.75rem;
+          color: var(--color-text-secondary);
+          margin: 0;
+        }
+
+        .category-count {
+          background: var(--bg-tertiary);
+          padding: 4px 10px;
+          border-radius: 12px;
+          font-size: 0.7rem;
+          font-weight: 700;
+          color: var(--color-text-secondary);
+        }
+
+        /* Carousel Header */
+        .carousel-header {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          margin-bottom: 16px;
+        }
+
+        .back-btn {
+          display: flex;
+          align-items: center;
+          gap: 4px;
+          background: var(--bg-tertiary);
+          border: 1px solid var(--color-border);
+          border-radius: 8px;
+          padding: 6px 12px;
+          cursor: pointer;
+          font-size: 0.75rem;
+          font-weight: 600;
+          color: var(--color-text);
+          transition: all 0.15s;
+        }
+
+        .back-btn:active {
+          background: var(--color-border);
+        }
+
+        .carousel-title {
+          font-size: 0.9rem;
+          font-weight: 700;
+          color: var(--color-text);
+        }
+
+        /* Guide Subtitle */
+        .guide-subtitle {
+          font-size: 0.75rem;
+          color: var(--color-text-secondary);
+          text-align: center;
+          margin: 0 0 12px 0;
+          font-weight: 600;
+        }
+
+        /* Scale In/Out Styles */
+        .scale-explanation {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+          margin-bottom: 12px;
+        }
+
+        .scale-item {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+          padding: 12px;
+          border-radius: 8px;
+        }
+
+        .scale-item.scale-in {
+          background: rgba(14, 124, 123, 0.1);
+          border: 1px solid rgba(14, 124, 123, 0.3);
+        }
+
+        .scale-item.scale-out {
+          background: rgba(214, 34, 70, 0.1);
+          border: 1px solid rgba(214, 34, 70, 0.3);
+        }
+
+        .scale-label {
+          font-size: 0.8rem;
+          font-weight: 800;
+          color: var(--color-text);
+        }
+
+        .scale-desc {
+          font-size: 0.7rem;
+          color: var(--color-text-secondary);
+        }
+
+        .scale-visual {
+          font-size: 0.7rem;
+          font-weight: 600;
+          color: var(--color-text);
+          font-family: monospace;
+          margin-top: 4px;
+        }
+
+        .guide-benefits {
+          background: var(--bg-tertiary);
+          border-radius: 8px;
+          padding: 12px;
+          margin-bottom: 12px;
+        }
+
+        .benefits-title {
+          font-size: 0.75rem;
+          font-weight: 700;
+          color: var(--color-text);
+          margin: 0 0 8px 0;
+        }
+
+        .benefit-item {
+          font-size: 0.7rem;
+          color: var(--color-green);
+          margin: 0 0 4px 0;
+          line-height: 1.4;
+        }
+
+        .scale-example {
+          background: var(--bg-tertiary);
+          border-radius: 8px;
+          padding: 12px;
+          margin-bottom: 12px;
+        }
+
+        .example-title {
+          font-size: 0.75rem;
+          font-weight: 700;
+          color: var(--color-text);
+          margin: 0 0 10px 0;
+          text-align: center;
+        }
+
+        .example-steps {
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+          margin-bottom: 10px;
+        }
+
+        .step-row {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 6px 8px;
+          background: var(--bg-primary);
+          border-radius: 6px;
+        }
+
+        .step-action {
+          font-size: 0.7rem;
+          font-weight: 600;
+          color: var(--color-text);
+        }
+
+        .step-percent {
+          font-size: 0.7rem;
+          color: var(--color-text-secondary);
+        }
+
+        .step-price {
+          font-size: 0.7rem;
+          font-weight: 700;
+          color: var(--color-text);
+        }
+
+        .example-result {
+          font-size: 0.8rem;
+          font-weight: 700;
+          color: var(--color-green);
+          text-align: center;
+          margin: 0;
+        }
+
+        .guide-rules {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+          margin-bottom: 12px;
+        }
+
+        .rules-never {
+          background: rgba(214, 34, 70, 0.1);
+          border: 1px solid rgba(214, 34, 70, 0.3);
+          border-radius: 8px;
+          padding: 12px;
+        }
+
+        .rules-always {
+          background: rgba(14, 124, 123, 0.1);
+          border: 1px solid rgba(14, 124, 123, 0.3);
+          border-radius: 8px;
+          padding: 12px;
+        }
+
+        .rules-label {
+          font-size: 0.75rem;
+          font-weight: 800;
+          margin: 0 0 8px 0;
+        }
+
+        .rules-never .rules-label {
+          color: var(--color-red);
+        }
+
+        .rules-always .rules-label {
+          color: var(--color-green);
+        }
+
+        .rule-item {
+          font-size: 0.7rem;
+          color: var(--color-text-secondary);
+          margin: 0 0 4px 0;
+          padding-left: 8px;
+          line-height: 1.4;
+        }
+
+        /* Pullback Info */
+        .pullback-info {
+          background: var(--bg-tertiary);
+          border-radius: 8px;
+          padding: 12px;
+          margin-bottom: 12px;
+        }
+
+        .pullback-intro {
+          font-size: 0.75rem;
+          font-weight: 700;
+          color: var(--color-text);
+          margin: 0 0 8px 0;
+        }
+
+        .pullback-reasons {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+        }
+
+        .pullback-reason {
+          font-size: 0.7rem;
+          color: var(--color-text-secondary);
+          margin: 0;
+          padding-left: 4px;
+        }
+
+        /* Quality Checklist */
+        .quality-checklist {
+          background: rgba(14, 124, 123, 0.1);
+          border: 1px solid rgba(14, 124, 123, 0.3);
+          border-radius: 8px;
+          padding: 12px;
+          margin-bottom: 12px;
+        }
+
+        .checklist-title {
+          font-size: 0.75rem;
+          font-weight: 700;
+          color: var(--color-text);
+          margin: 0 0 8px 0;
+        }
+
+        .checklist-item {
+          font-size: 0.7rem;
+          margin: 0 0 4px 0;
+          line-height: 1.4;
+        }
+
+        .checklist-item.good {
+          color: var(--color-green);
+        }
+
+        /* Red Flags */
+        .red-flags {
+          background: rgba(214, 34, 70, 0.1);
+          border: 1px solid rgba(214, 34, 70, 0.3);
+          border-radius: 8px;
+          padding: 12px;
+          margin-bottom: 12px;
+        }
+
+        .flags-title {
+          font-size: 0.75rem;
+          font-weight: 700;
+          color: var(--color-red);
+          margin: 0 0 8px 0;
+        }
+
+        .flag-item {
+          font-size: 0.7rem;
+          color: var(--color-red);
+          margin: 0 0 4px 0;
+          line-height: 1.4;
         }
 
         /* Info Modal */

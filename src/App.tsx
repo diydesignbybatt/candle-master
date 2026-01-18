@@ -19,7 +19,7 @@ import PositionSizeCalculator from './components/PositionSizeCalculator';
 import { fetchRandomStockData } from './utils/data';
 import type { StockData } from './utils/data';
 import { useTradingSession, resetSavedBalance } from './hooks/useTradingSession';
-import { SkipForward, Square, TrendingUp, TrendingDown, Loader2, Info, X, History, Trash2, GraduationCap, CircleUser, Volume2, VolumeX, Edit, ZoomIn, ZoomOut, BarChart3, BookOpen, Clock, User, Plus, Minus, Calculator } from 'lucide-react';
+import { SkipForward, Square, TrendingUp, TrendingDown, Loader2, Info, X, History, Trash2, GraduationCap, CircleUser, Volume2, VolumeX, Edit, ZoomIn, ZoomOut, BarChart3, BookOpen, Clock, User, Plus, Minus, Calculator, ChevronDown, ChevronUp } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { soundService, playSound } from './services/soundService';
 import { format } from 'date-fns';
@@ -308,6 +308,7 @@ const App: React.FC = () => {
   const [showProfile, setShowProfile] = useState(false);
   const [history, setHistory] = useState<TradeRecord[]>([]);
   const [zoom, setZoom] = useState(1);
+  const [positionsCollapsed, setPositionsCollapsed] = useState(false);
   const [activeTab, setActiveTab] = useState<'trade' | 'calculator' | 'academy' | 'history' | 'profile'>('trade');
   const [soundEnabled, setSoundEnabled] = useState(soundService.isEnabled());
   const [tradeAmount, setTradeAmount] = useState(1000);
@@ -374,16 +375,19 @@ const App: React.FC = () => {
     balance,
     displayBalance,
     startingBalance,
-    position,
+    positions,
+    maxPositions,
     totalReturn,
     isGameOver,
     totalCommissions,
     unrealizedPL,
+    getPositionPL,
     tradeCount,
     winCount,
     long: originalLong,
     short: originalShort,
     closePosition: originalClosePosition,
+    closeAllPositions: originalCloseAllPositions,
     skipDay: originalSkipDay,
     stop: originalStop
   } = useTradingSession(stock);
@@ -426,12 +430,10 @@ const App: React.FC = () => {
     }
   };
 
-  const closePosition = () => {
-    if (position) {
-      const currentPrice = currentCandle.close;
-      const pnl = position.type === 'LONG'
-        ? (currentPrice - position.entryPrice) * position.amount
-        : (position.entryPrice - currentPrice) * position.amount;
+  const closePosition = (positionId: string) => {
+    const pos = positions.find(p => p.id === positionId);
+    if (pos) {
+      const pnl = getPositionPL(pos);
 
       // Play profit or loss sound
       if (pnl > 0) {
@@ -440,7 +442,19 @@ const App: React.FC = () => {
         playSound('loss');
       }
     }
-    originalClosePosition();
+    originalClosePosition(positionId);
+  };
+
+  const closeAllPositions = () => {
+    if (positions.length > 0) {
+      const totalPnl = positions.reduce((sum, pos) => sum + getPositionPL(pos), 0);
+      if (totalPnl > 0) {
+        playSound('profit');
+      } else {
+        playSound('loss');
+      }
+    }
+    originalCloseAllPositions();
   };
 
   const skipDay = () => {
@@ -526,18 +540,7 @@ const App: React.FC = () => {
     <div className="mobile-shell">
       <div className="app-container">
         {activeTab !== 'calculator' && (
-          <header className="header">
-          <div className="header-top">
-            <div className="header-left-section">
-              <h1 className="app-title">Candle Master</h1>
-              <p className="app-subtitle">Trading Simulator</p>
-            </div>
-            <div className="header-actions">
-              <button className="btn-icon" onClick={() => setShowInfo(true)}>
-                <Info size={24} color="#1A1D23" />
-              </button>
-            </div>
-          </div>
+          <header className="header compact">
           <div className="stats-grid">
             <div className="stat-card">
               <span className="stat-label">Total</span>
@@ -564,7 +567,7 @@ const App: React.FC = () => {
           {activeTab === 'trade' && (
           <>
           {/* Trade Amount Input */}
-          {!position && !isGameOver && (
+          {positions.length < maxPositions && !isGameOver && balance > 0 && (
             <div className="trade-amount-section">
               <span className="trade-amount-label">Trade Amount</span>
               <div className="trade-amount-controls">
@@ -606,64 +609,124 @@ const App: React.FC = () => {
 
           <div className="chart-wrapper">
             <AnimatePresence>
-              {position && (
+              {positions.length > 0 && (
                 <motion.div
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  className={`position-bar ${position.type === 'LONG' ? 'long' : 'short'}`}
+                  className="positions-container"
                 >
-                  <div className="pos-info">
-                    <span className="pos-badge">{position.type}</span>
-                    <span>{position.amount.toFixed(4)} Units</span>
+                  {/* Positions Header - Always visible */}
+                  <div
+                    className="positions-header"
+                    onClick={() => setPositionsCollapsed(!positionsCollapsed)}
+                  >
+                    <div className="positions-summary">
+                      <span className="positions-count">{positions.length} Position{positions.length > 1 ? 's' : ''}</span>
+                      <span className={`positions-total-pl ${unrealizedPL >= 0 ? 'text-success' : 'text-danger'}`}>
+                        {unrealizedPL >= 0 ? '+' : ''}${unrealizedPL.toFixed(2)}
+                      </span>
+                    </div>
+                    <button className="positions-toggle">
+                      {positionsCollapsed ? <ChevronDown size={18} /> : <ChevronUp size={18} />}
+                    </button>
                   </div>
-                  <span className={unrealizedPL >= 0 ? 'text-success' : 'text-danger'}>
-                    ${unrealizedPL.toFixed(2)}
-                  </span>
+
+                  {/* Positions List - Collapsible */}
+                  {!positionsCollapsed && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      className="positions-list"
+                    >
+                      {positions.map((pos) => {
+                        const positionPL = getPositionPL(pos);
+                        return (
+                          <div
+                            key={pos.id}
+                            className={`position-bar ${pos.type === 'LONG' ? 'long' : 'short'}`}
+                          >
+                            <div className="pos-info">
+                              <span className="pos-badge">{pos.type}</span>
+                              <div className="pos-details">
+                                <span className="pos-entry">@${pos.entryPrice.toFixed(2)}</span>
+                                <span className="pos-amount">{pos.amount.toFixed(4)} units</span>
+                              </div>
+                            </div>
+                            <div className="pos-right">
+                              <span className={positionPL >= 0 ? 'text-success' : 'text-danger'}>
+                                {positionPL >= 0 ? '+' : ''}${positionPL.toFixed(2)}
+                              </span>
+                              <button
+                                className="pos-close-btn"
+                                onClick={() => closePosition(pos.id)}
+                                disabled={isGameOver}
+                              >
+                                <X size={14} />
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </motion.div>
+                  )}
                 </motion.div>
               )}
             </AnimatePresence>
             <div className="scroll-chart-container">
+              <div className="zoom-controls-floating">
+                <button
+                  className="zoom-btn-mini"
+                  onClick={() => setZoom(prev => Math.min(3, prev + 0.25))}
+                  disabled={zoom >= 3}
+                >
+                  <ZoomIn size={14} />
+                </button>
+                <button
+                  className="zoom-btn-mini"
+                  onClick={() => setZoom(prev => Math.max(0.5, prev - 0.25))}
+                  disabled={zoom <= 0.5}
+                >
+                  <ZoomOut size={14} />
+                </button>
+              </div>
+              <div className="info-btn-floating">
+                <button
+                  className="zoom-btn-mini"
+                  onClick={() => setShowInfo(true)}
+                >
+                  <Info size={14} />
+                </button>
+              </div>
               <ErrorBoundary>
                 {visibleData.length > 0 ? <Chart data={visibleData} zoom={zoom} /> : <div className="loading-placeholder">Initializing chart...</div>}
               </ErrorBoundary>
-            </div>
-            <div className="zoom-controls">
-              <button
-                className="zoom-btn"
-                onClick={() => setZoom(prev => Math.max(0.5, prev - 0.25))}
-                disabled={zoom <= 0.5}
-              >
-                <ZoomOut size={18} />
-              </button>
-              <span className="zoom-label">{Math.round(zoom * 100)}%</span>
-              <button
-                className="zoom-btn"
-                onClick={() => setZoom(prev => Math.min(3, prev + 0.25))}
-                disabled={zoom >= 3}
-              >
-                <ZoomIn size={18} />
-              </button>
             </div>
           </div>
 
           <section className="controls">
             <div className="action-buttons-single-row">
-              {!position ? (
-                <>
-                  <button className="btn btn-buy" onClick={long} disabled={isGameOver}>
-                    <TrendingUp size={20} />
-                    <span>LONG</span>
-                  </button>
-                  <button className="btn btn-sell" onClick={short} disabled={isGameOver}>
-                    <TrendingDown size={20} />
-                    <span>SHORT</span>
-                  </button>
-                </>
-              ) : (
-                <button className="btn btn-close-pos" onClick={closePosition} disabled={isGameOver}>
-                  <Square size={18} fill="currentColor" />
-                  <span>CLOSE POSITION</span>
+              <button
+                className="btn btn-buy"
+                onClick={long}
+                disabled={isGameOver || positions.length >= maxPositions || balance <= 0}
+              >
+                <TrendingUp size={20} />
+                <span>LONG</span>
+              </button>
+              <button
+                className="btn btn-sell"
+                onClick={short}
+                disabled={isGameOver || positions.length >= maxPositions || balance <= 0}
+              >
+                <TrendingDown size={20} />
+                <span>SHORT</span>
+              </button>
+              {positions.length > 0 && (
+                <button className="btn btn-close-all" onClick={closeAllPositions} disabled={isGameOver}>
+                  <X size={18} />
+                  <span>CLOSE ALL</span>
                 </button>
               )}
               <button className="btn btn-skip" onClick={skipDay} disabled={isGameOver}>
@@ -764,14 +827,14 @@ const App: React.FC = () => {
                 </span>
                 <div className="balance-detail">
                   <span>Available Cash: ${balance.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
-                  {position && <span>In Position: ${(displayBalance - balance).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>}
+                  {positions.length > 0 && <span>In Position: ${(displayBalance - balance).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>}
                 </div>
               </div>
 
               <div className="profile-actions">
-                <button className="profile-action-btn">
-                  <Edit size={20} />
-                  <span>Edit Username</span>
+                <button className="profile-action-btn" onClick={() => setShowInfo(true)}>
+                  <Info size={20} />
+                  <span>How to Play</span>
                 </button>
                 <button className="profile-action-btn" onClick={resetGameData}>
                   <Trash2 size={20} />
@@ -852,25 +915,38 @@ const App: React.FC = () => {
                   </button>
                 </div>
                 <div className="info-content">
-                  <div className="info-item">
-                    <h3>🏆 Survival Mode</h3>
-                    <p>Start with <strong>$10,000</strong>. Every trade is <strong>ALL IN</strong>. Maximize profit in <strong>100 days</strong>.</p>
+                  <div className="info-item intro">
+                    <h3>🌍 Welcome to Real Market Trading</h3>
+                    <p>Candle Master is a stock trading simulator using <strong>real historical market data</strong> from around the world (1990-2024). You never know which period you'll face - just price, candlesticks, and daily timeframes.</p>
                   </div>
                   <div className="info-item">
-                    <h3>📊 Real Simulation</h3>
-                    <p>Trade on <strong>historical market data</strong>. Analyze pure price action with candlesticks.</p>
-                  </div>
-                  <div className="info-item">
-                    <h3>⚡ Mechanics</h3>
+                    <h3>🎯 Your Mission</h3>
+                    <p><strong>Starting Capital:</strong> $10,000 virtual money</p>
                     <ul>
-                      <li>Trades execute at <strong>Close Price</strong>.</li>
-                      <li><strong>Skip Day</strong> to advance time.</li>
-                      <li><strong>Stop</strong> to cash out early.</li>
+                      <li>Open up to <strong>3 positions</strong> simultaneously</li>
+                      <li>Set your own position size per trade</li>
+                      <li>All trades execute at <strong>candle close price</strong> only</li>
                     </ul>
                   </div>
                   <div className="info-item warning">
-                    <h3>⚠️ Commission Fee</h3>
-                    <p><strong>0.15% per trade</strong>. You need <strong>{'>'}0.3% profit</strong> per roundtrip just to break even!</p>
+                    <h3>⚠️ Reality Check</h3>
+                    <ul>
+                      <li><strong>0.15%</strong> commission fee per trade</li>
+                      <li>You need <strong>{'>'}0.3% profit</strong> per round-trip just to break even</li>
+                      <li>Real market conditions = Real challenges</li>
+                    </ul>
+                  </div>
+                  <div className="info-item">
+                    <h3>🎮 Controls</h3>
+                    <ul>
+                      <li><strong>SKIP</strong> → Move to next day's candle</li>
+                      <li><strong>STOP</strong> → End current session & lock in results</li>
+                    </ul>
+                  </div>
+                  <div className="info-item challenge">
+                    <h3>🏆 The Challenge</h3>
+                    <p>Can you survive the markets and grow your account? If you're truly skilled, you'll become the next <strong>Candle Master</strong>.</p>
+                    <p className="good-luck">Good luck, trader. 🍀</p>
                   </div>
                 </div>
               </motion.div>
@@ -940,8 +1016,8 @@ const App: React.FC = () => {
           --color-text-secondary: #666666;
           --color-text-tertiary: #999999;
           --color-border: #E5E5E5;
-          --color-green: #22c55e;
-          --color-red: #ef4444;
+          --color-green: #0E7C7B;
+          --color-red: #D62246;
           --safe-area-top: env(safe-area-inset-top, 0);
           --safe-area-bottom: env(safe-area-inset-bottom, 0);
 
@@ -1010,7 +1086,9 @@ const App: React.FC = () => {
         .stat-card { padding: 3%; background: var(--bg-tertiary); border-radius: 0.75rem; border: 1px solid var(--color-border); }
         .stat-label { font-size: clamp(0.6rem, 2vw, 0.65rem); font-weight: 700; color: var(--color-text-tertiary); display: block; margin-bottom: 0.25rem; text-transform: uppercase; letter-spacing: 0.5px; }
         .stat-value { font-size: clamp(0.9rem, 3vw, 1rem); font-weight: 800; color: var(--color-text); }
-        .header-meta { margin-top: var(--spacing-md); display: flex; justify-content: space-between; font-size: clamp(0.65rem, 2.5vw, 0.75rem); font-weight: 600; color: var(--color-text-secondary); }
+        .header-meta { margin-top: var(--spacing-sm); display: flex; justify-content: space-between; align-items: center; font-size: clamp(0.65rem, 2.5vw, 0.75rem); font-weight: 600; color: var(--color-text-secondary); }
+        .header.compact { padding: calc(var(--safe-area-top) + var(--spacing-sm)) 4% var(--spacing-sm); }
+        .header.compact .stats-grid { margin-top: 0; }
         .main-content { flex: 1; display: flex; flex-direction: column; padding: 0; min-height: 0; overflow: hidden; }
         .main-content.fullscreen-mode { padding-top: var(--safe-area-top); }
 
@@ -1138,14 +1216,29 @@ const App: React.FC = () => {
           min-height: 0;
           padding-bottom: calc(var(--controls-height) * 2 + var(--safe-area-bottom) + 2rem);
         }
-        .scroll-chart-container { flex: 1; padding: 0 4%; min-height: 0; overflow: hidden; }
-        .position-bar { background: var(--bg-primary); padding: 3% 4%; border-radius: 0.75rem; margin: 0 4%; display: flex; justify-content: space-between; align-items: center; border: 2px solid var(--color-border); flex-shrink: 0; }
+        .scroll-chart-container { flex: 1; padding: 0 4%; min-height: 0; overflow: hidden; position: relative; }
+        .positions-container { display: flex; flex-direction: column; margin: 0 4%; flex-shrink: 0; background: var(--bg-primary); border: 1px solid var(--color-border); border-radius: 0.75rem; overflow: hidden; }
+        .positions-header { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0.75rem; cursor: pointer; background: var(--bg-tertiary); }
+        .positions-header:active { background: var(--color-border); }
+        .positions-summary { display: flex; align-items: center; gap: 0.75rem; }
+        .positions-count { font-size: 0.75rem; font-weight: 700; color: var(--color-text); }
+        .positions-total-pl { font-size: 0.8rem; font-weight: 800; }
+        .positions-toggle { background: none; border: none; padding: 4px; cursor: pointer; color: var(--color-text-secondary); display: flex; align-items: center; justify-content: center; }
+        .positions-list { display: flex; flex-direction: column; gap: 0.5rem; padding: 0.5rem; }
+        .position-bar { background: var(--bg-primary); padding: 0.5rem 0.75rem; border-radius: 0.75rem; display: flex; justify-content: space-between; align-items: center; border: 2px solid var(--color-border); flex-shrink: 0; }
         .position-bar.long { border-color: var(--color-green); }
         .position-bar.short { border-color: var(--color-red); }
         .pos-info { display: flex; align-items: center; gap: 0.5rem; }
-        .pos-badge { padding: 0.25rem 0.5rem; border-radius: 0.5rem; font-size: clamp(0.6rem, 2vw, 0.65rem); font-weight: 800; color: #FFF; }
+        .pos-details { display: flex; flex-direction: column; gap: 0.1rem; }
+        .pos-entry { font-size: clamp(0.7rem, 2vw, 0.75rem); font-weight: 600; color: var(--text-primary); }
+        .pos-amount { font-size: clamp(0.6rem, 1.8vw, 0.65rem); color: var(--text-secondary); }
+        .pos-badge { padding: 0.2rem 0.4rem; border-radius: 0.4rem; font-size: clamp(0.55rem, 1.8vw, 0.6rem); font-weight: 800; color: #FFF; }
         .long .pos-badge { background: var(--color-green); }
         .short .pos-badge { background: var(--color-red); }
+        .pos-right { display: flex; align-items: center; gap: 0.5rem; }
+        .pos-close-btn { background: var(--bg-secondary); border: 1px solid var(--color-border); border-radius: 0.4rem; padding: 0.3rem; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--text-secondary); transition: all 0.2s; }
+        .pos-close-btn:hover { background: var(--color-red); color: #FFF; border-color: var(--color-red); }
+        .pos-close-btn:disabled { opacity: 0.5; cursor: not-allowed; }
         .controls {
           position: fixed;
           bottom: calc(var(--controls-height) + var(--safe-area-bottom));
@@ -1176,17 +1269,18 @@ const App: React.FC = () => {
           height: 44px;
           border-radius: 10px;
           font-weight: 600;
-          font-size: 0.8rem;
+          font-size: 0.65rem;
           border: none;
           cursor: pointer;
           display: flex;
           align-items: center;
           justify-content: center;
-          gap: 6px;
+          gap: 4px;
           transition: all 0.2s ease;
           text-transform: uppercase;
           letter-spacing: 0.3px;
         }
+        .btn svg { width: 14px; height: 14px; }
 
         .btn:active {
           transform: scale(0.96);
@@ -1225,6 +1319,15 @@ const App: React.FC = () => {
           background: #333;
         }
 
+        .btn-close-all {
+          background: #000000;
+          color: white;
+        }
+
+        .btn-close-all:active {
+          background: #333333;
+        }
+
         .btn-skip {
           background: var(--bg-tertiary);
           color: var(--color-text-secondary);
@@ -1242,18 +1345,23 @@ const App: React.FC = () => {
         .btn-stop:active {
           background: var(--color-border);
         }
-        .modal-overlay { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(8px); display: flex; align-items: flex-end; z-index: 1000; }
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(8px); display: flex; align-items: flex-end; justify-content: center; z-index: 1000; }
         .game-over-modal { background: var(--bg-primary); width: 100%; border-radius: 24px 24px 0 0; padding: 48px 32px calc(var(--safe-area-bottom) + 24px); }
-        .info-modal { background: var(--bg-primary); width: 100%; max-width: 360px; border-radius: 0.75rem; padding: 32px; border: 1px solid var(--color-border); }
-        .info-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+        .info-modal { background: var(--bg-primary); width: 100%; max-width: 360px; border-radius: 0.75rem; padding: 0; border: 1px solid var(--color-border); max-height: calc(100vh - 80px); display: flex; flex-direction: column; overflow: hidden; }
+        .info-header { display: flex; justify-content: space-between; align-items: center; padding: 24px 24px 16px; border-bottom: 1px solid var(--color-border); flex-shrink: 0; position: sticky; top: 0; background: var(--bg-primary); z-index: 10; }
         .info-header h2 { font-size: 1.5rem; font-weight: 800; color: var(--color-text); }
-        .info-content { display: flex; flex-direction: column; gap: 20px; }
+        .info-content { display: flex; flex-direction: column; gap: 20px; padding: 24px; overflow-y: auto; flex: 1; }
         .info-item h3 { font-size: 1rem; font-weight: 700; color: var(--color-text); margin-bottom: 6px; }
         .info-item p, .info-item ul { font-size: 0.9rem; color: var(--color-text-secondary); margin: 0; line-height: 1.5; }
         .info-item ul { padding-left: 20px; margin-top: 4px; }
-        .info-item.warning { background: var(--bg-tertiary); padding: 12px 16px; border-radius: 0.75rem; border: 1px solid var(--color-border); }
-        .info-item.warning h3 { color: var(--color-text); }
-        .info-item.warning p { color: var(--color-text-secondary); }
+        .info-item.intro { background: linear-gradient(135deg, rgba(14, 124, 123, 0.1) 0%, rgba(14, 124, 123, 0.05) 100%); padding: 16px; border-radius: 0.75rem; border: 1px solid rgba(14, 124, 123, 0.3); }
+        .info-item.intro h3 { color: var(--color-green); font-size: 1rem; }
+        .info-item.warning { background: rgba(214, 34, 70, 0.08); padding: 12px 16px; border-radius: 0.75rem; border: 1px solid rgba(214, 34, 70, 0.3); }
+        .info-item.warning h3 { color: var(--color-red); }
+        .info-item.warning p, .info-item.warning li { color: var(--color-text-secondary); }
+        .info-item.challenge { background: var(--bg-tertiary); padding: 16px; border-radius: 0.75rem; border: 1px solid var(--color-border); text-align: center; }
+        .info-item.challenge h3 { color: var(--color-text); }
+        .info-item .good-luck { font-weight: 700; color: var(--color-green); margin-top: 8px; font-style: italic; }
         .modal-pill { width: 48px; height: 6px; background: var(--color-border); border-radius: 3px; position: absolute; top: 16px; left: 50%; transform: translateX(-50%); }
         .text-success { color: var(--color-green); }
         .text-danger { color: var(--color-red); }
@@ -1546,31 +1654,48 @@ const App: React.FC = () => {
           background: var(--color-text-secondary);
         }
 
-        /* Zoom Controls */
-        .zoom-controls {
+        /* Zoom Controls - Floating */
+        .zoom-controls-floating {
+          position: absolute;
+          top: 8px;
+          left: 8px;
           display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 12px;
-          padding: 12px 4%;
-          background: var(--bg-primary);
-          border-radius: 0.75rem;
-          margin: 0 4%;
-          border: 1px solid var(--color-border);
+          flex-direction: column;
+          gap: 4px;
+          z-index: 100;
         }
 
-        .zoom-btn {
-          background: var(--bg-tertiary);
+        /* Info Button - Floating */
+        .info-btn-floating {
+          position: absolute;
+          bottom: 8px;
+          left: 8px;
+          z-index: 100;
+        }
+
+        .zoom-btn-mini {
+          background: rgba(255, 255, 255, 0.9);
           border: 1px solid var(--color-border);
-          border-radius: 0.5rem;
-          width: 36px;
-          height: 36px;
+          border-radius: 6px;
+          width: 28px;
+          height: 28px;
           display: flex;
           align-items: center;
           justify-content: center;
           cursor: pointer;
           transition: all 0.15s;
           color: var(--color-text);
+          box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .zoom-btn-mini:active {
+          background: var(--bg-tertiary);
+          transform: scale(0.95);
+        }
+
+        .zoom-btn-mini:disabled {
+          opacity: 0.4;
+          cursor: not-allowed;
         }
 
         .zoom-btn:active {
@@ -1603,13 +1728,13 @@ const App: React.FC = () => {
           transform: translateX(-50%);
           width: 100%;
           max-width: min(430px, 100vw);
-          height: calc(var(--controls-height));
+          height: calc(var(--controls-height) + var(--safe-area-bottom));
           background: var(--bg-primary);
           border-top: 1px solid var(--color-border);
           display: flex;
           justify-content: space-around;
-          align-items: center;
-          padding: 0 2%;
+          align-items: flex-start;
+          padding: 8px 2% 0;
           padding-bottom: var(--safe-area-bottom);
           z-index: 1000;
           box-shadow: 0 -2px 10px rgba(0,0,0,0.05);

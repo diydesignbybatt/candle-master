@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="96" fill="#1A1D23"/>
+
+  <!-- Candlestick 1 - Green (bullish) -->
+  <rect x="100" y="180" width="60" height="120" rx="4" fill="#0E7C7B"/>
+  <rect x="126" y="140" width="8" height="40" fill="#0E7C7B"/>
+  <rect x="126" y="300" width="8" height="60" fill="#0E7C7B"/>
+
+  <!-- Candlestick 2 - Red (bearish) -->
+  <rect x="226" y="200" width="60" height="100" rx="4" fill="#D62246"/>
+  <rect x="252" y="160" width="8" height="40" fill="#D62246"/>
+  <rect x="252" y="300" width="8" height="80" fill="#D62246"/>
+
+  <!-- Candlestick 3 - Green (bullish) -->
+  <rect x="352" y="140" width="60" height="160" rx="4" fill="#0E7C7B"/>
+  <rect x="378" y="100" width="8" height="40" fill="#0E7C7B"/>
+  <rect x="378" y="300" width="8" height="40" fill="#0E7C7B"/>
+
+  <!-- Text "CM" -->
+  <text x="256" y="440" font-family="Arial, sans-serif" font-size="80" font-weight="bold" fill="#FAF9F6" text-anchor="middle">CM</text>
+</svg>
