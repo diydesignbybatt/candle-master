@@ -1,0 +1,97 @@
+import stocks from './stocks.json';
+
+export interface Candle {
+  time: string;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+}
+
+export interface StockData {
+  symbol: string;
+  name: string;
+  data: Candle[];
+}
+
+/**
+ * Fallback generator in case API fails
+ */
+const generateMockHistory = (info: { symbol: string, name: string }): StockData => {
+  const data: Candle[] = [];
+  let currentClose = 50 + Math.random() * 100;
+  let currentDate = new Date('2010-01-01');
+  const endDate = new Date('2023-12-31');
+
+  while (currentDate <= endDate) {
+    if (currentDate.getDay() !== 0 && currentDate.getDay() !== 6) {
+      const open = currentClose;
+      const change = (Math.random() - 0.495) * 0.02 * currentClose;
+      const close = open + change;
+      const high = Math.max(open, close) + Math.random() * (0.01 * currentClose);
+      const low = Math.min(open, close) - Math.random() * (0.01 * currentClose);
+
+      data.push({
+        time: currentDate.toISOString().split('T')[0],
+        open: parseFloat(open.toFixed(2)),
+        high: parseFloat(high.toFixed(2)),
+        low: parseFloat(low.toFixed(2)),
+        close: parseFloat(close.toFixed(2)),
+      });
+      currentClose = close;
+    }
+    currentDate.setDate(currentDate.getDate() + 1);
+  }
+  return { symbol: info.symbol.split('.')[0], name: info.name + " (Simulated)", data };
+};
+
+/**
+ * Fetches real historical data from the elite pool using a reliable proxy
+ */
+export const fetchRandomStockData = async (): Promise<StockData> => {
+  // 1. Pick a random stock from our new 200-item JSON list
+  const stockInfo = stocks[Math.floor(Math.random() * stocks.length)];
+
+  // 2. Prepare API parameters
+  const stooqUrl = `https://stooq.com/q/d/l/?s=${stockInfo.symbol.toLowerCase()}&i=d`;
+  const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(stooqUrl)}`;
+
+  try {
+    const response = await fetch(proxyUrl);
+    if (!response.ok) throw new Error('Network error');
+
+    const csvData = await response.text();
+    if (!csvData || csvData.length < 100) throw new Error('Bad data format');
+
+    const lines = csvData.trim().split('\n');
+    const allCandles: Candle[] = lines.slice(1).map(line => {
+      const columns = line.split(',');
+      if (columns.length < 5) return null;
+      const [date, open, high, low, close] = columns;
+      return {
+        time: date,
+        open: parseFloat(open),
+        high: parseFloat(high),
+        low: parseFloat(low),
+        close: parseFloat(close)
+      };
+    }).filter((c): c is Candle => c !== null && !isNaN(c.close));
+
+    // Ensure we have enough data to pick a window
+    if (allCandles.length < 300) throw new Error('Data too short');
+
+    // 3. Select a random 250-candle training window
+    const windowSize = 250;
+    const maxStartIndex = allCandles.length - windowSize;
+    const randomStartIndex = Math.floor(Math.random() * maxStartIndex);
+
+    return {
+      symbol: stockInfo.symbol.split('.')[0],
+      name: stockInfo.name,
+      data: allCandles.slice(randomStartIndex, randomStartIndex + windowSize)
+    };
+  } catch (error) {
+    console.warn(`Redirecting to simulator for ${stockInfo.symbol}:`, error);
+    return generateMockHistory(stockInfo);
+  }
+};

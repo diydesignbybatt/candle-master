@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(xcopy:*)",
+      "Bash(robocopy:*)",
+      "Bash(powershell:*)",
+      "Bash(dir:*)",
+      "Bash(timeout /t 3)",
+      "Bash(npm run dev)"
+    ]
+  }
+}

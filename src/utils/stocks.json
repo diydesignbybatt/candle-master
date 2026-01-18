@@ -1,0 +1,818 @@
+[
+    {
+        "symbol": "AAPL.US",
+        "name": "Apple Inc."
+    },
+    {
+        "symbol": "MSFT.US",
+        "name": "Microsoft Corp"
+    },
+    {
+        "symbol": "GOOGL.US",
+        "name": "Alphabet Inc."
+    },
+    {
+        "symbol": "AMZN.US",
+        "name": "Amazon.com Inc."
+    },
+    {
+        "symbol": "NVDA.US",
+        "name": "NVIDIA Corp"
+    },
+    {
+        "symbol": "TSLA.US",
+        "name": "Tesla Inc."
+    },
+    {
+        "symbol": "META.US",
+        "name": "Meta Platforms Inc."
+    },
+    {
+        "symbol": "BRK-B.US",
+        "name": "Berkshire Hathaway"
+    },
+    {
+        "symbol": "V.US",
+        "name": "Visa Inc."
+    },
+    {
+        "symbol": "MA.US",
+        "name": "Mastercard Inc."
+    },
+    {
+        "symbol": "JPM.US",
+        "name": "JPMorgan Chase & Co."
+    },
+    {
+        "symbol": "WMT.US",
+        "name": "Walmart Inc."
+    },
+    {
+        "symbol": "JNJ.US",
+        "name": "Johnson & Johnson"
+    },
+    {
+        "symbol": "PG.US",
+        "name": "Procter & Gamble"
+    },
+    {
+        "symbol": "ORCL.US",
+        "name": "Oracle Corp"
+    },
+    {
+        "symbol": "HD.US",
+        "name": "Home Depot Inc."
+    },
+    {
+        "symbol": "CVX.US",
+        "name": "Chevron Corp"
+    },
+    {
+        "symbol": "XOM.US",
+        "name": "Exxon Mobil Corp"
+    },
+    {
+        "symbol": "PFE.US",
+        "name": "Pfizer Inc."
+    },
+    {
+        "symbol": "KO.US",
+        "name": "Coca-Cola Company"
+    },
+    {
+        "symbol": "PEP.US",
+        "name": "PepsiCo Inc."
+    },
+    {
+        "symbol": "MCD.US",
+        "name": "McDonald's Corp"
+    },
+    {
+        "symbol": "NKE.US",
+        "name": "Nike Inc."
+    },
+    {
+        "symbol": "ADBE.US",
+        "name": "Adobe Inc."
+    },
+    {
+        "symbol": "CRM.US",
+        "name": "Salesforce.com Inc."
+    },
+    {
+        "symbol": "NFLX.US",
+        "name": "Netflix Inc."
+    },
+    {
+        "symbol": "DIS.US",
+        "name": "The Walt Disney Company"
+    },
+    {
+        "symbol": "CSCO.US",
+        "name": "Cisco Systems"
+    },
+    {
+        "symbol": "INTC.US",
+        "name": "Intel Corp"
+    },
+    {
+        "symbol": "IBM.US",
+        "name": "IBM Corp"
+    },
+    {
+        "symbol": "0700.HK",
+        "name": "Tencent Holdings"
+    },
+    {
+        "symbol": "9988.HK",
+        "name": "Alibaba Group"
+    },
+    {
+        "symbol": "1299.HK",
+        "name": "AIA Group"
+    },
+    {
+        "symbol": "0005.HK",
+        "name": "HSBC Holdings (HK)"
+    },
+    {
+        "symbol": "3690.HK",
+        "name": "Meituan"
+    },
+    {
+        "symbol": "9888.HK",
+        "name": "Baidu Inc."
+    },
+    {
+        "symbol": "1810.HK",
+        "name": "Xiaomi Corp"
+    },
+    {
+        "symbol": "2318.HK",
+        "name": "Ping An Insurance"
+    },
+    {
+        "symbol": "0388.HK",
+        "name": "HKEX"
+    },
+    {
+        "symbol": "1024.HK",
+        "name": "Kuaishou Technology"
+    },
+    {
+        "symbol": "7203.JP",
+        "name": "Toyota Motor Corp"
+    },
+    {
+        "symbol": "6758.JP",
+        "name": "Sony Group"
+    },
+    {
+        "symbol": "9984.JP",
+        "name": "SoftBank Group"
+    },
+    {
+        "symbol": "8035.JP",
+        "name": "Tokyo Electron"
+    },
+    {
+        "symbol": "6030.JP",
+        "name": "Keyence Corp"
+    },
+    {
+        "symbol": "4063.JP",
+        "name": "Shin-Etsu Chemical"
+    },
+    {
+        "symbol": "6501.JP",
+        "name": "Hitachi Ltd."
+    },
+    {
+        "symbol": "8001.JP",
+        "name": "Itochu Corp"
+    },
+    {
+        "symbol": "9432.JP",
+        "name": "Nippon Telegraph & Telephone"
+    },
+    {
+        "symbol": "7267.JP",
+        "name": "Honda Motor Co."
+    },
+    {
+        "symbol": "PTT.TH",
+        "name": "PTT Public Company"
+    },
+    {
+        "symbol": "ADVANC.TH",
+        "name": "Advanced Info Service"
+    },
+    {
+        "symbol": "CPALL.TH",
+        "name": "CP ALL Public Company"
+    },
+    {
+        "symbol": "AOT.TH",
+        "name": "Airports of Thailand"
+    },
+    {
+        "symbol": "BDMS.TH",
+        "name": "Bangkok Dusit Medical"
+    },
+    {
+        "symbol": "GULF.TH",
+        "name": "Gulf Energy Development"
+    },
+    {
+        "symbol": "SCB.TH",
+        "name": "SCB X Public Company"
+    },
+    {
+        "symbol": "KBANK.TH",
+        "name": "Kasikornbank"
+    },
+    {
+        "symbol": "BBL.TH",
+        "name": "Bangkok Bank"
+    },
+    {
+        "symbol": "SCC.TH",
+        "name": "Siam Cement"
+    },
+    {
+        "symbol": "HSBA.UK",
+        "name": "HSBC Holdings (UK)"
+    },
+    {
+        "symbol": "AZN.UK",
+        "name": "AstraZeneca"
+    },
+    {
+        "symbol": "BP.UK",
+        "name": "BP plc"
+    },
+    {
+        "symbol": "SHEL.UK",
+        "name": "Shell plc"
+    },
+    {
+        "symbol": "GSK.UK",
+        "name": "GSK plc"
+    },
+    {
+        "symbol": "ULVR.UK",
+        "name": "Unilever"
+    },
+    {
+        "symbol": "DGE.UK",
+        "name": "Diageo plc"
+    },
+    {
+        "symbol": "RIO.UK",
+        "name": "Rio Tinto"
+    },
+    {
+        "symbol": "BARC.UK",
+        "name": "Barclays"
+    },
+    {
+        "symbol": "BMW.DE",
+        "name": "BMW AG"
+    },
+    {
+        "symbol": "SAP.DE",
+        "name": "SAP SE"
+    },
+    {
+        "symbol": "SIE.DE",
+        "name": "Siemens AG"
+    },
+    {
+        "symbol": "AIR.DE",
+        "name": "Airbus SE"
+    },
+    {
+        "symbol": "RY.US",
+        "name": "Royal Bank of Canada"
+    },
+    {
+        "symbol": "TD.US",
+        "name": "Toronto-Dominion Bank"
+    },
+    {
+        "symbol": "CAT.US",
+        "name": "Caterpillar Inc."
+    },
+    {
+        "symbol": "DE.US",
+        "name": "Deere & Company"
+    },
+    {
+        "symbol": "GS.US",
+        "name": "Goldman Sachs Group"
+    },
+    {
+        "symbol": "MS.US",
+        "name": "Morgan Stanley"
+    },
+    {
+        "symbol": "BA.US",
+        "name": "Boeing Company"
+    },
+    {
+        "symbol": "HON.US",
+        "name": "Honeywell"
+    },
+    {
+        "symbol": "GE.US",
+        "name": "General Electric"
+    },
+    {
+        "symbol": "MMM.US",
+        "name": "3M Company"
+    },
+    {
+        "symbol": "ABT.US",
+        "name": "Abbott Laboratories"
+    },
+    {
+        "symbol": "ABBV.US",
+        "name": "AbbVie Inc."
+    },
+    {
+        "symbol": "TMO.US",
+        "name": "Thermo Fisher Scientific"
+    },
+    {
+        "symbol": "COST.US",
+        "name": "Costco Wholesale"
+    },
+    {
+        "symbol": "TGT.US",
+        "name": "Target Corp"
+    },
+    {
+        "symbol": "LOW.US",
+        "name": "Lowe's Companies"
+    },
+    {
+        "symbol": "SBUX.US",
+        "name": "Starbucks Corp"
+    },
+    {
+        "symbol": "AMD.US",
+        "name": "Advanced Micro Devices"
+    },
+    {
+        "symbol": "QCOM.US",
+        "name": "Qualcomm Inc."
+    },
+    {
+        "symbol": "TXN.US",
+        "name": "Texas Instruments"
+    },
+    {
+        "symbol": "INTU.US",
+        "name": "Intuit Inc."
+    },
+    {
+        "symbol": "LRCX.US",
+        "name": "Lam Research"
+    },
+    {
+        "symbol": "MU.US",
+        "name": "Micron Technology"
+    },
+    {
+        "symbol": "PYPL.US",
+        "name": "PayPal Holdings"
+    },
+    {
+        "symbol": "UBER.US",
+        "name": "Uber Technologies"
+    },
+    {
+        "symbol": "Airbnb.US",
+        "name": "Airbnb Inc."
+    },
+    {
+        "symbol": "SHOP.US",
+        "name": "Shopify Inc."
+    },
+    {
+        "symbol": "SQ.US",
+        "name": "Block Inc."
+    },
+    {
+        "symbol": "DOCU.US",
+        "name": "DocuSign Inc."
+    },
+    {
+        "symbol": "ZM.US",
+        "name": "Zoom Video"
+    },
+    {
+        "symbol": "SNOW.US",
+        "name": "Snowflake Inc."
+    },
+    {
+        "symbol": "TEAM.US",
+        "name": "Atlassian Corp"
+    },
+    {
+        "symbol": "MDB.US",
+        "name": "MongoDB Inc."
+    },
+    {
+        "symbol": "DDOG.US",
+        "name": "Datadog Inc."
+    },
+    {
+        "symbol": "CRWD.US",
+        "name": "CrowdStrike Holdings"
+    },
+    {
+        "symbol": "OKTA.US",
+        "name": "Okta Inc."
+    },
+    {
+        "symbol": "NET.US",
+        "name": "Cloudflare Inc."
+    },
+    {
+        "symbol": "U.US",
+        "name": "Unity Software"
+    },
+    {
+        "symbol": "PLTR.US",
+        "name": "Palantir Technologies"
+    },
+    {
+        "symbol": "AI.US",
+        "name": "C3.ai Inc."
+    },
+    {
+        "symbol": "HOOD.US",
+        "name": "Robinhood Markets"
+    },
+    {
+        "symbol": "COIN.US",
+        "name": "Coinbase Global"
+    },
+    {
+        "symbol": "SPGI.US",
+        "name": "S&P Global"
+    },
+    {
+        "symbol": "MCO.US",
+        "name": "Moody's Corp"
+    },
+    {
+        "symbol": "BLK.US",
+        "name": "BlackRock Inc."
+    },
+    {
+        "symbol": "BX.US",
+        "name": "Blackstone Inc."
+    },
+    {
+        "symbol": "KKR.US",
+        "name": "KKR & Co. Inc."
+    },
+    {
+        "symbol": "T.US",
+        "name": "AT&T Inc."
+    },
+    {
+        "symbol": "VZ.US",
+        "name": "Verizon Communications"
+    },
+    {
+        "symbol": "TMUS.US",
+        "name": "T-Mobile US"
+    },
+    {
+        "symbol": "CMCSA.UK",
+        "name": "Comcast Corp"
+    },
+    {
+        "symbol": "TATE.UK",
+        "name": "Tate & Lyle"
+    },
+    {
+        "symbol": "TSCO.UK",
+        "name": "Tesco plc"
+    },
+    {
+        "symbol": "VOW3.DE",
+        "name": "Volkswagen AG"
+    },
+    {
+        "symbol": "DAI.DE",
+        "name": "Mercedes-Benz Group"
+    },
+    {
+        "symbol": "PAH3.DE",
+        "name": "Porsche SE"
+    },
+    {
+        "symbol": "AIR.FR",
+        "name": "Airbus"
+    },
+    {
+        "symbol": "MC.FR",
+        "name": "LVMH Moët Hennessy"
+    },
+    {
+        "symbol": "OR.FR",
+        "name": "L'Oréal"
+    },
+    {
+        "symbol": "RMS.FR",
+        "name": "Hermès International"
+    },
+    {
+        "symbol": "KER.FR",
+        "name": "Kering"
+    },
+    {
+        "symbol": "ASML.NL",
+        "name": "ASML Holding"
+    },
+    {
+        "symbol": "AD.NL",
+        "name": "Ahold Delhaize"
+    },
+    {
+        "symbol": "PRX.NL",
+        "name": "Prosus"
+    },
+    {
+        "symbol": "SPOT.US",
+        "name": "Spotify Technology"
+    },
+    {
+        "symbol": "MELI.US",
+        "name": "MercadoLibre"
+    },
+    {
+        "symbol": "SEA.US",
+        "name": "Sea Limited"
+    },
+    {
+        "symbol": "GRUB.US",
+        "name": "Just Eat Takeaway"
+    },
+    {
+        "symbol": "DASH.US",
+        "name": "DoorDash Inc."
+    },
+    {
+        "symbol": "ROKU.US",
+        "name": "Roku Inc."
+    },
+    {
+        "symbol": "SNAP.US",
+        "name": "Snap Inc."
+    },
+    {
+        "symbol": "PINS.US",
+        "name": "Pinterest Inc."
+    },
+    {
+        "symbol": "TWTR.US",
+        "name": "Twitter (X)"
+    },
+    {
+        "symbol": "RBLX.US",
+        "name": "Roblox Corp"
+    },
+    {
+        "symbol": "MTCH.US",
+        "name": "Match Group"
+    },
+    {
+        "symbol": "AAV.US",
+        "name": "Aavix"
+    },
+    {
+        "symbol": "FCX.US",
+        "name": "Freeport-McMoRan"
+    },
+    {
+        "symbol": "VALE.US",
+        "name": "Vale S.A."
+    },
+    {
+        "symbol": "F.US",
+        "name": "Ford Motor Co."
+    },
+    {
+        "symbol": "GM.US",
+        "name": "General Motors"
+    },
+    {
+        "symbol": "RIVN.US",
+        "name": "Rivian Automotive"
+    },
+    {
+        "symbol": "LCID.US",
+        "name": "Lucid Group"
+    },
+    {
+        "symbol": "NIO.US",
+        "name": "Nio Inc."
+    },
+    {
+        "symbol": "LI.US",
+        "name": "Li Auto Inc."
+    },
+    {
+        "symbol": "XPEV.US",
+        "name": "XPeng Inc."
+    },
+    {
+        "symbol": "BYD.HK",
+        "name": "BYD Company"
+    },
+    {
+        "symbol": "0027.HK",
+        "name": "Galaxy Entertainment"
+    },
+    {
+        "symbol": "1928.HK",
+        "name": "Sands China"
+    },
+    {
+        "symbol": "1113.HK",
+        "name": "CK Asset Holdings"
+    },
+    {
+        "symbol": "0001.HK",
+        "name": "CK Hutchison"
+    },
+    {
+        "symbol": "0002.HK",
+        "name": "CLP Holdings"
+    },
+    {
+        "symbol": "0003.HK",
+        "name": "Hong Kong & China Gas"
+    },
+    {
+        "symbol": "0006.HK",
+        "name": "Power Assets Holdings"
+    },
+    {
+        "symbol": "0011.HK",
+        "name": "Hang Seng Bank"
+    },
+    {
+        "symbol": "0012.HK",
+        "name": "Henderson Land"
+    },
+    {
+        "symbol": "0016.HK",
+        "name": "Sun Hung Kai Prop"
+    },
+    {
+        "symbol": "0017.HK",
+        "name": "New World Dev"
+    },
+    {
+        "symbol": "0066.HK",
+        "name": "MTR Corporation"
+    },
+    {
+        "symbol": "0101.HK",
+        "name": "Hang Lung Prop"
+    },
+    {
+        "symbol": "0151.HK",
+        "name": "Want Want China"
+    },
+    {
+        "symbol": "0267.HK",
+        "name": "CITIC Limited"
+    },
+    {
+        "symbol": "0288.HK",
+        "name": "WH Group"
+    },
+    {
+        "symbol": "0291.HK",
+        "name": "China Resources Beer"
+    },
+    {
+        "symbol": "0386.HK",
+        "name": "Sinopec Corp"
+    },
+    {
+        "symbol": "0669.HK",
+        "name": "Techtronic Industries"
+    },
+    {
+        "symbol": "0688.HK",
+        "name": "China Overseas Land"
+    },
+    {
+        "symbol": "0762.HK",
+        "name": "China Unicom"
+    },
+    {
+        "symbol": "0857.HK",
+        "name": "PetroChina"
+    },
+    {
+        "symbol": "0883.HK",
+        "name": "CNOOC Limited"
+    },
+    {
+        "symbol": "0939.HK",
+        "name": "CCB"
+    },
+    {
+        "symbol": "0941.HK",
+        "name": "China Mobile"
+    },
+    {
+        "symbol": "0960.HK",
+        "name": "Longfor Group"
+    },
+    {
+        "symbol": "0968.HK",
+        "name": "Xinyi Solar"
+    },
+    {
+        "symbol": "0981.HK",
+        "name": "SMIC"
+    },
+    {
+        "symbol": "0992.HK",
+        "name": "Lenovo Group"
+    },
+    {
+        "symbol": "1038.HK",
+        "name": "CKI Holdings"
+    },
+    {
+        "symbol": "1044.HK",
+        "name": "Hengan International"
+    },
+    {
+        "symbol": "1088.HK",
+        "name": "China Shenhua"
+    },
+    {
+        "symbol": "1093.HK",
+        "name": "CSPC Pharma"
+    },
+    {
+        "symbol": "1109.HK",
+        "name": "China Resources Land"
+    },
+    {
+        "symbol": "1177.HK",
+        "name": "Sino Biopharm"
+    },
+    {
+        "symbol": "1398.HK",
+        "name": "ICBC"
+    },
+    {
+        "symbol": "1919.HK",
+        "name": "COSCO SHIPPING"
+    },
+    {
+        "symbol": "2020.HK",
+        "name": "ANTA Sports"
+    },
+    {
+        "symbol": "2313.HK",
+        "name": "Shenzhou International"
+    },
+    {
+        "symbol": "2331.HK",
+        "name": "Li Ning"
+    },
+    {
+        "symbol": "2382.HK",
+        "name": "Sunny Optical"
+    },
+    {
+        "symbol": "2628.HK",
+        "name": "China Life"
+    },
+    {
+        "symbol": "3328.HK",
+        "name": "Bank of Communications"
+    },
+    {
+        "symbol": "3968.HK",
+        "name": "CM Bank"
+    },
+    {
+        "symbol": "3988.HK",
+        "name": "Bank of China"
+    }
+]

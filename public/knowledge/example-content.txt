@@ -1,0 +1,106 @@
+# Example Knowledge Base Content
+
+This file shows example content that should be in your PDF files.
+
+## Trading Basics
+
+### What is a Candlestick?
+A candlestick is a type of price chart used in technical analysis that displays the high, low, open, and close prices of a security for a specific period.
+
+Components:
+- Body: The area between open and close
+- Upper Shadow (Wick): High of the period
+- Lower Shadow (Wick): Low of the period
+- Green/White: Close > Open (Bullish)
+- Red/Black: Close < Open (Bearish)
+
+## Common Candlestick Patterns
+
+### 1. Hammer
+- Appears at bottom of downtrend
+- Small body at top, long lower shadow
+- Signals potential bullish reversal
+- Lower shadow should be 2-3x body length
+
+### 2. Shooting Star
+- Appears at top of uptrend
+- Small body at bottom, long upper shadow
+- Signals potential bearish reversal
+- Upper shadow should be 2-3x body length
+
+### 3. Doji
+- Open and close are equal/very close
+- Represents indecision in the market
+- Can signal reversal when combined with other patterns
+- Types: Standard, Long-legged, Gravestone, Dragonfly
+
+### 4. Engulfing Patterns
+Bullish Engulfing:
+- Occurs after downtrend
+- Green candle completely engulfs previous red candle
+- Strong reversal signal
+
+Bearish Engulfing:
+- Occurs after uptrend
+- Red candle completely engulfs previous green candle
+- Strong reversal signal
+
+## Risk Management
+
+### Position Sizing
+- Never risk more than 1-2% of capital per trade
+- Calculate position size based on stop loss distance
+- Use proper leverage (or none at all for beginners)
+
+### Stop Loss Rules
+- Always set stop loss before entering trade
+- Place beyond technical levels (support/resistance)
+- Don't move stop loss against your position
+- Accept the loss if hit
+
+### Psychology
+- Emotions are the biggest enemy
+- Stick to your trading plan
+- Don't revenge trade after losses
+- Take breaks after big wins or losses
+- Keep a trading journal
+
+## Trading Strategies
+
+### Support and Resistance Trading
+- Identify key levels where price bounces
+- Buy near support, sell near resistance
+- Wait for confirmation before entry
+- Use multiple timeframes for confirmation
+
+### Trend Following
+- Trade in direction of major trend
+- Use moving averages to identify trend
+- Enter on pullbacks in trending markets
+- Don't fight the trend
+
+### Breakout Trading
+- Wait for price to break key levels
+- Confirm with volume
+- Enter after successful retest
+- Set stop below breakout level
+
+## Common Mistakes
+
+1. **Overtrading**: Taking too many trades
+2. **Lack of Plan**: Trading without strategy
+3. **Ignoring Risk Management**: Not using stop losses
+4. **Emotional Trading**: Letting fear/greed control decisions
+5. **Not Learning**: Repeating same mistakes
+
+## Key Principles
+
+✅ The trend is your friend
+✅ Cut losses short, let profits run
+✅ Plan your trade, trade your plan
+✅ Risk management > Everything else
+✅ Consistency beats perfection
+
+---
+
+**Remember**: This app is for educational purposes. Always practice with paper trading before risking real money.
