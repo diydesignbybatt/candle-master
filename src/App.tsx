@@ -19,7 +19,8 @@ import PositionSizeCalculator from './components/PositionSizeCalculator';
 import { fetchRandomStockData } from './utils/data';
 import type { StockData } from './utils/data';
 import { useTradingSession, resetSavedBalance } from './hooks/useTradingSession';
-import { SkipForward, Square, TrendingUp, TrendingDown, Loader2, Info, X, History, Trash2, GraduationCap, CircleUser, Volume2, VolumeX, Edit, ZoomIn, ZoomOut, BarChart3, BookOpen, Clock, User, Plus, Minus, Calculator, ChevronDown, ChevronUp } from 'lucide-react';
+import { SkipForward, Square, TrendingUp, TrendingDown, Loader2, Info, X, Trash2, Volume2, VolumeX, ZoomIn, ZoomOut, BarChart3, BookOpen, Clock, User, Plus, Minus, Calculator, ChevronDown, ChevronUp, Sun, Moon, Monitor } from 'lucide-react';
+import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { soundService, playSound } from './services/soundService';
 import { format } from 'date-fns';
@@ -299,13 +300,11 @@ const getTradingTitle = (pnl: number, trades: number) => {
   return "Bag Holder";
 };
 
-const App: React.FC = () => {
+const AppContent: React.FC = () => {
+  const { mode, setMode, resolvedTheme } = useTheme();
   const [stock, setStock] = useState<StockData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showInfo, setShowInfo] = useState(false);
-  const [showHistory, setShowHistory] = useState(false);
-  const [showAcademy, setShowAcademy] = useState(false);
-  const [showProfile, setShowProfile] = useState(false);
   const [history, setHistory] = useState<TradeRecord[]>([]);
   const [zoom, setZoom] = useState(1);
   const [positionsCollapsed, setPositionsCollapsed] = useState(false);
@@ -374,7 +373,6 @@ const App: React.FC = () => {
     currentCandle,
     balance,
     displayBalance,
-    startingBalance,
     positions,
     maxPositions,
     totalReturn,
@@ -410,10 +408,12 @@ const App: React.FC = () => {
     originalShort(tradeAmount);
   };
 
+  const MIN_TRADE_AMOUNT = 1000;
+
   const adjustTradeAmount = (delta: number) => {
     setTradeAmount(prev => {
       const newAmount = prev + delta;
-      if (newAmount < 100) return 100;
+      if (newAmount < MIN_TRADE_AMOUNT) return MIN_TRADE_AMOUNT;
       if (newAmount > balance) return Math.floor(balance);
       return newAmount;
     });
@@ -423,8 +423,8 @@ const App: React.FC = () => {
     const value = parseFloat(e.target.value) || 0;
     if (value > balance) {
       setTradeAmount(Math.floor(balance));
-    } else if (value < 0) {
-      setTradeAmount(0);
+    } else if (value < MIN_TRADE_AMOUNT) {
+      setTradeAmount(MIN_TRADE_AMOUNT);
     } else {
       setTradeAmount(value);
     }
@@ -566,15 +566,34 @@ const App: React.FC = () => {
         <main className={`main-content ${activeTab === 'calculator' ? 'fullscreen-mode' : ''}`}>
           {activeTab === 'trade' && (
           <>
+          {/* Broke Card - When balance is too low */}
+          {!isGameOver && balance < MIN_TRADE_AMOUNT && positions.length === 0 && (
+            <div className="broke-card">
+              <div className="broke-emoji">🍔</div>
+              <h3 className="broke-title">Oops! You're Broke!</h3>
+              <p className="broke-balance">
+                Current Balance: <span>${balance.toLocaleString(undefined, { maximumFractionDigits: 2 })}</span>
+              </p>
+              <p className="broke-message">
+                Come back when you have more than $1,000.
+                <br />
+                Maybe grab a cheeseburger first to heal your soul.
+              </p>
+              <button className="btn btn-primary broke-btn" onClick={resetGameData}>
+                Start Fresh ($10,000)
+              </button>
+            </div>
+          )}
+
           {/* Trade Amount Input */}
-          {positions.length < maxPositions && !isGameOver && balance > 0 && (
+          {positions.length < maxPositions && !isGameOver && balance >= MIN_TRADE_AMOUNT && (
             <div className="trade-amount-section">
               <span className="trade-amount-label">Trade Amount</span>
               <div className="trade-amount-controls">
                 <button
                   className="amount-btn"
                   onClick={() => adjustTradeAmount(-1000)}
-                  disabled={tradeAmount <= 100}
+                  disabled={tradeAmount <= MIN_TRADE_AMOUNT}
                 >
                   <Minus size={18} />
                 </button>
@@ -585,7 +604,7 @@ const App: React.FC = () => {
                     className="amount-input"
                     value={tradeAmount}
                     onChange={handleTradeAmountChange}
-                    min={100}
+                    min={MIN_TRADE_AMOUNT}
                     max={balance}
                   />
                 </div>
@@ -710,7 +729,7 @@ const App: React.FC = () => {
               <button
                 className="btn btn-buy"
                 onClick={long}
-                disabled={isGameOver || positions.length >= maxPositions || balance <= 0}
+                disabled={isGameOver || positions.length >= maxPositions || balance < MIN_TRADE_AMOUNT}
               >
                 <TrendingUp size={20} />
                 <span>LONG</span>
@@ -718,7 +737,7 @@ const App: React.FC = () => {
               <button
                 className="btn btn-sell"
                 onClick={short}
-                disabled={isGameOver || positions.length >= maxPositions || balance <= 0}
+                disabled={isGameOver || positions.length >= maxPositions || balance < MIN_TRADE_AMOUNT}
               >
                 <TrendingDown size={20} />
                 <span>SHORT</span>
@@ -847,6 +866,36 @@ const App: React.FC = () => {
                     <div className="toggle-knob"></div>
                   </div>
                 </button>
+
+                <div className="theme-selector">
+                  <div className="theme-selector-header">
+                    {resolvedTheme === 'dark' ? <Moon size={20} /> : <Sun size={20} />}
+                    <span>Theme</span>
+                  </div>
+                  <div className="theme-options">
+                    <button
+                      className={`theme-option ${mode === 'light' ? 'active' : ''}`}
+                      onClick={() => setMode('light')}
+                    >
+                      <Sun size={16} />
+                      <span>Light</span>
+                    </button>
+                    <button
+                      className={`theme-option ${mode === 'dark' ? 'active' : ''}`}
+                      onClick={() => setMode('dark')}
+                    >
+                      <Moon size={16} />
+                      <span>Dark</span>
+                    </button>
+                    <button
+                      className={`theme-option ${mode === 'system' ? 'active' : ''}`}
+                      onClick={() => setMode('system')}
+                    >
+                      <Monitor size={16} />
+                      <span>System</span>
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           )}
@@ -1033,6 +1082,19 @@ const App: React.FC = () => {
           --controls-height: 4rem;
         }
 
+        /* Dark mode overrides */
+        [data-theme="dark"] {
+          --bg-primary: #1A1A1A;
+          --bg-secondary: #121212;
+          --bg-tertiary: #252525;
+          --color-text: #FFFFFF;
+          --color-text-secondary: #A0A0A0;
+          --color-text-tertiary: #707070;
+          --color-border: #333333;
+          --color-green: #22c55e;
+          --color-red: #ef4444;
+        }
+
         * {
           box-sizing: border-box;
         }
@@ -1091,6 +1153,63 @@ const App: React.FC = () => {
         .header.compact .stats-grid { margin-top: 0; }
         .main-content { flex: 1; display: flex; flex-direction: column; padding: 0; min-height: 0; overflow: hidden; }
         .main-content.fullscreen-mode { padding-top: var(--safe-area-top); }
+
+        /* Broke Card */
+        .broke-card {
+          margin: 16px;
+          padding: 32px 24px;
+          background: var(--bg-primary);
+          border: 2px dashed var(--color-border);
+          border-radius: 16px;
+          text-align: center;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 12px;
+        }
+
+        .broke-emoji {
+          font-size: 4rem;
+          line-height: 1;
+          margin-bottom: 8px;
+          animation: bounce 1s ease infinite;
+        }
+
+        @keyframes bounce {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-10px); }
+        }
+
+        .broke-title {
+          font-size: 1.5rem;
+          font-weight: 800;
+          color: var(--color-red);
+          margin: 0;
+        }
+
+        .broke-balance {
+          font-size: 1rem;
+          color: var(--color-text-secondary);
+          margin: 0;
+        }
+
+        .broke-balance span {
+          font-weight: 800;
+          color: var(--color-text);
+        }
+
+        .broke-message {
+          font-size: 0.9rem;
+          color: var(--color-text-secondary);
+          line-height: 1.6;
+          margin: 8px 0 16px 0;
+        }
+
+        .broke-btn {
+          height: 52px !important;
+          margin-top: 8px !important;
+          font-size: 0.95rem !important;
+        }
 
         /* Trade Amount Section */
         .trade-amount-section {
@@ -1346,7 +1465,7 @@ const App: React.FC = () => {
           background: var(--color-border);
         }
         .modal-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(8px); display: flex; align-items: flex-end; justify-content: center; z-index: 1000; }
-        .game-over-modal { background: var(--bg-primary); width: 100%; border-radius: 24px 24px 0 0; padding: 48px 32px calc(var(--safe-area-bottom) + 24px); }
+        .game-over-modal { background: var(--bg-primary); width: 100%; max-width: 100%; border-radius: 24px 24px 0 0; padding: 32px 24px calc(var(--safe-area-bottom) + 24px); max-height: 85vh; overflow-y: auto; }
         .info-modal { background: var(--bg-primary); width: 100%; max-width: 360px; border-radius: 0.75rem; padding: 0; border: 1px solid var(--color-border); max-height: calc(100vh - 80px); display: flex; flex-direction: column; overflow: hidden; }
         .info-header { display: flex; justify-content: space-between; align-items: center; padding: 24px 24px 16px; border-bottom: 1px solid var(--color-border); flex-shrink: 0; position: sticky; top: 0; background: var(--bg-primary); z-index: 10; }
         .info-header h2 { font-size: 1.5rem; font-weight: 800; color: var(--color-text); }
@@ -1598,7 +1717,7 @@ const App: React.FC = () => {
         }
 
         /* Summary Modal Additions */
-        .game-over-modal.cream-theme { background: var(--bg-primary); color: var(--color-text); text-align: center; padding-top: 50px; border: 1px solid var(--color-border); }
+        .game-over-modal.cream-theme { background: var(--bg-primary); color: var(--color-text); text-align: center; padding-top: 32px; border: 1px solid var(--color-border); border-bottom: none; }
         .title-section { margin-bottom: 30px; }
         .summary-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 2px; opacity: 0.6; margin-bottom: 8px; font-weight: 600; }
         .trading-title { font-size: 2.2rem; line-height: 1.1; font-family: 'Cormorant Garamond', serif; font-weight: 700; color: var(--color-text); margin: 0; }
@@ -1637,7 +1756,7 @@ const App: React.FC = () => {
 
         .btn-primary {
           background: var(--color-text);
-          color: white;
+          color: var(--bg-primary);
           height: 72px;
           font-size: 1.1rem;
           font-weight: 700;
@@ -1652,6 +1771,15 @@ const App: React.FC = () => {
 
         .btn-primary:active {
           background: var(--color-text-secondary);
+        }
+
+        [data-theme="dark"] .btn-primary {
+          background: #FFFFFF;
+          color: #000000;
+        }
+
+        [data-theme="dark"] .btn-primary:active {
+          background: #E0E0E0;
         }
 
         /* Zoom Controls - Floating */
@@ -1688,9 +1816,20 @@ const App: React.FC = () => {
           box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
 
+        [data-theme="dark"] .zoom-btn-mini {
+          background: rgba(60, 60, 60, 0.95);
+          border: 1px solid rgba(100, 100, 100, 0.5);
+          color: #FFFFFF;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        }
+
         .zoom-btn-mini:active {
           background: var(--bg-tertiary);
           transform: scale(0.95);
+        }
+
+        [data-theme="dark"] .zoom-btn-mini:active {
+          background: rgba(80, 80, 80, 0.95);
         }
 
         .zoom-btn-mini:disabled {
@@ -1979,8 +2118,105 @@ const App: React.FC = () => {
           opacity: 0.5;
           cursor: not-allowed;
         }
+
+        /* Theme Selector Styles */
+        .theme-selector {
+          background: var(--bg-tertiary);
+          border: 1px solid var(--color-border);
+          border-radius: 0.75rem;
+          padding: 16px 20px;
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+        }
+
+        .theme-selector-header {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          font-size: 0.95rem;
+          font-weight: 600;
+          color: var(--color-text);
+        }
+
+        .theme-options {
+          display: flex;
+          gap: 8px;
+        }
+
+        .theme-option {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 6px;
+          padding: 12px 8px;
+          background: var(--bg-primary);
+          border: 2px solid var(--color-border);
+          border-radius: 0.75rem;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          color: var(--color-text-secondary);
+        }
+
+        .theme-option span {
+          font-size: 0.7rem;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+
+        .theme-option:hover {
+          border-color: var(--color-text-tertiary);
+        }
+
+        .theme-option.active {
+          border-color: var(--color-green);
+          background: rgba(14, 124, 123, 0.1);
+          color: var(--color-green);
+        }
+
+        [data-theme="dark"] .theme-option.active {
+          background: rgba(34, 197, 94, 0.15);
+        }
+
+        .theme-option:active {
+          transform: scale(0.95);
+        }
+
+        /* Smooth theme transitions */
+        .mobile-shell,
+        .app-container,
+        .header,
+        .main-content,
+        .bottom-nav,
+        .controls,
+        .modal-overlay,
+        .game-over-modal,
+        .info-modal,
+        .stat-card,
+        .position-bar,
+        .positions-container,
+        .academy-card,
+        .history-item,
+        .profile-balance-card,
+        .profile-action-btn,
+        .theme-selector,
+        .theme-option,
+        .btn,
+        .zoom-btn-mini {
+          transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+        }
       `}</style>
     </div>
+  );
+};
+
+const App: React.FC = () => {
+  return (
+    <ThemeProvider>
+      <AppContent />
+    </ThemeProvider>
   );
 };
 

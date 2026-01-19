@@ -1,5 +1,6 @@
 import React, { useRef, useLayoutEffect, useState, useEffect } from 'react';
 import type { Candle } from '../utils/data';
+import { useTheme } from '../contexts/ThemeContext';
 
 interface ChartProps {
   data: Candle[];
@@ -10,6 +11,18 @@ export const Chart: React.FC<ChartProps> = ({ data, zoom = 1 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [chartHeight, setChartHeight] = useState(400);
+  const { resolvedTheme } = useTheme();
+
+  // Theme-aware colors
+  const isDark = resolvedTheme === 'dark';
+  const colors = {
+    background: isDark ? '#1A1A1A' : '#FFFFFF',
+    backgroundOverlay: isDark ? 'rgba(26, 26, 26, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+    gridLine: isDark ? '#333333' : '#F2F2F2',
+    labelText: isDark ? '#707070' : '#8E8E93',
+    candleUp: '#22c55e',
+    candleDown: '#ef4444',
+  };
 
   // Measure container height on mount and resize
   useEffect(() => {
@@ -79,12 +92,13 @@ export const Chart: React.FC<ChartProps> = ({ data, zoom = 1 }) => {
         width: '100%',
         height: '100%',
         minHeight: '200px', /* Ensure it never collapses completely */
-        background: '#FFFFFF',
+        background: colors.background,
         borderRadius: '12px',
         padding: '10px 10px 0 10px', /* Remove bottom padding to let scrollbar sit flush */
         position: 'relative',
         display: 'flex',
-        overflow: 'hidden'
+        overflow: 'hidden',
+        transition: 'background-color 0.3s ease'
       }}
     >
       {/* Fixed Y-Axis */}
@@ -94,10 +108,11 @@ export const Chart: React.FC<ChartProps> = ({ data, zoom = 1 }) => {
         position: 'absolute',
         top: '0',
         left: '10px',
-        background: 'rgba(255, 255, 255, 0.95)',
+        background: colors.backgroundOverlay,
         zIndex: 10,
-        borderRight: '1px solid #F2F2F2',
-        pointerEvents: 'none'
+        borderRight: `1px solid ${colors.gridLine}`,
+        pointerEvents: 'none',
+        transition: 'background-color 0.3s ease, border-color 0.3s ease'
       }}>
         <svg width="100%" height="100%">
           {yLabels.map((label, i) => (
@@ -107,7 +122,7 @@ export const Chart: React.FC<ChartProps> = ({ data, zoom = 1 }) => {
               y={label.y}
               textAnchor="end"
               alignmentBaseline="middle"
-              fill="#8E8E93"
+              fill={colors.labelText}
               fontSize="10px"
               fontFamily="Nunito, sans-serif"
               fontWeight="600"
@@ -139,7 +154,7 @@ export const Chart: React.FC<ChartProps> = ({ data, zoom = 1 }) => {
               y1={label.y}
               x2={totalWidth - paddingRight}
               y2={label.y}
-              stroke="#F2F2F2"
+              stroke={colors.gridLine}
               strokeWidth="1"
             />
           ))}
@@ -148,7 +163,7 @@ export const Chart: React.FC<ChartProps> = ({ data, zoom = 1 }) => {
           {data.map((d, i) => {
             const x = getX(i);
             const isUp = d.close >= d.open;
-            const color = isUp ? '#00D293' : '#FF5A5F'; // Matching the new K-App Theme
+            const color = isUp ? colors.candleUp : colors.candleDown;
 
             return (
               <g key={`${d.time}-${i}`}>

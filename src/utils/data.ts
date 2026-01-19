@@ -1,4 +1,11 @@
-import stocks from './stocks.json';
+import stocksData from './stocks.json';
+
+// Combine free + pro stocks (for now, all users get access to free stocks only)
+// TODO: Filter based on subscription status
+const isPro = localStorage.getItem('candle_master_pro') === 'true';
+const stocks = isPro
+  ? [...stocksData.free, ...stocksData.pro]
+  : stocksData.free;
 
 export interface Candle {
   time: string;

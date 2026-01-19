@@ -11,7 +11,7 @@
   line-height: 1.5;
   font-weight: 400;
 
-  color-scheme: light;
+  color-scheme: light dark;
   color: var(--color-black);
   background-color: var(--color-white);
 
@@ -21,6 +21,17 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Dark mode overrides */
+[data-theme="dark"] {
+  --color-white: #1A1A1A;
+  --color-bg: #0D0D0D;
+  --color-black: #FFFFFF;
+  --color-gray: #A0A0A0;
+
+  --color-success: #22c55e;
+  --color-danger: #ef4444;
+}
+
 body {
   margin: 0;
   display: flex;
@@ -28,6 +39,7 @@ body {
   min-width: 320px;
   min-height: 100vh;
   background-color: var(--color-bg);
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 #root {
@@ -39,6 +51,7 @@ body {
   flex-direction: column;
   position: relative;
   background-color: var(--color-white);
+  transition: background-color 0.3s ease;
 }
 
 * {
