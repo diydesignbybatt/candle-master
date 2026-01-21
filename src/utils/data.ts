@@ -1,4 +1,6 @@
 import stocksData from './stocks.json';
+import { CapacitorHttp } from '@capacitor/core';
+import { Capacitor } from '@capacitor/core';
 
 // Combine free + pro stocks (for now, all users get access to free stocks only)
 // TODO: Filter based on subscription status
@@ -13,6 +15,7 @@ export interface Candle {
   high: number;
   low: number;
   close: number;
+  volume?: number;
 }
 
 export interface StockData {
@@ -54,6 +57,7 @@ const generateMockHistory = (info: { symbol: string, name: string }): StockData 
 
 /**
  * Fetches real historical data from the elite pool using a reliable proxy
+ * Supports both web (CORS proxy) and native app (Capacitor HTTP)
  */
 export const fetchRandomStockData = async (): Promise<StockData> => {
   // 1. Pick a random stock from our new 200-item JSON list
@@ -61,26 +65,37 @@ export const fetchRandomStockData = async (): Promise<StockData> => {
 
   // 2. Prepare API parameters
   const stooqUrl = `https://stooq.com/q/d/l/?s=${stockInfo.symbol.toLowerCase()}&i=d`;
-  const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(stooqUrl)}`;
+  const isNative = Capacitor.isNativePlatform();
 
   try {
-    const response = await fetch(proxyUrl);
-    if (!response.ok) throw new Error('Network error');
+    let csvData: string;
 
-    const csvData = await response.text();
+    if (isNative) {
+      // Native app: Use Capacitor HTTP (no CORS issues)
+      const response = await CapacitorHttp.get({ url: stooqUrl });
+      csvData = response.data;
+    } else {
+      // Web: Use CORS proxy
+      const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(stooqUrl)}`;
+      const response = await fetch(proxyUrl);
+      if (!response.ok) throw new Error('Network error');
+      csvData = await response.text();
+    }
+
     if (!csvData || csvData.length < 100) throw new Error('Bad data format');
 
     const lines = csvData.trim().split('\n');
     const allCandles: Candle[] = lines.slice(1).map(line => {
       const columns = line.split(',');
       if (columns.length < 5) return null;
-      const [date, open, high, low, close] = columns;
+      const [date, open, high, low, close, volume] = columns;
       return {
         time: date,
         open: parseFloat(open),
         high: parseFloat(high),
         low: parseFloat(low),
-        close: parseFloat(close)
+        close: parseFloat(close),
+        volume: volume ? parseInt(volume) : undefined
       };
     }).filter((c): c is Candle => c !== null && !isNaN(c.close));
 

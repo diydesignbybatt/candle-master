@@ -914,7 +914,7 @@ const PositionSizeCalculator: React.FC = () => {
 
         .toggle-btn.active {
           background: var(--color-text);
-          color: white;
+          color: var(--bg-primary);
         }
 
         .warning-box {

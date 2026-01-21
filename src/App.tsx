@@ -642,9 +642,20 @@ const AppContent: React.FC = () => {
                   >
                     <div className="positions-summary">
                       <span className="positions-count">{positions.length} Position{positions.length > 1 ? 's' : ''}</span>
-                      <span className={`positions-total-pl ${unrealizedPL >= 0 ? 'text-success' : 'text-danger'}`}>
-                        {unrealizedPL >= 0 ? '+' : ''}${unrealizedPL.toFixed(2)}
-                      </span>
+                      <div className="positions-total-pl-group">
+                        <span className={`positions-total-pl ${unrealizedPL >= 0 ? 'text-success' : 'text-danger'}`}>
+                          {unrealizedPL >= 0 ? '+' : ''}${unrealizedPL.toFixed(2)}
+                        </span>
+                        {positions.length > 0 && (() => {
+                          const totalValue = positions.reduce((sum, pos) => sum + (pos.entryPrice * pos.amount), 0);
+                          const totalPLPercent = (unrealizedPL / totalValue) * 100;
+                          return (
+                            <span className={`positions-total-pl-percent ${unrealizedPL >= 0 ? 'text-success' : 'text-danger'}`}>
+                              ({totalPLPercent >= 0 ? '+' : ''}{totalPLPercent.toFixed(2)}%)
+                            </span>
+                          );
+                        })()}
+                      </div>
                     </div>
                     <button className="positions-toggle">
                       {positionsCollapsed ? <ChevronDown size={18} /> : <ChevronUp size={18} />}
@@ -661,6 +672,8 @@ const AppContent: React.FC = () => {
                     >
                       {positions.map((pos) => {
                         const positionPL = getPositionPL(pos);
+                        const positionValue = pos.entryPrice * pos.amount;
+                        const positionPLPercent = (positionPL / positionValue) * 100;
                         return (
                           <div
                             key={pos.id}
@@ -674,9 +687,14 @@ const AppContent: React.FC = () => {
                               </div>
                             </div>
                             <div className="pos-right">
-                              <span className={positionPL >= 0 ? 'text-success' : 'text-danger'}>
-                                {positionPL >= 0 ? '+' : ''}${positionPL.toFixed(2)}
-                              </span>
+                              <div className="pos-pl-container">
+                                <span className={positionPL >= 0 ? 'text-success' : 'text-danger'}>
+                                  {positionPL >= 0 ? '+' : ''}${positionPL.toFixed(2)}
+                                </span>
+                                <span className={`pos-pl-percent ${positionPL >= 0 ? 'text-success' : 'text-danger'}`}>
+                                  ({positionPLPercent >= 0 ? '+' : ''}{positionPLPercent.toFixed(2)}%)
+                                </span>
+                              </div>
                               <button
                                 className="pos-close-btn"
                                 onClick={() => closePosition(pos.id)}
@@ -1341,7 +1359,9 @@ const AppContent: React.FC = () => {
         .positions-header:active { background: var(--color-border); }
         .positions-summary { display: flex; align-items: center; gap: 0.75rem; }
         .positions-count { font-size: 0.75rem; font-weight: 700; color: var(--color-text); }
+        .positions-total-pl-group { display: flex; flex-direction: column; align-items: flex-end; gap: 0.1rem; }
         .positions-total-pl { font-size: 0.8rem; font-weight: 800; }
+        .positions-total-pl-percent { font-size: 0.65rem; font-weight: 600; }
         .positions-toggle { background: none; border: none; padding: 4px; cursor: pointer; color: var(--color-text-secondary); display: flex; align-items: center; justify-content: center; }
         .positions-list { display: flex; flex-direction: column; gap: 0.5rem; padding: 0.5rem; }
         .position-bar { background: var(--bg-primary); padding: 0.5rem 0.75rem; border-radius: 0.75rem; display: flex; justify-content: space-between; align-items: center; border: 2px solid var(--color-border); flex-shrink: 0; }
@@ -1355,6 +1375,8 @@ const AppContent: React.FC = () => {
         .long .pos-badge { background: var(--color-green); }
         .short .pos-badge { background: var(--color-red); }
         .pos-right { display: flex; align-items: center; gap: 0.5rem; }
+        .pos-pl-container { display: flex; flex-direction: column; align-items: flex-end; gap: 0.1rem; }
+        .pos-pl-percent { font-size: clamp(0.6rem, 1.8vw, 0.65rem); font-weight: 600; }
         .pos-close-btn { background: var(--bg-secondary); border: 1px solid var(--color-border); border-radius: 0.4rem; padding: 0.3rem; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--text-secondary); transition: all 0.2s; }
         .pos-close-btn:hover { background: var(--color-red); color: #FFF; border-color: var(--color-red); }
         .pos-close-btn:disabled { opacity: 0.5; cursor: not-allowed; }
