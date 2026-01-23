@@ -22,7 +22,9 @@
       "Bash(npx cap:*)",
       "Bash(ipconfig:*)",
       "Bash(findstr:*)",
-      "Bash(ping:*)"
+      "Bash(ping:*)",
+      "Bash(gh repo view:*)",
+      "Bash(netstat:*)"
     ]
   }
 }

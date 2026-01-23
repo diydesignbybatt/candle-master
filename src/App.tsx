@@ -19,7 +19,9 @@ import PositionSizeCalculator from './components/PositionSizeCalculator';
 import { fetchRandomStockData } from './utils/data';
 import type { StockData } from './utils/data';
 import { useTradingSession, resetSavedBalance } from './hooks/useTradingSession';
+import { useOrientation } from './hooks/useOrientation';
 import { SkipForward, Square, TrendingUp, TrendingDown, Loader2, Info, X, Trash2, Volume2, VolumeX, ZoomIn, ZoomOut, BarChart3, BookOpen, Clock, User, Plus, Minus, Calculator, ChevronDown, ChevronUp, Sun, Moon, Monitor } from 'lucide-react';
+import { ScreenOrientation } from '@capacitor/screen-orientation';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { soundService, playSound } from './services/soundService';
@@ -302,6 +304,7 @@ const getTradingTitle = (pnl: number, trades: number) => {
 
 const AppContent: React.FC = () => {
   const { mode, setMode, resolvedTheme } = useTheme();
+  const orientation = useOrientation();
   const [stock, setStock] = useState<StockData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showInfo, setShowInfo] = useState(false);
@@ -311,6 +314,30 @@ const AppContent: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'trade' | 'calculator' | 'academy' | 'history' | 'profile'>('trade');
   const [soundEnabled, setSoundEnabled] = useState(soundService.isEnabled());
   const [tradeAmount, setTradeAmount] = useState(1000);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+
+  // Check if in landscape mode and on trade screen
+  const isLandscapeTrading = orientation === 'landscape' && activeTab === 'trade';
+
+  // Screen Orientation Lock/Unlock based on active tab
+  useEffect(() => {
+    const handleOrientation = async () => {
+      try {
+        if (activeTab === 'trade') {
+          // Unlock orientation for trade screen (allow rotation)
+          await ScreenOrientation.unlock();
+        } else {
+          // Lock to portrait for other screens
+          await ScreenOrientation.lock({ orientation: 'portrait' });
+        }
+      } catch (error) {
+        // Silently fail on web/unsupported platforms
+        console.log('Screen orientation not supported:', error);
+      }
+    };
+
+    handleOrientation();
+  }, [activeTab]);
 
   // Load history on mount
   useEffect(() => {
@@ -336,11 +363,15 @@ const AppContent: React.FC = () => {
   };
 
   const resetGameData = () => {
-    // Clear history
-    setHistory([]);
-    localStorage.removeItem('candle_master_history');
+    setShowResetConfirm(true);
+  };
+
+  const confirmReset = () => {
+    setShowResetConfirm(false);
     // Reset balance to $10,000
     resetSavedBalance();
+    // Clear trade history (so equity curve shows true performance)
+    clearHistory();
     // Reload with new stock to apply the reset
     loadNewStock();
   };
@@ -408,23 +439,21 @@ const AppContent: React.FC = () => {
     originalShort(tradeAmount);
   };
 
-  const MIN_TRADE_AMOUNT = 1000;
-
   const adjustTradeAmount = (delta: number) => {
     setTradeAmount(prev => {
       const newAmount = prev + delta;
-      if (newAmount < MIN_TRADE_AMOUNT) return MIN_TRADE_AMOUNT;
+      if (newAmount < 0) return 0;
       if (newAmount > balance) return Math.floor(balance);
       return newAmount;
     });
   };
 
   const handleTradeAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseFloat(e.target.value) || 0;
-    if (value > balance) {
+    const value = parseFloat(e.target.value);
+    if (isNaN(value) || value < 0) {
+      setTradeAmount(0);
+    } else if (value > balance) {
       setTradeAmount(Math.floor(balance));
-    } else if (value < MIN_TRADE_AMOUNT) {
-      setTradeAmount(MIN_TRADE_AMOUNT);
     } else {
       setTradeAmount(value);
     }
@@ -537,9 +566,9 @@ const AppContent: React.FC = () => {
   }
 
   return (
-    <div className="mobile-shell">
+    <div className={`mobile-shell ${isLandscapeTrading ? 'landscape-mode' : ''}`}>
       <div className="app-container">
-        {activeTab !== 'calculator' && (
+        {activeTab !== 'calculator' && !isLandscapeTrading && (
           <header className="header compact">
           <div className="stats-grid">
             <div className="stat-card">
@@ -566,34 +595,15 @@ const AppContent: React.FC = () => {
         <main className={`main-content ${activeTab === 'calculator' ? 'fullscreen-mode' : ''}`}>
           {activeTab === 'trade' && (
           <>
-          {/* Broke Card - When balance is too low */}
-          {!isGameOver && balance < MIN_TRADE_AMOUNT && positions.length === 0 && (
-            <div className="broke-card">
-              <div className="broke-emoji">🍔</div>
-              <h3 className="broke-title">Oops! You're Broke!</h3>
-              <p className="broke-balance">
-                Current Balance: <span>${balance.toLocaleString(undefined, { maximumFractionDigits: 2 })}</span>
-              </p>
-              <p className="broke-message">
-                Come back when you have more than $1,000.
-                <br />
-                Maybe grab a cheeseburger first to heal your soul.
-              </p>
-              <button className="btn btn-primary broke-btn" onClick={resetGameData}>
-                Start Fresh ($10,000)
-              </button>
-            </div>
-          )}
-
           {/* Trade Amount Input */}
-          {positions.length < maxPositions && !isGameOver && balance >= MIN_TRADE_AMOUNT && (
+          {!isLandscapeTrading && positions.length < maxPositions && !isGameOver && (
             <div className="trade-amount-section">
               <span className="trade-amount-label">Trade Amount</span>
               <div className="trade-amount-controls">
                 <button
                   className="amount-btn"
                   onClick={() => adjustTradeAmount(-1000)}
-                  disabled={tradeAmount <= MIN_TRADE_AMOUNT}
+                  disabled={tradeAmount <= 0}
                 >
                   <Minus size={18} />
                 </button>
@@ -604,7 +614,7 @@ const AppContent: React.FC = () => {
                     className="amount-input"
                     value={tradeAmount}
                     onChange={handleTradeAmountChange}
-                    min={MIN_TRADE_AMOUNT}
+                    min={0}
                     max={balance}
                   />
                 </div>
@@ -628,7 +638,7 @@ const AppContent: React.FC = () => {
 
           <div className="chart-wrapper">
             <AnimatePresence>
-              {positions.length > 0 && (
+              {!isLandscapeTrading && positions.length > 0 && (
                 <motion.div
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -717,6 +727,7 @@ const AppContent: React.FC = () => {
                   className="zoom-btn-mini"
                   onClick={() => setZoom(prev => Math.min(3, prev + 0.25))}
                   disabled={zoom >= 3}
+                  title="Zoom In"
                 >
                   <ZoomIn size={14} />
                 </button>
@@ -724,6 +735,7 @@ const AppContent: React.FC = () => {
                   className="zoom-btn-mini"
                   onClick={() => setZoom(prev => Math.max(0.5, prev - 0.25))}
                   disabled={zoom <= 0.5}
+                  title="Zoom Out"
                 >
                   <ZoomOut size={14} />
                 </button>
@@ -742,12 +754,13 @@ const AppContent: React.FC = () => {
             </div>
           </div>
 
+          {!isLandscapeTrading && (
           <section className="controls">
             <div className="action-buttons-single-row">
               <button
                 className="btn btn-buy"
                 onClick={long}
-                disabled={isGameOver || positions.length >= maxPositions || balance < MIN_TRADE_AMOUNT}
+                disabled={isGameOver || positions.length >= maxPositions || tradeAmount <= 0 || tradeAmount > balance}
               >
                 <TrendingUp size={20} />
                 <span>LONG</span>
@@ -755,7 +768,7 @@ const AppContent: React.FC = () => {
               <button
                 className="btn btn-sell"
                 onClick={short}
-                disabled={isGameOver || positions.length >= maxPositions || balance < MIN_TRADE_AMOUNT}
+                disabled={isGameOver || positions.length >= maxPositions || tradeAmount <= 0 || tradeAmount > balance}
               >
                 <TrendingDown size={20} />
                 <span>SHORT</span>
@@ -776,6 +789,7 @@ const AppContent: React.FC = () => {
               </button>
             </div>
           </section>
+          )}
           </>
           )}
 
@@ -813,6 +827,96 @@ const AppContent: React.FC = () => {
                 <h2>Trade History</h2>
                 <p className="tab-subtitle">Your past performance</p>
               </div>
+
+              {history.length > 0 && (() => {
+                const INITIAL_BALANCE = 10000;
+                const equityCurve = [INITIAL_BALANCE];
+                let runningBalance = INITIAL_BALANCE;
+
+                history.forEach(record => {
+                  runningBalance = runningBalance * (1 + record.returnPercentage / 100);
+                  equityCurve.push(runningBalance);
+                });
+
+                const finalBalance = equityCurve[equityCurve.length - 1];
+                const totalReturn = finalBalance - INITIAL_BALANCE;
+                const totalReturnPct = ((finalBalance / INITIAL_BALANCE - 1) * 100);
+                const maxBalance = Math.max(...equityCurve);
+                const minBalance = Math.min(...equityCurve);
+                const range = maxBalance - minBalance || 1;
+
+                const chartWidth = 280;
+                const chartHeight = 80;
+                const padding = { top: 10, bottom: 20, left: 10, right: 10 };
+
+                const chartDrawWidth = chartWidth - padding.left - padding.right;
+
+                const points = equityCurve.map((balance, i) => {
+                  const x = padding.left + (i / (equityCurve.length - 1)) * chartDrawWidth;
+                  const y = chartHeight - padding.bottom - ((balance - minBalance) / range) * (chartHeight - padding.top - padding.bottom);
+                  return `${x},${y}`;
+                }).join(' ');
+
+                // Calculate Y position for the initial balance line (10,000)
+                const initialBalanceY = chartHeight - padding.bottom - ((INITIAL_BALANCE - minBalance) / range) * (chartHeight - padding.top - padding.bottom);
+
+                return (
+                  <div className="equity-chart-card">
+                    <div className="equity-stats">
+                      <div className="equity-stat">
+                        <span className="equity-label">Total Return</span>
+                        <span className={`equity-value ${totalReturn >= 0 ? 'pos' : 'neg'}`}>
+                          {totalReturn >= 0 ? '+' : ''}{totalReturn.toFixed(0)}
+                        </span>
+                      </div>
+                      <div className="equity-stat">
+                        <span className="equity-label">Return %</span>
+                        <span className={`equity-value ${totalReturnPct >= 0 ? 'pos' : 'neg'}`}>
+                          {totalReturnPct >= 0 ? '+' : ''}{totalReturnPct.toFixed(2)}%
+                        </span>
+                      </div>
+                    </div>
+                    <svg width={chartWidth} height={chartHeight} style={{ overflow: 'visible' }}>
+                      {/* Baseline - initial balance reference line */}
+                      <line
+                        x1="0"
+                        y1={initialBalanceY}
+                        x2={chartWidth}
+                        y2={initialBalanceY}
+                        stroke="var(--color-text-secondary)"
+                        strokeWidth="1.5"
+                        strokeDasharray="5 3"
+                        opacity="0.7"
+                      />
+                      {/* Equity curve */}
+                      <polyline
+                        points={points}
+                        fill="none"
+                        stroke={totalReturn >= 0 ? '#22c55e' : '#ef4444'}
+                        strokeWidth="2"
+                        strokeLinejoin="round"
+                      />
+                      {/* Data points */}
+                      {equityCurve.map((balance, i) => {
+                        const x = padding.left + (i / (equityCurve.length - 1)) * chartDrawWidth;
+                        const y = chartHeight - padding.bottom - ((balance - minBalance) / range) * (chartHeight - padding.top - padding.bottom);
+                        return (
+                          <circle
+                            key={i}
+                            cx={x}
+                            cy={y}
+                            r="3"
+                            fill={totalReturn >= 0 ? '#22c55e' : '#ef4444'}
+                            opacity="0.8"
+                          />
+                        );
+                      })}
+                    </svg>
+                  </div>
+                );
+
+              })()}
+
               <div className="history-list-inline">
                 {history.length === 0 ? (
                   <div className="empty-history">
@@ -836,10 +940,6 @@ const AppContent: React.FC = () => {
                         </div>
                       </div>
                     ))}
-                    <button className="btn-clear" onClick={clearHistory}>
-                      <Trash2 size={16} />
-                      <span>Clear History</span>
-                    </button>
                   </>
                 )}
               </div>
@@ -899,11 +999,46 @@ const AppContent: React.FC = () => {
                       <span>Light</span>
                     </button>
                     <button
+                      className={`theme-option ${mode === 'sandstone' ? 'active' : ''}`}
+                      onClick={() => setMode('sandstone')}
+                      style={{
+                        background: mode === 'sandstone' ? 'linear-gradient(135deg, #F2EBE3 0%, #E5DDD3 100%)' : undefined,
+                        color: mode === 'sandstone' ? '#C5A059' : undefined,
+                        borderColor: mode === 'sandstone' ? '#C5A059' : undefined,
+                      }}
+                    >
+                      <Sun size={16} />
+                      <span>Sandstone</span>
+                    </button>
+                    <button
                       className={`theme-option ${mode === 'dark' ? 'active' : ''}`}
                       onClick={() => setMode('dark')}
                     >
                       <Moon size={16} />
                       <span>Dark</span>
+                    </button>
+                    <button
+                      className={`theme-option ${mode === 'midnight' ? 'active' : ''}`}
+                      onClick={() => setMode('midnight')}
+                      style={{
+                        background: mode === 'midnight' ? 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)' : undefined,
+                        color: mode === 'midnight' ? '#22D3EE' : undefined,
+                      }}
+                    >
+                      <Moon size={16} />
+                      <span>Midnight</span>
+                    </button>
+                    <button
+                      className={`theme-option ${mode === 'solarized' ? 'active' : ''}`}
+                      onClick={() => setMode('solarized')}
+                      style={{
+                        background: mode === 'solarized' ? 'linear-gradient(135deg, #002b36 0%, #073642 100%)' : undefined,
+                        color: mode === 'solarized' ? '#b58900' : undefined,
+                        borderColor: mode === 'solarized' ? '#b58900' : undefined,
+                      }}
+                    >
+                      <Moon size={16} />
+                      <span>Solarized</span>
                     </button>
                     <button
                       className={`theme-option ${mode === 'system' ? 'active' : ''}`}
@@ -919,6 +1054,7 @@ const AppContent: React.FC = () => {
           )}
 
           {/* Bottom Navigation */}
+          {!isLandscapeTrading && (
           <nav className="bottom-nav">
             <button
               className={`nav-item ${activeTab === 'trade' ? 'active' : ''}`}
@@ -956,6 +1092,7 @@ const AppContent: React.FC = () => {
               <span>Profile</span>
             </button>
           </nav>
+          )}
         </main>
 
         <AnimatePresence>
@@ -1020,6 +1157,56 @@ const AppContent: React.FC = () => {
             </motion.div>
           )}
 
+          {/* Reset Confirmation Modal */}
+          {showResetConfirm && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="modal-overlay"
+              style={{ zIndex: 1200 }}
+              onClick={() => setShowResetConfirm(false)}
+            >
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                className="reset-confirm-modal"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="reset-modal-icon">⚠️</div>
+                <h2 className="reset-modal-title">Reset Game Data?</h2>
+                <div className="reset-modal-content">
+                  <div className="reset-info-item">
+                    <span className="reset-icon">✅</span>
+                    <span>Balance will reset to <strong>$10,000</strong></span>
+                  </div>
+                  <div className="reset-info-item">
+                    <span className="reset-icon">✅</span>
+                    <span>Current game will restart</span>
+                  </div>
+                  <div className="reset-info-item highlight">
+                    <span className="reset-icon">📊</span>
+                    <span>Your trading history will <strong>NOT</strong> be deleted</span>
+                  </div>
+                </div>
+                <div className="reset-modal-actions">
+                  <button
+                    className="btn-reset-cancel"
+                    onClick={() => setShowResetConfirm(false)}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    className="btn-reset-confirm"
+                    onClick={confirmReset}
+                  >
+                    Reset Balance
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
 
           {isGameOver && (
             <motion.div
@@ -1417,37 +1604,122 @@ const AppContent: React.FC = () => {
           align-items: center;
           justify-content: center;
           gap: 4px;
-          transition: all 0.2s ease;
+          transition: all 0.15s ease;
           text-transform: uppercase;
           letter-spacing: 0.3px;
+          position: relative;
+          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15), 0 1px 3px rgba(0, 0, 0, 0.12);
         }
-        .btn svg { width: 14px; height: 14px; }
+
+        .btn::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          height: 50%;
+          background: linear-gradient(to bottom, rgba(255, 255, 255, 0.2), transparent);
+          border-radius: 10px 10px 0 0;
+          pointer-events: none;
+        }
+
+        .btn svg { width: 14px; height: 14px; position: relative; z-index: 1; }
+        .btn span { position: relative; z-index: 1; }
 
         .btn:active {
-          transform: scale(0.96);
+          transform: translateY(2px);
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15), 0 1px 2px rgba(0, 0, 0, 0.12);
         }
 
         .btn:disabled {
           opacity: 0.35;
           cursor: not-allowed;
+          transform: none !important;
         }
 
         .btn-buy {
-          background: var(--color-green);
+          background: linear-gradient(to bottom, #26d366, #1fa94d);
           color: white;
+          box-shadow: 0 4px 10px rgba(34, 197, 94, 0.35), 0 2px 4px rgba(0, 0, 0, 0.15), inset 0 -2px 0 rgba(0, 0, 0, 0.2);
         }
 
         .btn-buy:active {
-          background: #1a9d4a;
+          background: linear-gradient(to bottom, #1fa94d, #1a9043);
+          box-shadow: 0 2px 5px rgba(34, 197, 94, 0.25), 0 1px 2px rgba(0, 0, 0, 0.15), inset 0 1px 3px rgba(0, 0, 0, 0.25);
         }
 
         .btn-sell {
-          background: var(--color-red);
+          background: linear-gradient(to bottom, #f04444, #d93939);
           color: white;
+          box-shadow: 0 4px 10px rgba(239, 68, 68, 0.35), 0 2px 4px rgba(0, 0, 0, 0.15), inset 0 -2px 0 rgba(0, 0, 0, 0.2);
         }
 
         .btn-sell:active {
-          background: #d93939;
+          background: linear-gradient(to bottom, #d93939, #c93030);
+          box-shadow: 0 2px 5px rgba(239, 68, 68, 0.25), 0 1px 2px rgba(0, 0, 0, 0.15), inset 0 1px 3px rgba(0, 0, 0, 0.25);
+        }
+
+        /* Midnight Slate theme - premium emerald/amber colors */
+        :root[style*="--bg-primary: #0F172A"] .btn-buy {
+          background: linear-gradient(to bottom, #10B981, #059669);
+          box-shadow: 0 4px 10px rgba(16, 185, 129, 0.4), 0 2px 4px rgba(0, 0, 0, 0.2), inset 0 -2px 0 rgba(0, 0, 0, 0.3);
+        }
+
+        :root[style*="--bg-primary: #0F172A"] .btn-buy:active {
+          background: linear-gradient(to bottom, #059669, #047857);
+          box-shadow: 0 2px 5px rgba(16, 185, 129, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2), inset 0 1px 3px rgba(0, 0, 0, 0.35);
+        }
+
+        :root[style*="--bg-primary: #0F172A"] .btn-sell {
+          background: linear-gradient(to bottom, #FF6B6B, #EF5350);
+          box-shadow: 0 4px 10px rgba(255, 107, 107, 0.4), 0 2px 4px rgba(0, 0, 0, 0.2), inset 0 -2px 0 rgba(0, 0, 0, 0.3);
+        }
+
+        :root[style*="--bg-primary: #0F172A"] .btn-sell:active {
+          background: linear-gradient(to bottom, #EF5350, #E53935);
+          box-shadow: 0 2px 5px rgba(255, 107, 107, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2), inset 0 1px 3px rgba(0, 0, 0, 0.35);
+        }
+
+        /* Sandstone theme - luxury warm colors */
+        :root[style*="--bg-primary: #F2EBE3"] .btn-buy {
+          background: linear-gradient(to bottom, #2D7A5A, #246B4D);
+          box-shadow: 0 4px 10px rgba(45, 122, 90, 0.35), 0 2px 4px rgba(0, 0, 0, 0.12), inset 0 -2px 0 rgba(0, 0, 0, 0.2);
+        }
+
+        :root[style*="--bg-primary: #F2EBE3"] .btn-buy:active {
+          background: linear-gradient(to bottom, #246B4D, #1D5A40);
+          box-shadow: 0 2px 5px rgba(45, 122, 90, 0.25), 0 1px 2px rgba(0, 0, 0, 0.12), inset 0 1px 3px rgba(0, 0, 0, 0.25);
+        }
+
+        :root[style*="--bg-primary: #F2EBE3"] .btn-sell {
+          background: linear-gradient(to bottom, #C85A54, #B24A45);
+          box-shadow: 0 4px 10px rgba(200, 90, 84, 0.35), 0 2px 4px rgba(0, 0, 0, 0.12), inset 0 -2px 0 rgba(0, 0, 0, 0.2);
+        }
+
+        :root[style*="--bg-primary: #F2EBE3"] .btn-sell:active {
+          background: linear-gradient(to bottom, #B24A45, #9E3F3B);
+          box-shadow: 0 2px 5px rgba(200, 90, 84, 0.25), 0 1px 2px rgba(0, 0, 0, 0.12), inset 0 1px 3px rgba(0, 0, 0, 0.25);
+        }
+
+        /* Solarized Dark theme - classic terminal colors */
+        :root[style*="--bg-primary: #002b36"] .btn-buy {
+          background: linear-gradient(to bottom, #2aa198, #1f8178);
+          box-shadow: 0 4px 10px rgba(42, 161, 152, 0.4), 0 2px 4px rgba(0, 0, 0, 0.2), inset 0 -2px 0 rgba(0, 0, 0, 0.3);
+        }
+
+        :root[style*="--bg-primary: #002b36"] .btn-buy:active {
+          background: linear-gradient(to bottom, #1f8178, #16625c);
+          box-shadow: 0 2px 5px rgba(42, 161, 152, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2), inset 0 1px 3px rgba(0, 0, 0, 0.35);
+        }
+
+        :root[style*="--bg-primary: #002b36"] .btn-sell {
+          background: linear-gradient(to bottom, #cb4b16, #b03c0f);
+          box-shadow: 0 4px 10px rgba(203, 75, 22, 0.4), 0 2px 4px rgba(0, 0, 0, 0.2), inset 0 -2px 0 rgba(0, 0, 0, 0.3);
+        }
+
+        :root[style*="--bg-primary: #002b36"] .btn-sell:active {
+          background: linear-gradient(to bottom, #b03c0f, #942f0a);
+          box-shadow: 0 2px 5px rgba(203, 75, 22, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2), inset 0 1px 3px rgba(0, 0, 0, 0.35);
         }
 
         .btn-close-pos {
@@ -1469,23 +1741,174 @@ const AppContent: React.FC = () => {
           background: #333333;
         }
 
+        /* Skip Button with Soft Yellow Pulse Glow + 3D */
         .btn-skip {
-          background: var(--bg-tertiary);
+          background: linear-gradient(to bottom, #fafafa, #e5e5e5);
           color: var(--color-text-secondary);
+          position: relative;
+          animation: skipButtonGlow 3s ease-in-out infinite;
+          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12), 0 1px 3px rgba(0, 0, 0, 0.08), inset 0 -2px 0 rgba(0, 0, 0, 0.08);
+        }
+
+        [data-theme="dark"] .btn-skip {
+          background: linear-gradient(to bottom, #3a3a3a, #2a2a2a);
+          color: var(--color-text);
+          animation: skipButtonGlowDark 3s ease-in-out infinite;
         }
 
         .btn-skip:active {
-          background: var(--color-border);
+          background: linear-gradient(to bottom, #e5e5e5, #d4d4d4);
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.08), inset 0 1px 3px rgba(0, 0, 0, 0.15);
+        }
+
+        [data-theme="dark"] .btn-skip:active {
+          background: linear-gradient(to bottom, #2a2a2a, #1a1a1a);
+        }
+
+        /* Midnight Slate SKIP button */
+        :root[style*="--bg-primary: #0F172A"] .btn-skip {
+          background: linear-gradient(to bottom, #334155, #1E293B);
+          color: #94A3B8;
+          animation: skipButtonGlowMidnight 3s ease-in-out infinite;
+          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3), 0 1px 3px rgba(0, 0, 0, 0.2), inset 0 -2px 0 rgba(0, 0, 0, 0.4);
+        }
+
+        :root[style*="--bg-primary: #0F172A"] .btn-skip:active {
+          background: linear-gradient(to bottom, #1E293B, #0F172A);
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2), inset 0 1px 3px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Sandstone SKIP button */
+        :root[style*="--bg-primary: #F2EBE3"] .btn-skip {
+          background: linear-gradient(to bottom, #E5DDD3, #D1C7BC);
+          color: #8C837A;
+          animation: skipButtonGlowSandstone 3s ease-in-out infinite;
+          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08), inset 0 -2px 0 rgba(0, 0, 0, 0.08);
+        }
+
+        :root[style*="--bg-primary: #F2EBE3"] .btn-skip:active {
+          background: linear-gradient(to bottom, #D1C7BC, #BDB3A8);
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.08), inset 0 1px 3px rgba(0, 0, 0, 0.12);
+        }
+
+        @keyframes skipButtonGlowSandstone {
+          0%, 100% {
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08), inset 0 -2px 0 rgba(0, 0, 0, 0.08), 0 0 0 rgba(197, 160, 89, 0);
+          }
+          50% {
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08), inset 0 -2px 0 rgba(0, 0, 0, 0.08), 0 0 20px rgba(197, 160, 89, 0.4), 0 0 30px rgba(197, 160, 89, 0.2);
+          }
+        }
+
+        /* Solarized SKIP button */
+        :root[style*="--bg-primary: #002b36"] .btn-skip {
+          background: linear-gradient(to bottom, #073642, #002b36);
+          color: #839496;
+          animation: skipButtonGlowSolarized 3s ease-in-out infinite;
+          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3), 0 1px 3px rgba(0, 0, 0, 0.2), inset 0 -2px 0 rgba(0, 0, 0, 0.4);
+        }
+
+        :root[style*="--bg-primary: #002b36"] .btn-skip:active {
+          background: linear-gradient(to bottom, #002b36, #001a21);
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2), inset 0 1px 3px rgba(0, 0, 0, 0.5);
+        }
+
+        @keyframes skipButtonGlowSolarized {
+          0%, 100% {
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3), 0 1px 3px rgba(0, 0, 0, 0.2), inset 0 -2px 0 rgba(0, 0, 0, 0.4), 0 0 0 rgba(181, 137, 0, 0);
+          }
+          50% {
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3), 0 1px 3px rgba(0, 0, 0, 0.2), inset 0 -2px 0 rgba(0, 0, 0, 0.4), 0 0 20px rgba(181, 137, 0, 0.4), 0 0 30px rgba(181, 137, 0, 0.2);
+          }
+        }
+
+        @keyframes skipButtonGlowMidnight {
+          0%, 100% {
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3), 0 1px 3px rgba(0, 0, 0, 0.2), inset 0 -2px 0 rgba(0, 0, 0, 0.4), 0 0 0 rgba(34, 211, 238, 0);
+          }
+          50% {
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3), 0 1px 3px rgba(0, 0, 0, 0.2), inset 0 -2px 0 rgba(0, 0, 0, 0.4), 0 0 20px rgba(34, 211, 238, 0.4), 0 0 30px rgba(34, 211, 238, 0.2);
+          }
+        }
+
+        .btn-skip:disabled {
+          animation: none;
+        }
+
+        @keyframes skipButtonGlow {
+          0%, 100% {
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12), 0 1px 3px rgba(0, 0, 0, 0.08), inset 0 -2px 0 rgba(0, 0, 0, 0.08), 0 0 0 rgba(250, 204, 21, 0);
+          }
+          50% {
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12), 0 1px 3px rgba(0, 0, 0, 0.08), inset 0 -2px 0 rgba(0, 0, 0, 0.08), 0 0 20px rgba(250, 204, 21, 0.4), 0 0 30px rgba(250, 204, 21, 0.2);
+          }
+        }
+
+        @keyframes skipButtonGlowDark {
+          0%, 100% {
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.25), 0 1px 3px rgba(0, 0, 0, 0.15), inset 0 -2px 0 rgba(0, 0, 0, 0.3), 0 0 0 rgba(255, 255, 255, 0);
+          }
+          50% {
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.25), 0 1px 3px rgba(0, 0, 0, 0.15), inset 0 -2px 0 rgba(0, 0, 0, 0.3), 0 0 20px rgba(255, 255, 255, 0.35), 0 0 30px rgba(255, 255, 255, 0.2);
+          }
         }
 
         .btn-stop {
-          background: var(--bg-tertiary);
+          background: linear-gradient(to bottom, #fafafa, #e5e5e5);
           color: var(--color-text-secondary);
+          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12), 0 1px 3px rgba(0, 0, 0, 0.08), inset 0 -2px 0 rgba(0, 0, 0, 0.08);
+        }
+
+        [data-theme="dark"] .btn-stop {
+          background: linear-gradient(to bottom, #3a3a3a, #2a2a2a);
+          color: var(--color-text);
         }
 
         .btn-stop:active {
-          background: var(--color-border);
+          background: linear-gradient(to bottom, #e5e5e5, #d4d4d4);
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.08), inset 0 1px 3px rgba(0, 0, 0, 0.15);
         }
+
+        [data-theme="dark"] .btn-stop:active {
+          background: linear-gradient(to bottom, #2a2a2a, #1a1a1a);
+        }
+
+        /* Midnight Slate STOP button */
+        :root[style*="--bg-primary: #0F172A"] .btn-stop {
+          background: linear-gradient(to bottom, #475569, #334155);
+          color: #CBD5E1;
+          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3), 0 1px 3px rgba(0, 0, 0, 0.2), inset 0 -2px 0 rgba(0, 0, 0, 0.4);
+        }
+
+        :root[style*="--bg-primary: #0F172A"] .btn-stop:active {
+          background: linear-gradient(to bottom, #334155, #1E293B);
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2), inset 0 1px 3px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Sandstone STOP button */
+        :root[style*="--bg-primary: #F2EBE3"] .btn-stop {
+          background: linear-gradient(to bottom, #D1C7BC, #C0B6AB);
+          color: #6B6360;
+          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08), inset 0 -2px 0 rgba(0, 0, 0, 0.08);
+        }
+
+        :root[style*="--bg-primary: #F2EBE3"] .btn-stop:active {
+          background: linear-gradient(to bottom, #C0B6AB, #AFA59A);
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.08), inset 0 1px 3px rgba(0, 0, 0, 0.12);
+        }
+
+        /* Solarized STOP button */
+        :root[style*="--bg-primary: #002b36"] .btn-stop {
+          background: linear-gradient(to bottom, #586e75, #073642);
+          color: #93a1a1;
+          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3), 0 1px 3px rgba(0, 0, 0, 0.2), inset 0 -2px 0 rgba(0, 0, 0, 0.4);
+        }
+
+        :root[style*="--bg-primary: #002b36"] .btn-stop:active {
+          background: linear-gradient(to bottom, #073642, #002b36);
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2), inset 0 1px 3px rgba(0, 0, 0, 0.5);
+        }
+
         .modal-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(8px); display: flex; align-items: flex-end; justify-content: center; z-index: 1000; }
         .game-over-modal { background: var(--bg-primary); width: 100%; max-width: 100%; border-radius: 24px 24px 0 0; padding: 32px 24px calc(var(--safe-area-bottom) + 24px); max-height: 85vh; overflow-y: auto; }
         .info-modal { background: var(--bg-primary); width: 100%; max-width: 360px; border-radius: 0.75rem; padding: 0; border: 1px solid var(--color-border); max-height: calc(100vh - 80px); display: flex; flex-direction: column; overflow: hidden; }
@@ -1503,6 +1926,23 @@ const AppContent: React.FC = () => {
         .info-item.challenge { background: var(--bg-tertiary); padding: 16px; border-radius: 0.75rem; border: 1px solid var(--color-border); text-align: center; }
         .info-item.challenge h3 { color: var(--color-text); }
         .info-item .good-luck { font-weight: 700; color: var(--color-green); margin-top: 8px; font-style: italic; }
+
+        /* Reset Confirmation Modal */
+        .reset-confirm-modal { background: var(--bg-primary); width: 90%; max-width: 400px; border-radius: 16px; padding: 28px 24px 24px; border: 1px solid var(--color-border); text-align: center; }
+        .reset-modal-icon { font-size: 3rem; margin-bottom: 12px; }
+        .reset-modal-title { font-size: 1.25rem; font-weight: 800; color: var(--color-text); margin: 0 0 20px 0; }
+        .reset-modal-content { display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px; }
+        .reset-info-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: var(--bg-tertiary); border-radius: 8px; text-align: left; font-size: 0.9rem; color: var(--color-text-secondary); }
+        .reset-info-item.highlight { background: rgba(255, 191, 0, 0.1); border: 1px solid rgba(255, 191, 0, 0.3); }
+        .reset-icon { font-size: 1.2rem; flex-shrink: 0; }
+        .reset-modal-actions { display: flex; gap: 12px; }
+        .btn-reset-cancel { flex: 1; padding: 12px 20px; border: 1px solid var(--color-border); background: var(--bg-secondary); color: var(--color-text); border-radius: 8px; font-size: 0.95rem; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+        .btn-reset-cancel:hover { background: var(--bg-tertiary); }
+        .btn-reset-cancel:active { transform: scale(0.98); }
+        .btn-reset-confirm { flex: 1; padding: 12px 20px; border: none; background: var(--color-red); color: white; border-radius: 8px; font-size: 0.95rem; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+        .btn-reset-confirm:hover { background: #dc2626; }
+        .btn-reset-confirm:active { transform: scale(0.98); }
+
         .modal-pill { width: 48px; height: 6px; background: var(--color-border); border-radius: 3px; position: absolute; top: 16px; left: 50%; transform: translateX(-50%); }
         .text-success { color: var(--color-green); }
         .text-danger { color: var(--color-red); }
@@ -1984,6 +2424,50 @@ const AppContent: React.FC = () => {
           margin: 0.75rem 0 0.25rem 0;
         }
 
+        .equity-chart-card {
+          background: var(--bg-secondary);
+          border: 1px solid var(--color-border);
+          border-radius: 12px;
+          padding: 16px;
+          margin-bottom: 16px;
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+        }
+
+        .equity-stats {
+          display: flex;
+          gap: 16px;
+        }
+
+        .equity-stat {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+        }
+
+        .equity-label {
+          font-size: 0.75rem;
+          color: var(--color-text-secondary);
+          font-weight: 600;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+
+        .equity-value {
+          font-size: 1.25rem;
+          font-weight: 700;
+        }
+
+        .equity-value.pos {
+          color: #22c55e;
+        }
+
+        .equity-value.neg {
+          color: #ef4444;
+        }
+
         .history-list-inline {
           display: flex;
           flex-direction: column;
@@ -2162,12 +2646,12 @@ const AppContent: React.FC = () => {
         }
 
         .theme-options {
-          display: flex;
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
           gap: 8px;
         }
 
         .theme-option {
-          flex: 1;
           display: flex;
           flex-direction: column;
           align-items: center;
@@ -2182,7 +2666,7 @@ const AppContent: React.FC = () => {
         }
 
         .theme-option span {
-          font-size: 0.7rem;
+          font-size: 0.65rem;
           font-weight: 700;
           text-transform: uppercase;
           letter-spacing: 0.5px;

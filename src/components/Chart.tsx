@@ -13,19 +13,62 @@ export const Chart: React.FC<ChartProps> = ({ data, zoom = 1 }) => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [chartHeight, setChartHeight] = useState(400);
   const [showVolume, setShowVolume] = useState(true);
-  const [showMA, setShowMA] = useState(false);
+  const [showMA, setShowMA] = useState(true);
   const { resolvedTheme } = useTheme();
 
   // Theme-aware colors
-  const isDark = resolvedTheme === 'dark';
-  const colors = {
-    background: isDark ? '#1A1A1A' : '#FFFFFF',
-    backgroundOverlay: isDark ? 'rgba(26, 26, 26, 0.95)' : 'rgba(255, 255, 255, 0.95)',
-    gridLine: isDark ? '#333333' : '#F2F2F2',
-    labelText: isDark ? '#707070' : '#8E8E93',
-    candleUp: '#22c55e',
-    candleDown: '#ef4444',
+  const getThemeColors = () => {
+    switch (resolvedTheme) {
+      case 'solarized':
+        return {
+          background: '#002b36',
+          backgroundOverlay: 'rgba(0, 43, 54, 0.95)',
+          gridLine: '#073642',
+          labelText: '#586e75',
+          candleUp: '#2aa198',
+          candleDown: '#cb4b16',
+        };
+      case 'midnight':
+        return {
+          background: '#0F172A',
+          backgroundOverlay: 'rgba(15, 23, 42, 0.95)',
+          gridLine: '#1E293B',
+          labelText: '#64748B',
+          candleUp: '#10B981',
+          candleDown: '#FF6B6B',
+        };
+      case 'sandstone':
+        return {
+          background: '#F2EBE3',
+          backgroundOverlay: 'rgba(242, 235, 227, 0.95)',
+          gridLine: '#E5DDD3',
+          labelText: '#8C837A',
+          candleUp: '#2D7A5A',
+          candleDown: '#C85A54',
+        };
+      case 'dark':
+        return {
+          background: '#1A1A1A',
+          backgroundOverlay: 'rgba(26, 26, 26, 0.95)',
+          gridLine: '#333333',
+          labelText: '#707070',
+          candleUp: '#22c55e',
+          candleDown: '#ef4444',
+        };
+      case 'light':
+      default:
+        return {
+          background: '#FFFFFF',
+          backgroundOverlay: 'rgba(255, 255, 255, 0.95)',
+          gridLine: '#F2F2F2',
+          labelText: '#8E8E93',
+          candleUp: '#22c55e',
+          candleDown: '#ef4444',
+        };
+    }
   };
+
+  const colors = getThemeColors();
 
   // Measure container height on mount and resize
   useEffect(() => {
@@ -271,7 +314,7 @@ export const Chart: React.FC<ChartProps> = ({ data, zoom = 1 }) => {
                 return i === 0 || isNaN(ma20[i - 1]) ? `M ${x} ${y}` : `L ${x} ${y}`;
               }).join(' ')}
               stroke="#3B82F6"
-              strokeWidth="2"
+              strokeWidth="1.5"
               fill="none"
               opacity="0.8"
             />
@@ -285,7 +328,7 @@ export const Chart: React.FC<ChartProps> = ({ data, zoom = 1 }) => {
                 return i === 0 || isNaN(ma50[i - 1]) ? `M ${x} ${y}` : `L ${x} ${y}`;
               }).join(' ')}
               stroke="#F97316"
-              strokeWidth="2"
+              strokeWidth="1.5"
               fill="none"
               opacity="0.8"
             />

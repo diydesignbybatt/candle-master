@@ -1,77 +1,114 @@
-<<<<<<< HEAD
-# React + TypeScript + Vite
+# Candle Master
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A professional trading application with advanced candlestick chart analysis, technical indicators, and position calculator.
 
-Currently, two official plugins are available:
+## Version
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+**v1.4.0**
 
-## React Compiler
+## Features
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- Interactive candlestick charts with zoom and pan
+- Real-time price tracking for Thai stocks (SET)
+- Technical indicators:
+  - Moving Averages (MA)
+  - Volume analysis
+- Position calculator for risk management
+- Dark mode support
+- PWA (Progressive Web App) support
+- Native mobile apps (iOS & Android) via Capacitor
 
-## Expanding the ESLint configuration
+## Tech Stack
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- **Frontend**: React 19.2.0 + TypeScript
+- **Build Tool**: Vite 7.2.4
+- **Charts**: Lightweight Charts 5.1.0
+- **Mobile**: Capacitor 8.0.1
+- **UI**: Framer Motion + Lucide Icons
+- **Date Handling**: date-fns 4.1.0
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## Development
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+```bash
+# Install dependencies
+npm install
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+# Run development server
+npm run dev
+
+# Build for production
+npm run build
+
+# Preview production build
+npm run preview
+
+# Lint code
+npm run lint
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Mobile Development
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+### Android
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+# Build and sync
+npm run cap:sync
+
+# Open Android Studio
+npm run cap:android
+
+# Run on Android device
+npm run cap:run:android
 ```
-=======
-# candle-master
->>>>>>> 3475bfb5ba5ff4c5cc7128b633994d3064afa9c6
+
+### iOS
+
+```bash
+# Build and sync
+npm run cap:sync
+
+# Open Xcode
+npm run cap:ios
+
+# Run on iOS device
+npm run cap:run:ios
+```
+
+## Project Structure
+
+```
+candle-master/
+├── src/
+│   ├── App.tsx           # Main application component
+│   ├── main.tsx          # Application entry point
+│   └── assets/           # Static assets
+├── android/              # Android native project
+├── ios/                  # iOS native project
+├── public/               # Public assets
+└── dist/                 # Production build output
+```
+
+## Deployment
+
+### Web (PWA)
+Build and deploy the `dist/` folder to any static hosting service.
+
+### Android (Google Play Store)
+1. Build the app: `npm run cap:sync`
+2. Open Android Studio: `npm run cap:android`
+3. Generate signed APK/Bundle
+4. Upload to Google Play Console
+
+### iOS (App Store)
+1. Build the app: `npm run cap:sync`
+2. Open Xcode: `npm run cap:ios`
+3. Archive and upload to App Store Connect
+4. Submit for review
+
+## License
+
+Private project
+
+## Author
+
+Developed with React, TypeScript, and Capacitor
