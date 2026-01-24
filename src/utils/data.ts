@@ -96,7 +96,7 @@ export const fetchRandomStockData = async (): Promise<StockData> => {
         low: parseFloat(low),
         close: parseFloat(close),
         volume: volume ? parseInt(volume) : undefined
-      };
+      } as Candle;
     }).filter((c): c is Candle => c !== null && !isNaN(c.close));
 
     // Ensure we have enough data to pick a window

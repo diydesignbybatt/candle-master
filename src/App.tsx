@@ -16,6 +16,7 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boole
 
 import { appStyles, Colors, GLOBAL_STYLES, LOADING_STYLES, UI_STYLES, MODAL_STYLES } from './styles/appStyles';
 import { ACADEMY_PATTERNS, CHART_PATTERNS } from './constants/patterns';
+import type { ChartPattern } from './constants/patterns';
 import { Chart } from './components/Chart';
 import PositionSizeCalculator from './components/PositionSizeCalculator';
 import { fetchRandomStockData } from './utils/data';
@@ -73,6 +74,7 @@ const AppContent: React.FC = () => {
   const [tradeAmount, setTradeAmount] = useState(1000);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [academySection, setAcademySection] = useState<'candle' | 'chart'>('candle');
+  const [selectedChartPattern, setSelectedChartPattern] = useState<ChartPattern | null>(null);
 
   // Check if in landscape mode and on trade screen
   const isLandscapeTrading = orientation.isLandscape && activeTab === 'trade';
@@ -584,7 +586,11 @@ const AppContent: React.FC = () => {
                     const suffix = resolvedTheme === 'sandstone' ? 'l' : 'd';
                     const imgSrc = `/patterns/${pattern.imageKey}-${suffix}.webp`;
                     return (
-                      <div key={pattern.id} className="academy-card">
+                      <div
+                        key={pattern.id}
+                        className={`academy-card ${pattern.details ? 'clickable' : ''}`}
+                        onClick={() => pattern.details && setSelectedChartPattern(pattern)}
+                      >
                         <div className="academy-img-wrapper">
                           <img
                             src={imgSrc}
@@ -600,6 +606,9 @@ const AppContent: React.FC = () => {
                           <h3>{pattern.name}</h3>
                           <p>{pattern.desc}</p>
                         </div>
+                        {pattern.details && (
+                          <div className="pattern-tap-hint">Tap for details</div>
+                        )}
                       </div>
                     );
                   })}
@@ -959,6 +968,46 @@ const AppContent: React.FC = () => {
                   >
                     Reset Balance
                   </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+
+          {/* Chart Pattern Detail Modal */}
+          {selectedChartPattern && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="modal-overlay"
+              onClick={() => setSelectedChartPattern(null)}
+            >
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                className="pattern-detail-modal"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <button className="pattern-modal-close" onClick={() => setSelectedChartPattern(null)}>
+                  <X size={24} />
+                </button>
+                <div className="pattern-modal-image">
+                  <img
+                    src={`/patterns/${selectedChartPattern.imageKey}-${resolvedTheme === 'sandstone' ? 'l' : 'd'}.webp`}
+                    alt={selectedChartPattern.name}
+                  />
+                </div>
+                <div className="pattern-modal-content">
+                  <h2>{selectedChartPattern.name}</h2>
+                  <p className="pattern-modal-desc">{selectedChartPattern.desc}</p>
+                  {selectedChartPattern.details && (
+                    <div className="pattern-modal-details">
+                      {selectedChartPattern.details.split('\n\n').map((paragraph, i) => (
+                        <p key={i}>{paragraph}</p>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </motion.div>
             </motion.div>

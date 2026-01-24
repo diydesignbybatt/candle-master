@@ -772,4 +772,113 @@ export const MODAL_STYLES = `
   .toggle-switch.active { background: var(--color-green); }
   .toggle-knob { width: 20px; height: 20px; background: #FFF; border-radius: 50%; position: absolute; top: 2px; left: 2px; transition: left 0.3s; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
   .toggle-switch.active .toggle-knob { left: 22px; }
+
+  /* Chart Pattern Detail Modal */
+  .academy-card.clickable {
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    position: relative;
+  }
+
+  .academy-card.clickable:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  }
+
+  .academy-card.clickable:active {
+    transform: scale(0.98);
+  }
+
+  .pattern-tap-hint {
+    font-size: 0.65rem;
+    color: var(--color-green);
+    font-weight: 600;
+    margin-top: 8px;
+    opacity: 0.8;
+  }
+
+  .pattern-detail-modal {
+    background: var(--bg-primary);
+    width: 100%;
+    max-width: 400px;
+    border-radius: 16px;
+    overflow: hidden;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    margin: 20px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  }
+
+  .pattern-modal-close {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: rgba(0,0,0,0.5);
+    border: none;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: white;
+    z-index: 10;
+    transition: background 0.2s;
+  }
+
+  .pattern-modal-close:hover {
+    background: rgba(0,0,0,0.7);
+  }
+
+  .pattern-modal-image {
+    width: 100%;
+    aspect-ratio: 600 / 360;
+    background: var(--bg-secondary);
+  }
+
+  .pattern-modal-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .pattern-modal-content {
+    padding: 24px;
+    overflow-y: auto;
+  }
+
+  .pattern-modal-content h2 {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--color-text);
+    margin-bottom: 8px;
+  }
+
+  .pattern-modal-desc {
+    font-size: 0.95rem;
+    color: var(--color-text-secondary);
+    margin-bottom: 16px;
+    line-height: 1.5;
+  }
+
+  .pattern-modal-details {
+    background: var(--bg-tertiary);
+    border-radius: 12px;
+    padding: 16px;
+    border: 1px solid var(--color-border);
+  }
+
+  .pattern-modal-details p {
+    font-size: 0.9rem;
+    color: var(--color-text);
+    line-height: 1.6;
+    margin-bottom: 12px;
+  }
+
+  .pattern-modal-details p:last-child {
+    margin-bottom: 0;
+  }
 `;

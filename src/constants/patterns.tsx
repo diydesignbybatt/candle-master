@@ -259,31 +259,108 @@ export interface ChartPattern {
     name: string;
     desc: string;
     imageKey: string; // e.g., "double-top" -> double-top-l.webp / double-top-d.webp
+    details?: string; // Extended description for modal view
 }
 
 export const CHART_PATTERNS: ChartPattern[] = [
+    // Reversal Patterns
     {
         id: 1,
         name: "Double Top",
         desc: "Bearish reversal. Two peaks at same level.",
-        imageKey: "double-top"
+        imageKey: "double-top",
+        details: "When to use: After an uptrend, price makes two highs at roughly the same level, failing to break higher.\n\nConfirmation: Wait for price to break below the neckline (the low point between the two peaks).\n\nTarget: Measure the distance from peaks to neckline, then project downward from the breakout point."
     },
     {
         id: 2,
         name: "Double Bottom",
         desc: "Bullish reversal. Two troughs at same level.",
-        imageKey: "double-bottom"
+        imageKey: "double-bottom",
+        details: "When to use: After a downtrend, price makes two lows at roughly the same level, showing strong support.\n\nConfirmation: Wait for price to break above the neckline (the high point between the two troughs).\n\nTarget: Measure the distance from troughs to neckline, then project upward from the breakout point."
     },
     {
         id: 3,
-        name: "Ascending Triangle",
-        desc: "Bullish continuation. Flat top, rising lows.",
-        imageKey: "ascending-triangle"
+        name: "Head & Shoulders",
+        desc: "Bearish reversal. Three peaks, middle highest.",
+        imageKey: "head-shoulders",
+        details: "When to use: After an uptrend, look for three peaks where the middle peak (head) is higher than the two side peaks (shoulders).\n\nConfirmation: Wait for price to break below the neckline connecting the two troughs.\n\nTarget: Measure the distance from head to neckline, then project downward from the breakout point."
     },
     {
         id: 4,
+        name: "Inverse Head & Shoulders",
+        desc: "Bullish reversal. Three troughs, middle lowest.",
+        imageKey: "invert-head-shoulders",
+        details: "When to use: After a downtrend, look for three troughs where the middle trough (head) is lower than the two side troughs (shoulders).\n\nConfirmation: Wait for price to break above the neckline connecting the two peaks.\n\nTarget: Measure the distance from head to neckline, then project upward from the breakout point."
+    },
+    {
+        id: 5,
+        name: "Diamond Top",
+        desc: "Bearish reversal. Diamond shape at top.",
+        imageKey: "diamond-top",
+        details: "When to use: After an uptrend, price forms a diamond shape with expanding then contracting volatility.\n\nConfirmation: Wait for price to break below the lower right trendline of the diamond.\n\nTarget: Measure the height of the diamond at its widest point, then project downward from the breakout."
+    },
+    {
+        id: 6,
+        name: "Diamond Bottom",
+        desc: "Bullish reversal. Diamond shape at bottom.",
+        imageKey: "diamond-bottom",
+        details: "When to use: After a downtrend, price forms a diamond shape with expanding then contracting volatility.\n\nConfirmation: Wait for price to break above the upper right trendline of the diamond.\n\nTarget: Measure the height of the diamond at its widest point, then project upward from the breakout."
+    },
+    {
+        id: 7,
+        name: "Rounding Top",
+        desc: "Bearish reversal. Gradual curved top.",
+        imageKey: "round-top",
+        details: "When to use: After an uptrend, price gradually curves over forming a dome or saucer shape inverted.\n\nConfirmation: Wait for price to break below the support level at the pattern's starting point.\n\nTarget: This is a slow pattern; expect gradual decline. Measure the height of the dome for potential target."
+    },
+    {
+        id: 8,
+        name: "Rounding Bottom",
+        desc: "Bullish reversal. Gradual curved bottom.",
+        imageKey: "round-bottom",
+        details: "When to use: After a downtrend, price gradually curves upward forming a saucer or bowl shape.\n\nConfirmation: Wait for price to break above the resistance level at the pattern's starting point.\n\nTarget: This is a slow pattern; expect gradual rise. Measure the depth of the bowl for potential target."
+    },
+    // Continuation Patterns
+    {
+        id: 9,
+        name: "Ascending Triangle",
+        desc: "Bullish continuation. Flat top, rising lows.",
+        imageKey: "ascending-triangle",
+        details: "When to use: During an uptrend, price consolidates with a flat resistance line and rising support (higher lows).\n\nConfirmation: Wait for price to break above the flat resistance line with increased volume.\n\nTarget: Measure the height of the triangle at its base, then project upward from the breakout point."
+    },
+    {
+        id: 10,
         name: "Descending Triangle",
         desc: "Bearish continuation. Flat bottom, falling highs.",
-        imageKey: "descending-triangle"
+        imageKey: "descending-triangle",
+        details: "When to use: During a downtrend, price consolidates with a flat support line and falling resistance (lower highs).\n\nConfirmation: Wait for price to break below the flat support line with increased volume.\n\nTarget: Measure the height of the triangle at its base, then project downward from the breakout point."
+    },
+    {
+        id: 11,
+        name: "Bull Flag",
+        desc: "Bullish continuation. Sharp rise, then consolidation.",
+        imageKey: "bull-flag",
+        details: "When to use: After a sharp upward move (flagpole), price consolidates in a small downward-sloping channel (flag).\n\nConfirmation: Wait for price to break above the upper trendline of the flag.\n\nTarget: Measure the length of the flagpole, then project upward from the breakout point."
+    },
+    {
+        id: 12,
+        name: "Bear Flag",
+        desc: "Bearish continuation. Sharp drop, then consolidation.",
+        imageKey: "bear-flag",
+        details: "When to use: After a sharp downward move (flagpole), price consolidates in a small upward-sloping channel (flag).\n\nConfirmation: Wait for price to break below the lower trendline of the flag.\n\nTarget: Measure the length of the flagpole, then project downward from the breakout point."
+    },
+    {
+        id: 13,
+        name: "Rising Wedge",
+        desc: "Bearish pattern. Converging upward trendlines.",
+        imageKey: "rising-wedge",
+        details: "When to use: Price moves upward within two converging trendlines, both sloping up. Often signals weakening momentum.\n\nConfirmation: Wait for price to break below the lower trendline of the wedge.\n\nTarget: Measure the height of the wedge at its base, then project downward from the breakout point."
+    },
+    {
+        id: 14,
+        name: "Cup & Handle",
+        desc: "Bullish continuation. U-shape with small handle.",
+        imageKey: "cup-handle",
+        details: "When to use: After an uptrend, price forms a rounded U-shape (cup), followed by a small downward drift (handle).\n\nConfirmation: Wait for price to break above the resistance level at the top of the cup.\n\nTarget: Measure the depth of the cup, then project upward from the breakout point."
     },
 ];

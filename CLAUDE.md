@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Candle Master v1.6.0** is a **Trading Simulator Game & Education Platform**.
+**Candle Master v1.6.1** is a **Trading Simulator Game & Education Platform**.
 - **Core Concept**: Users practice trading on historical data without knowing the stock beforehand (Blind Trading).
 - **Gameplay**:
     - Users see candlesticks, MA indicators (20/50), and Volume.
@@ -79,7 +79,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Location: `public/patterns/`
 - Format: `{pattern-name}-l.webp` (light) / `{pattern-name}-d.webp` (dark)
 - Size: 600 x 360 px
-- Current patterns: double-top, double-bottom, ascending-triangle, descending-triangle
+- Tap-to-expand: Each pattern has detailed usage info (When to use, Confirmation, Target)
+- **14 patterns**: double-top, double-bottom, head-shoulders, invert-head-shoulders, diamond-top, diamond-bottom, round-top, round-bottom, ascending-triangle, descending-triangle, bull-flag, bear-flag, rising-wedge, cup-handle
 
 ## Common Commands
 
