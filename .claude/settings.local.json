@@ -24,7 +24,8 @@
       "Bash(findstr:*)",
       "Bash(ping:*)",
       "Bash(gh repo view:*)",
-      "Bash(netstat:*)"
+      "Bash(netstat:*)",
+      "Bash(find:*)"
     ]
   }
 }

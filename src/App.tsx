@@ -9,18 +9,20 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boole
   static getDerivedStateFromError() { return { hasError: true }; }
   componentDidCatch(error: Error, errorInfo: ErrorInfo) { console.error("App Crash:", error, errorInfo); }
   render() {
-    if (this.state.hasError) return <div style={{ padding: 40, textAlign: 'center' }}>Something went wrong. Please refresh.</div>;
+    if (this.state.hasError) return <div style={appStyles.errorFallback}>Something went wrong. Please refresh.</div>;
     return this.props.children;
   }
 }
 
+import { appStyles, Colors, GLOBAL_STYLES, LOADING_STYLES, UI_STYLES, MODAL_STYLES } from './styles/appStyles';
+import { ACADEMY_PATTERNS } from './constants/patterns';
 import { Chart } from './components/Chart';
 import PositionSizeCalculator from './components/PositionSizeCalculator';
 import { fetchRandomStockData } from './utils/data';
 import type { StockData } from './utils/data';
 import { useTradingSession, resetSavedBalance } from './hooks/useTradingSession';
 import { useOrientation } from './hooks/useOrientation';
-import { SkipForward, Square, TrendingUp, TrendingDown, Loader2, Info, X, Trash2, Volume2, VolumeX, ZoomIn, ZoomOut, BarChart3, BookOpen, Clock, User, Plus, Minus, Calculator, ChevronDown, ChevronUp, Sun, Moon, Monitor } from 'lucide-react';
+import { SkipForward, Square, TrendingUp, TrendingDown, Loader2, Info, X, Trash2, Volume2, VolumeX, ZoomIn, ZoomOut, BarChart3, BookOpen, Clock, User, Plus, Minus, Calculator, ChevronDown, ChevronUp, Sun, Moon, Leaf } from 'lucide-react';
 import { ScreenOrientation } from '@capacitor/screen-orientation';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -35,256 +37,11 @@ interface TradeRecord {
   tradeCount: number;
 }
 
-interface AcademyPattern {
-  id: number;
-  name: string;
-  desc: string;
-  render: () => React.ReactNode;
-}
 
-const Green = "#22c55e";
-const Red = "#ef4444";
-const Black = "#000000";
-const Gray = "#9CA3AF";
 
-const ACADEMY_PATTERNS: AcademyPattern[] = [
-  // Row 1: Hammer vs Hanging Man
-  {
-    id: 1, name: "Hammer", desc: "Bullish reversal at bottom. Long lower shadow.",
-    render: () => (
-      <svg viewBox="0 0 100 60" className="academy-svg">
-        <line x1="10" y1="8" x2="10" y2="22" stroke={Gray} strokeWidth="2" /> <rect x="7" y="8" width="6" height="12" fill={Gray} />
-        <line x1="30" y1="12" x2="30" y2="30" stroke={Gray} strokeWidth="2" /> <rect x="27" y="14" width="6" height="14" fill={Gray} />
-        <line x1="50" y1="20" x2="50" y2="42" stroke={Gray} strokeWidth="2" /> <rect x="47" y="22" width="6" height="16" fill={Gray} />
-        <line x1="70" y1="28" x2="70" y2="52" stroke={Gray} strokeWidth="2" /> <rect x="67" y="30" width="6" height="18" fill={Gray} />
-        <line x1="90" y1="18" x2="90" y2="55" stroke={Green} strokeWidth="2" /> <rect x="86" y="18" width="8" height="10" fill={Green} />
-      </svg>
-    )
-  },
-  {
-    id: 2, name: "Hanging Man", desc: "Bearish reversal at top. Long lower shadow.",
-    render: () => (
-      <svg viewBox="0 0 100 60" className="academy-svg">
-        <line x1="10" y1="42" x2="10" y2="52" stroke={Gray} strokeWidth="2" /> <rect x="7" y="42" width="6" height="8" fill={Gray} />
-        <line x1="30" y1="32" x2="30" y2="46" stroke={Gray} strokeWidth="2" /> <rect x="27" y="32" width="6" height="12" fill={Gray} />
-        <line x1="50" y1="22" x2="50" y2="36" stroke={Gray} strokeWidth="2" /> <rect x="47" y="22" width="6" height="12" fill={Gray} />
-        <line x1="70" y1="12" x2="70" y2="26" stroke={Gray} strokeWidth="2" /> <rect x="67" y="12" width="6" height="12" fill={Gray} />
-        <line x1="90" y1="5" x2="90" y2="55" stroke={Red} strokeWidth="2" /> <rect x="86" y="5" width="8" height="10" fill={Red} />
-      </svg>
-    )
-  },
-  // Row 2: Inverted Hammer vs Shooting Star
-  {
-    id: 3, name: "Inverted Hammer", desc: "Bullish reversal. Long upper shadow.",
-    render: () => (
-      <svg viewBox="0 0 100 60" className="academy-svg">
-        <line x1="10" y1="8" x2="10" y2="18" stroke={Gray} strokeWidth="2" /> <rect x="7" y="8" width="6" height="8" fill={Gray} />
-        <line x1="30" y1="12" x2="30" y2="24" stroke={Gray} strokeWidth="2" /> <rect x="27" y="14" width="6" height="8" fill={Gray} />
-        <line x1="50" y1="18" x2="50" y2="32" stroke={Gray} strokeWidth="2" /> <rect x="47" y="20" width="6" height="10" fill={Gray} />
-        <line x1="70" y1="25" x2="70" y2="42" stroke={Gray} strokeWidth="2" /> <rect x="67" y="32" width="6" height="8" fill={Gray} />
-        <line x1="90" y1="5" x2="90" y2="55" stroke={Green} strokeWidth="2" /> <rect x="86" y="45" width="8" height="10" fill={Green} />
-      </svg>
-    )
-  },
-  {
-    id: 4, name: "Shooting Star", desc: "Bearish reversal. Long upper shadow.",
-    render: () => (
-      <svg viewBox="0 0 100 60" className="academy-svg">
-        <line x1="10" y1="38" x2="10" y2="52" stroke={Gray} strokeWidth="2" /> <rect x="7" y="40" width="6" height="10" fill={Gray} />
-        <line x1="30" y1="28" x2="30" y2="42" stroke={Gray} strokeWidth="2" /> <rect x="27" y="28" width="6" height="12" fill={Gray} />
-        <line x1="50" y1="18" x2="50" y2="32" stroke={Gray} strokeWidth="2" /> <rect x="47" y="18" width="6" height="12" fill={Gray} />
-        <line x1="70" y1="8" x2="70" y2="22" stroke={Gray} strokeWidth="2" /> <rect x="67" y="10" width="6" height="10" fill={Gray} />
-        <line x1="90" y1="5" x2="90" y2="42" stroke={Red} strokeWidth="2" /> <rect x="86" y="32" width="8" height="10" fill={Red} />
-      </svg>
-    )
-  },
-  // Row 3: Bullish Engulfing vs Bearish Engulfing
-  {
-    id: 5, name: "Bullish Engulfing", desc: "Strong reversal. Green eats Red.",
-    render: () => (
-      <svg viewBox="0 0 100 60" className="academy-svg">
-        <line x1="15" y1="8" x2="15" y2="20" stroke={Gray} strokeWidth="2" /> <rect x="12" y="10" width="6" height="8" fill={Gray} />
-        <line x1="35" y1="15" x2="35" y2="28" stroke={Gray} strokeWidth="2" /> <rect x="32" y="17" width="6" height="9" fill={Gray} />
-        <line x1="55" y1="22" x2="55" y2="38" stroke={Gray} strokeWidth="2" /> <rect x="52" y="24" width="6" height="12" fill={Gray} />
-        <line x1="75" y1="30" x2="75" y2="48" stroke={Red} strokeWidth="2" /> <rect x="71" y="32" width="8" height="14" fill={Red} />
-        <line x1="95" y1="22" x2="95" y2="55" stroke={Green} strokeWidth="2" /> <rect x="90" y="24" width="10" height="28" fill={Green} />
-      </svg>
-    )
-  },
-  {
-    id: 6, name: "Bearish Engulfing", desc: "Strong reversal. Red eats Green.",
-    render: () => (
-      <svg viewBox="0 0 100 60" className="academy-svg">
-        <line x1="15" y1="42" x2="15" y2="54" stroke={Gray} strokeWidth="2" /> <rect x="12" y="44" width="6" height="8" fill={Gray} />
-        <line x1="35" y1="32" x2="35" y2="46" stroke={Gray} strokeWidth="2" /> <rect x="32" y="34" width="6" height="10" fill={Gray} />
-        <line x1="55" y1="22" x2="55" y2="36" stroke={Gray} strokeWidth="2" /> <rect x="52" y="24" width="6" height="10" fill={Gray} />
-        <line x1="75" y1="12" x2="75" y2="28" stroke={Green} strokeWidth="2" /> <rect x="71" y="14" width="8" height="12" fill={Green} />
-        <line x1="95" y1="5" x2="95" y2="38" stroke={Red} strokeWidth="2" /> <rect x="90" y="8" width="10" height="28" fill={Red} />
-      </svg>
-    )
-  },
-  // Row 4: Piercing Pattern vs Dark Cloud Cover
-  {
-    id: 7, name: "Piercing Pattern", desc: "Bullish reversal. Green closes above midpoint.",
-    render: () => (
-      <svg viewBox="0 0 100 60" className="academy-svg">
-        <line x1="20" y1="12" x2="20" y2="22" stroke={Gray} strokeWidth="2" /> <rect x="17" y="14" width="6" height="6" fill={Gray} />
-        <line x1="40" y1="18" x2="40" y2="28" stroke={Gray} strokeWidth="2" /> <rect x="37" y="20" width="6" height="6" fill={Gray} />
-        <line x1="60" y1="5" x2="60" y2="45" stroke={Red} strokeWidth="2" /> <rect x="55" y="8" width="10" height="35" fill={Red} />
-        <line x1="80" y1="18" x2="80" y2="55" stroke={Green} strokeWidth="2" /> <rect x="75" y="20" width="10" height="32" fill={Green} />
-      </svg>
-    )
-  },
-  {
-    id: 8, name: "Dark Cloud Cover", desc: "Bearish reversal. Red closes below midpoint.",
-    render: () => (
-      <svg viewBox="0 0 100 60" className="academy-svg">
-        <line x1="20" y1="38" x2="20" y2="48" stroke={Gray} strokeWidth="2" /> <rect x="17" y="40" width="6" height="6" fill={Gray} />
-        <line x1="40" y1="32" x2="40" y2="42" stroke={Gray} strokeWidth="2" /> <rect x="37" y="34" width="6" height="6" fill={Gray} />
-        <line x1="60" y1="15" x2="60" y2="55" stroke={Green} strokeWidth="2" /> <rect x="55" y="18" width="10" height="35" fill={Green} />
-        <line x1="80" y1="5" x2="80" y2="42" stroke={Red} strokeWidth="2" /> <rect x="75" y="8" width="10" height="32" fill={Red} />
-      </svg>
-    )
-  },
-  // Row 5: Morning Star vs Evening Star
-  {
-    id: 9, name: "Morning Star", desc: "3-candle bullish reversal.",
-    render: () => (
-      <svg viewBox="0 0 100 60" className="academy-svg">
-        <line x1="20" y1="8" x2="20" y2="18" stroke={Gray} strokeWidth="2" /> <rect x="17" y="10" width="6" height="6" fill={Gray} />
-        <line x1="40" y1="5" x2="40" y2="38" stroke={Red} strokeWidth="2" /> <rect x="36" y="8" width="8" height="28" fill={Red} />
-        <line x1="60" y1="38" x2="60" y2="52" stroke={Black} strokeWidth="2" /> <line x1="54" y1="45" x2="66" y2="45" stroke={Black} strokeWidth="4" />
-        <line x1="80" y1="15" x2="80" y2="48" stroke={Green} strokeWidth="2" /> <rect x="76" y="18" width="8" height="28" fill={Green} />
-      </svg>
-    )
-  },
-  {
-    id: 10, name: "Evening Star", desc: "3-candle bearish reversal.",
-    render: () => (
-      <svg viewBox="0 0 100 60" className="academy-svg">
-        <line x1="20" y1="42" x2="20" y2="52" stroke={Gray} strokeWidth="2" /> <rect x="17" y="44" width="6" height="6" fill={Gray} />
-        <line x1="40" y1="22" x2="40" y2="55" stroke={Green} strokeWidth="2" /> <rect x="36" y="24" width="8" height="28" fill={Green} />
-        <line x1="60" y1="8" x2="60" y2="22" stroke={Black} strokeWidth="2" /> <line x1="54" y1="15" x2="66" y2="15" stroke={Black} strokeWidth="4" />
-        <line x1="80" y1="12" x2="80" y2="45" stroke={Red} strokeWidth="2" /> <rect x="76" y="14" width="8" height="28" fill={Red} />
-      </svg>
-    )
-  },
-  // Row 6: Three White Soldiers vs Three Black Crows
-  {
-    id: 11, name: "Three White Soldiers", desc: "Strong bullish trend. 3 green candles.",
-    render: () => (
-      <svg viewBox="0 0 100 60" className="academy-svg">
-        <line x1="15" y1="42" x2="15" y2="52" stroke={Gray} strokeWidth="2" /> <rect x="12" y="44" width="6" height="6" fill={Gray} />
-        <line x1="35" y1="32" x2="35" y2="55" stroke={Green} strokeWidth="2" /> <rect x="31" y="35" width="8" height="18" fill={Green} />
-        <line x1="55" y1="18" x2="55" y2="42" stroke={Green} strokeWidth="2" /> <rect x="51" y="22" width="8" height="18" fill={Green} />
-        <line x1="75" y1="5" x2="75" y2="28" stroke={Green} strokeWidth="2" /> <rect x="71" y="8" width="8" height="18" fill={Green} />
-      </svg>
-    )
-  },
-  {
-    id: 12, name: "Three Black Crows", desc: "Strong bearish trend. 3 red candles.",
-    render: () => (
-      <svg viewBox="0 0 100 60" className="academy-svg">
-        <line x1="15" y1="8" x2="15" y2="18" stroke={Gray} strokeWidth="2" /> <rect x="12" y="10" width="6" height="6" fill={Gray} />
-        <line x1="35" y1="5" x2="35" y2="28" stroke={Red} strokeWidth="2" /> <rect x="31" y="8" width="8" height="18" fill={Red} />
-        <line x1="55" y1="18" x2="55" y2="42" stroke={Red} strokeWidth="2" /> <rect x="51" y="22" width="8" height="18" fill={Red} />
-        <line x1="75" y1="32" x2="75" y2="55" stroke={Red} strokeWidth="2" /> <rect x="71" y="35" width="8" height="18" fill={Red} />
-      </svg>
-    )
-  },
-  // Row 7: Bullish Harami vs Bearish Harami
-  {
-    id: 13, name: "Bullish Harami", desc: "Reversal. Small green inside big red.",
-    render: () => (
-      <svg viewBox="0 0 100 60" className="academy-svg">
-        <line x1="20" y1="8" x2="20" y2="18" stroke={Gray} strokeWidth="2" /> <rect x="17" y="10" width="6" height="6" fill={Gray} />
-        <line x1="40" y1="12" x2="40" y2="24" stroke={Gray} strokeWidth="2" /> <rect x="37" y="14" width="6" height="8" fill={Gray} />
-        <line x1="60" y1="5" x2="60" y2="55" stroke={Red} strokeWidth="2" /> <rect x="54" y="8" width="12" height="44" fill={Red} />
-        <line x1="80" y1="22" x2="80" y2="38" stroke={Green} strokeWidth="2" /> <rect x="76" y="24" width="8" height="12" fill={Green} />
-      </svg>
-    )
-  },
-  {
-    id: 14, name: "Bearish Harami", desc: "Reversal. Small red inside big green.",
-    render: () => (
-      <svg viewBox="0 0 100 60" className="academy-svg">
-        <line x1="20" y1="42" x2="20" y2="52" stroke={Gray} strokeWidth="2" /> <rect x="17" y="44" width="6" height="6" fill={Gray} />
-        <line x1="40" y1="36" x2="40" y2="48" stroke={Gray} strokeWidth="2" /> <rect x="37" y="38" width="6" height="8" fill={Gray} />
-        <line x1="60" y1="5" x2="60" y2="55" stroke={Green} strokeWidth="2" /> <rect x="54" y="8" width="12" height="44" fill={Green} />
-        <line x1="80" y1="22" x2="80" y2="38" stroke={Red} strokeWidth="2" /> <rect x="76" y="24" width="8" height="12" fill={Red} />
-      </svg>
-    )
-  },
-  // Row 8: Tweezer Bottom vs Tweezer Top
-  {
-    id: 15, name: "Tweezer Bottom", desc: "Bullish reversal. Same lows.",
-    render: () => (
-      <svg viewBox="0 0 100 60" className="academy-svg">
-        <line x1="20" y1="12" x2="20" y2="28" stroke={Gray} strokeWidth="2" /> <rect x="17" y="15" width="6" height="10" fill={Gray} />
-        <line x1="40" y1="22" x2="40" y2="38" stroke={Gray} strokeWidth="2" /> <rect x="37" y="25" width="6" height="10" fill={Gray} />
-        <line x1="60" y1="15" x2="60" y2="52" stroke={Red} strokeWidth="2" /> <rect x="55" y="18" width="10" height="32" fill={Red} />
-        <line x1="80" y1="22" x2="80" y2="52" stroke={Green} strokeWidth="2" /> <rect x="75" y="25" width="10" height="25" fill={Green} />
-        <line x1="50" y1="52" x2="90" y2="52" stroke="#666" strokeWidth="1" strokeDasharray="3,3" />
-      </svg>
-    )
-  },
-  {
-    id: 16, name: "Tweezer Top", desc: "Bearish reversal. Same highs.",
-    render: () => (
-      <svg viewBox="0 0 100 60" className="academy-svg">
-        <line x1="20" y1="32" x2="20" y2="48" stroke={Gray} strokeWidth="2" /> <rect x="17" y="35" width="6" height="10" fill={Gray} />
-        <line x1="40" y1="22" x2="40" y2="38" stroke={Gray} strokeWidth="2" /> <rect x="37" y="25" width="6" height="10" fill={Gray} />
-        <line x1="60" y1="8" x2="60" y2="45" stroke={Green} strokeWidth="2" /> <rect x="55" y="10" width="10" height="32" fill={Green} />
-        <line x1="80" y1="8" x2="80" y2="38" stroke={Red} strokeWidth="2" /> <rect x="75" y="10" width="10" height="25" fill={Red} />
-        <line x1="50" y1="8" x2="90" y2="8" stroke="#666" strokeWidth="1" strokeDasharray="3,3" />
-      </svg>
-    )
-  },
-  // Row 9: Dragonfly Doji vs Gravestone Doji
-  {
-    id: 17, name: "Dragonfly Doji", desc: "Bullish reversal. Long lower shadow.",
-    render: () => (
-      <svg viewBox="0 0 100 60" className="academy-svg">
-        <line x1="20" y1="8" x2="20" y2="18" stroke={Gray} strokeWidth="2" /> <rect x="17" y="10" width="6" height="6" fill={Gray} />
-        <line x1="40" y1="12" x2="40" y2="24" stroke={Gray} strokeWidth="2" /> <rect x="37" y="14" width="6" height="8" fill={Gray} />
-        <line x1="60" y1="18" x2="60" y2="32" stroke={Gray} strokeWidth="2" /> <rect x="57" y="20" width="6" height="10" fill={Gray} />
-        <line x1="80" y1="12" x2="80" y2="55" stroke={Green} strokeWidth="2" /> <line x1="72" y1="12" x2="88" y2="12" stroke={Green} strokeWidth="4" />
-      </svg>
-    )
-  },
-  {
-    id: 18, name: "Gravestone Doji", desc: "Bearish reversal. Long upper shadow.",
-    render: () => (
-      <svg viewBox="0 0 100 60" className="academy-svg">
-        <line x1="20" y1="42" x2="20" y2="52" stroke={Gray} strokeWidth="2" /> <rect x="17" y="44" width="6" height="6" fill={Gray} />
-        <line x1="40" y1="36" x2="40" y2="48" stroke={Gray} strokeWidth="2" /> <rect x="37" y="38" width="6" height="8" fill={Gray} />
-        <line x1="60" y1="28" x2="60" y2="42" stroke={Gray} strokeWidth="2" /> <rect x="57" y="30" width="6" height="10" fill={Gray} />
-        <line x1="80" y1="5" x2="80" y2="48" stroke={Red} strokeWidth="2" /> <line x1="72" y1="48" x2="88" y2="48" stroke={Red} strokeWidth="4" />
-      </svg>
-    )
-  },
-  // Row 10: Three Inside Up vs Three Inside Down
-  {
-    id: 19, name: "Three Inside Up", desc: "Bullish reversal. Harami + confirmation.",
-    render: () => (
-      <svg viewBox="0 0 100 60" className="academy-svg">
-        <line x1="25" y1="5" x2="25" y2="55" stroke={Red} strokeWidth="2" /> <rect x="19" y="8" width="12" height="44" fill={Red} />
-        <line x1="50" y1="22" x2="50" y2="38" stroke={Green} strokeWidth="2" /> <rect x="45" y="24" width="10" height="12" fill={Green} />
-        <line x1="75" y1="8" x2="75" y2="32" stroke={Green} strokeWidth="2" /> <rect x="69" y="10" width="12" height="20" fill={Green} />
-      </svg>
-    )
-  },
-  {
-    id: 20, name: "Three Inside Down", desc: "Bearish reversal. Harami + confirmation.",
-    render: () => (
-      <svg viewBox="0 0 100 60" className="academy-svg">
-        <line x1="25" y1="5" x2="25" y2="55" stroke={Green} strokeWidth="2" /> <rect x="19" y="8" width="12" height="44" fill={Green} />
-        <line x1="50" y1="22" x2="50" y2="38" stroke={Red} strokeWidth="2" /> <rect x="45" y="24" width="10" height="12" fill={Red} />
-        <line x1="75" y1="28" x2="75" y2="52" stroke={Red} strokeWidth="2" /> <rect x="69" y="30" width="12" height="20" fill={Red} />
-      </svg>
-    )
-  },
-];
+
+
+
 
 const getTradingTitle = (pnl: number, trades: number) => {
   if (trades === 0) return "The Spectator";
@@ -317,27 +74,8 @@ const AppContent: React.FC = () => {
   const [showResetConfirm, setShowResetConfirm] = useState(false);
 
   // Check if in landscape mode and on trade screen
-  const isLandscapeTrading = orientation === 'landscape' && activeTab === 'trade';
+  const isLandscapeTrading = orientation.isLandscape && activeTab === 'trade';
 
-  // Screen Orientation Lock/Unlock based on active tab
-  useEffect(() => {
-    const handleOrientation = async () => {
-      try {
-        if (activeTab === 'trade') {
-          // Unlock orientation for trade screen (allow rotation)
-          await ScreenOrientation.unlock();
-        } else {
-          // Lock to portrait for other screens
-          await ScreenOrientation.lock({ orientation: 'portrait' });
-        }
-      } catch (error) {
-        // Silently fail on web/unsupported platforms
-        console.log('Screen orientation not supported:', error);
-      }
-    };
-
-    handleOrientation();
-  }, [activeTab]);
 
   // Load history on mount
   useEffect(() => {
@@ -420,6 +158,26 @@ const AppContent: React.FC = () => {
     skipDay: originalSkipDay,
     stop: originalStop
   } = useTradingSession(stock);
+
+  // Screen Orientation Lock/Unlock based on active tab
+  useEffect(() => {
+    const handleOrientation = async () => {
+      try {
+        if (activeTab === 'trade' && !isLoading && !isGameOver) {
+          // Unlock orientation for trade screen (allow rotation)
+          await ScreenOrientation.unlock();
+        } else {
+          // Lock to portrait for other screens (Loading, Calc, Academy, etc.)
+          await ScreenOrientation.lock({ orientation: 'portrait' });
+        }
+      } catch (error) {
+        // Silently fail on web/unsupported platforms
+        console.log('Screen orientation not supported:', error);
+      }
+    };
+
+    handleOrientation();
+  }, [activeTab, isLoading, isGameOver]);
 
   // Reset tradeAmount when new game starts
   useEffect(() => {
@@ -540,27 +298,7 @@ const AppContent: React.FC = () => {
           <h2>Fetching Market Data...</h2>
           <p>Finding a mystery stock and random time window</p>
         </motion.div>
-        <style>{`
-          .loading-screen {
-            height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: var(--bg-primary);
-            text-align: center;
-          }
-          .spinner {
-            color: var(--color-text);
-            animation: spin 1s linear infinite;
-            margin-bottom: 24px;
-          }
-          @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-          }
-          h2 { font-weight: 700; margin-bottom: 8px; color: var(--color-text); }
-          p { color: var(--color-text-secondary); font-size: 0.875rem; }
-        `}</style>
+        <style>{LOADING_STYLES}</style>
       </div>
     );
   }
@@ -570,227 +308,227 @@ const AppContent: React.FC = () => {
       <div className="app-container">
         {activeTab !== 'calculator' && !isLandscapeTrading && (
           <header className="header compact">
-          <div className="stats-grid">
-            <div className="stat-card">
-              <span className="stat-label">Total</span>
-              <span className="stat-value">${displayBalance.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+            <div className="stats-grid">
+              <div className="stat-card">
+                <span className="stat-label">Total</span>
+                <span className="stat-value">${displayBalance.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+              </div>
+              <div className="stat-card">
+                <span className="stat-label">Available</span>
+                <span className="stat-value">${balance.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+              </div>
+              <div className={`stat-card ${totalReturn >= 0 ? 'positive' : 'negative'}`}>
+                <span className="stat-label">Return</span>
+                <span className="stat-value">{totalReturn.toFixed(1)}%</span>
+              </div>
             </div>
-            <div className="stat-card">
-              <span className="stat-label">Available</span>
-              <span className="stat-value">${balance.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+            <div className="header-meta">
+              <span>Price: ${currentCandle.close.toFixed(2)}</span>
+              <span>Fee: 0.15%</span>
+              <span>Comm: ${totalCommissions.toFixed(2)}</span>
             </div>
-            <div className={`stat-card ${totalReturn >= 0 ? 'positive' : 'negative'}`}>
-              <span className="stat-label">Return</span>
-              <span className="stat-value">{totalReturn.toFixed(1)}%</span>
-            </div>
-          </div>
-          <div className="header-meta">
-            <span>Price: ${currentCandle.close.toFixed(2)}</span>
-            <span>Fee: 0.15%</span>
-            <span>Comm: ${totalCommissions.toFixed(2)}</span>
-          </div>
-        </header>
+          </header>
         )}
 
         <main className={`main-content ${activeTab === 'calculator' ? 'fullscreen-mode' : ''}`}>
           {activeTab === 'trade' && (
-          <>
-          {/* Trade Amount Input */}
-          {!isLandscapeTrading && positions.length < maxPositions && !isGameOver && (
-            <div className="trade-amount-section">
-              <span className="trade-amount-label">Trade Amount</span>
-              <div className="trade-amount-controls">
-                <button
-                  className="amount-btn"
-                  onClick={() => adjustTradeAmount(-1000)}
-                  disabled={tradeAmount <= 0}
-                >
-                  <Minus size={18} />
-                </button>
-                <div className="amount-input-wrapper">
-                  <span className="currency-symbol">$</span>
-                  <input
-                    type="number"
-                    className="amount-input"
-                    value={tradeAmount}
-                    onChange={handleTradeAmountChange}
-                    min={0}
-                    max={balance}
-                  />
-                </div>
-                <button
-                  className="amount-btn"
-                  onClick={() => adjustTradeAmount(1000)}
-                  disabled={tradeAmount >= balance}
-                >
-                  <Plus size={18} />
-                </button>
-                <button
-                  className="amount-btn-max"
-                  onClick={() => setTradeAmount(Math.floor(balance))}
-                  disabled={tradeAmount >= balance}
-                >
-                  MAX
-                </button>
-              </div>
-            </div>
-          )}
-
-          <div className="chart-wrapper">
-            <AnimatePresence>
-              {!isLandscapeTrading && positions.length > 0 && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  className="positions-container"
-                >
-                  {/* Positions Header - Always visible */}
-                  <div
-                    className="positions-header"
-                    onClick={() => setPositionsCollapsed(!positionsCollapsed)}
-                  >
-                    <div className="positions-summary">
-                      <span className="positions-count">{positions.length} Position{positions.length > 1 ? 's' : ''}</span>
-                      <div className="positions-total-pl-group">
-                        <span className={`positions-total-pl ${unrealizedPL >= 0 ? 'text-success' : 'text-danger'}`}>
-                          {unrealizedPL >= 0 ? '+' : ''}${unrealizedPL.toFixed(2)}
-                        </span>
-                        {positions.length > 0 && (() => {
-                          const totalValue = positions.reduce((sum, pos) => sum + (pos.entryPrice * pos.amount), 0);
-                          const totalPLPercent = (unrealizedPL / totalValue) * 100;
-                          return (
-                            <span className={`positions-total-pl-percent ${unrealizedPL >= 0 ? 'text-success' : 'text-danger'}`}>
-                              ({totalPLPercent >= 0 ? '+' : ''}{totalPLPercent.toFixed(2)}%)
-                            </span>
-                          );
-                        })()}
-                      </div>
+            <>
+              {/* Trade Amount Input */}
+              {!isLandscapeTrading && positions.length < maxPositions && !isGameOver && (
+                <div className="trade-amount-section">
+                  <span className="trade-amount-label">Trade Amount</span>
+                  <div className="trade-amount-controls">
+                    <button
+                      className="amount-btn"
+                      onClick={() => adjustTradeAmount(-1000)}
+                      disabled={tradeAmount <= 0}
+                    >
+                      <Minus size={18} />
+                    </button>
+                    <div className="amount-input-wrapper">
+                      <span className="currency-symbol">$</span>
+                      <input
+                        type="number"
+                        className="amount-input"
+                        value={tradeAmount}
+                        onChange={handleTradeAmountChange}
+                        min={0}
+                        max={balance}
+                      />
                     </div>
-                    <button className="positions-toggle">
-                      {positionsCollapsed ? <ChevronDown size={18} /> : <ChevronUp size={18} />}
+                    <button
+                      className="amount-btn"
+                      onClick={() => adjustTradeAmount(1000)}
+                      disabled={tradeAmount >= balance}
+                    >
+                      <Plus size={18} />
+                    </button>
+                    <button
+                      className="amount-btn-max"
+                      onClick={() => setTradeAmount(Math.floor(balance))}
+                      disabled={tradeAmount >= balance}
+                    >
+                      MAX
                     </button>
                   </div>
+                </div>
+              )}
 
-                  {/* Positions List - Collapsible */}
-                  {!positionsCollapsed && (
+              <div className="chart-wrapper">
+                <AnimatePresence>
+                  {!isLandscapeTrading && positions.length > 0 && (
                     <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: 'auto', opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      className="positions-list"
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="positions-container"
                     >
-                      {positions.map((pos) => {
-                        const positionPL = getPositionPL(pos);
-                        const positionValue = pos.entryPrice * pos.amount;
-                        const positionPLPercent = (positionPL / positionValue) * 100;
-                        return (
-                          <div
-                            key={pos.id}
-                            className={`position-bar ${pos.type === 'LONG' ? 'long' : 'short'}`}
-                          >
-                            <div className="pos-info">
-                              <span className="pos-badge">{pos.type}</span>
-                              <div className="pos-details">
-                                <span className="pos-entry">@${pos.entryPrice.toFixed(2)}</span>
-                                <span className="pos-amount">{pos.amount.toFixed(4)} units</span>
-                              </div>
-                            </div>
-                            <div className="pos-right">
-                              <div className="pos-pl-container">
-                                <span className={positionPL >= 0 ? 'text-success' : 'text-danger'}>
-                                  {positionPL >= 0 ? '+' : ''}${positionPL.toFixed(2)}
+                      {/* Positions Header - Always visible */}
+                      <div
+                        className="positions-header"
+                        onClick={() => setPositionsCollapsed(!positionsCollapsed)}
+                      >
+                        <div className="positions-summary">
+                          <span className="positions-count">{positions.length} Position{positions.length > 1 ? 's' : ''}</span>
+                          <div className="positions-total-pl-group">
+                            <span className={`positions-total-pl ${unrealizedPL >= 0 ? 'text-success' : 'text-danger'}`}>
+                              {unrealizedPL >= 0 ? '+' : ''}${unrealizedPL.toFixed(2)}
+                            </span>
+                            {positions.length > 0 && (() => {
+                              const totalValue = positions.reduce((sum, pos) => sum + (pos.entryPrice * pos.amount), 0);
+                              const totalPLPercent = (unrealizedPL / totalValue) * 100;
+                              return (
+                                <span className={`positions-total-pl-percent ${unrealizedPL >= 0 ? 'text-success' : 'text-danger'}`}>
+                                  ({totalPLPercent >= 0 ? '+' : ''}{totalPLPercent.toFixed(2)}%)
                                 </span>
-                                <span className={`pos-pl-percent ${positionPL >= 0 ? 'text-success' : 'text-danger'}`}>
-                                  ({positionPLPercent >= 0 ? '+' : ''}{positionPLPercent.toFixed(2)}%)
-                                </span>
-                              </div>
-                              <button
-                                className="pos-close-btn"
-                                onClick={() => closePosition(pos.id)}
-                                disabled={isGameOver}
-                              >
-                                <X size={14} />
-                              </button>
-                            </div>
+                              );
+                            })()}
                           </div>
-                        );
-                      })}
+                        </div>
+                        <button className="positions-toggle">
+                          {positionsCollapsed ? <ChevronDown size={18} /> : <ChevronUp size={18} />}
+                        </button>
+                      </div>
+
+                      {/* Positions List - Collapsible */}
+                      {!positionsCollapsed && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: 'auto', opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          className="positions-list"
+                        >
+                          {positions.map((pos) => {
+                            const positionPL = getPositionPL(pos);
+                            const positionValue = pos.entryPrice * pos.amount;
+                            const positionPLPercent = (positionPL / positionValue) * 100;
+                            return (
+                              <div
+                                key={pos.id}
+                                className={`position-bar ${pos.type === 'LONG' ? 'long' : 'short'}`}
+                              >
+                                <div className="pos-info">
+                                  <span className="pos-badge">{pos.type}</span>
+                                  <div className="pos-details">
+                                    <span className="pos-entry">@${pos.entryPrice.toFixed(2)}</span>
+                                    <span className="pos-amount">{pos.amount.toFixed(4)} units</span>
+                                  </div>
+                                </div>
+                                <div className="pos-right">
+                                  <div className="pos-pl-container">
+                                    <span className={positionPL >= 0 ? 'text-success' : 'text-danger'}>
+                                      {positionPL >= 0 ? '+' : ''}${positionPL.toFixed(2)}
+                                    </span>
+                                    <span className={`pos-pl-percent ${positionPL >= 0 ? 'text-success' : 'text-danger'}`}>
+                                      ({positionPLPercent >= 0 ? '+' : ''}{positionPLPercent.toFixed(2)}%)
+                                    </span>
+                                  </div>
+                                  <button
+                                    className="pos-close-btn"
+                                    onClick={() => closePosition(pos.id)}
+                                    disabled={isGameOver}
+                                  >
+                                    <X size={14} />
+                                  </button>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </motion.div>
+                      )}
                     </motion.div>
                   )}
-                </motion.div>
-              )}
-            </AnimatePresence>
-            <div className="scroll-chart-container">
-              <div className="zoom-controls-floating">
-                <button
-                  className="zoom-btn-mini"
-                  onClick={() => setZoom(prev => Math.min(3, prev + 0.25))}
-                  disabled={zoom >= 3}
-                  title="Zoom In"
-                >
-                  <ZoomIn size={14} />
-                </button>
-                <button
-                  className="zoom-btn-mini"
-                  onClick={() => setZoom(prev => Math.max(0.5, prev - 0.25))}
-                  disabled={zoom <= 0.5}
-                  title="Zoom Out"
-                >
-                  <ZoomOut size={14} />
-                </button>
+                </AnimatePresence>
+                <div className="scroll-chart-container">
+                  <div className="zoom-controls-floating">
+                    <button
+                      className="zoom-btn-mini"
+                      onClick={() => setZoom(prev => Math.min(3, prev + 0.25))}
+                      disabled={zoom >= 3}
+                      title="Zoom In"
+                    >
+                      <ZoomIn size={14} />
+                    </button>
+                    <button
+                      className="zoom-btn-mini"
+                      onClick={() => setZoom(prev => Math.max(0.5, prev - 0.25))}
+                      disabled={zoom <= 0.5}
+                      title="Zoom Out"
+                    >
+                      <ZoomOut size={14} />
+                    </button>
+                  </div>
+                  <div className="info-btn-floating">
+                    <button
+                      className="zoom-btn-mini"
+                      onClick={() => setShowInfo(true)}
+                    >
+                      <Info size={14} />
+                    </button>
+                  </div>
+                  <ErrorBoundary>
+                    {visibleData.length > 0 ? <Chart data={visibleData} zoom={zoom} /> : <div className="loading-placeholder">Initializing chart...</div>}
+                  </ErrorBoundary>
+                </div>
               </div>
-              <div className="info-btn-floating">
-                <button
-                  className="zoom-btn-mini"
-                  onClick={() => setShowInfo(true)}
-                >
-                  <Info size={14} />
-                </button>
-              </div>
-              <ErrorBoundary>
-                {visibleData.length > 0 ? <Chart data={visibleData} zoom={zoom} /> : <div className="loading-placeholder">Initializing chart...</div>}
-              </ErrorBoundary>
-            </div>
-          </div>
 
-          {!isLandscapeTrading && (
-          <section className="controls">
-            <div className="action-buttons-single-row">
-              <button
-                className="btn btn-buy"
-                onClick={long}
-                disabled={isGameOver || positions.length >= maxPositions || tradeAmount <= 0 || tradeAmount > balance}
-              >
-                <TrendingUp size={20} />
-                <span>LONG</span>
-              </button>
-              <button
-                className="btn btn-sell"
-                onClick={short}
-                disabled={isGameOver || positions.length >= maxPositions || tradeAmount <= 0 || tradeAmount > balance}
-              >
-                <TrendingDown size={20} />
-                <span>SHORT</span>
-              </button>
-              {positions.length > 0 && (
-                <button className="btn btn-close-all" onClick={closeAllPositions} disabled={isGameOver}>
-                  <X size={18} />
-                  <span>CLOSE ALL</span>
-                </button>
+              {!isLandscapeTrading && (
+                <section className="controls">
+                  <div className="action-buttons-single-row">
+                    <button
+                      className="btn btn-buy"
+                      onClick={long}
+                      disabled={isGameOver || positions.length >= maxPositions || tradeAmount <= 0 || tradeAmount > balance}
+                    >
+                      <TrendingUp size={20} />
+                      <span>LONG</span>
+                    </button>
+                    <button
+                      className="btn btn-sell"
+                      onClick={short}
+                      disabled={isGameOver || positions.length >= maxPositions || tradeAmount <= 0 || tradeAmount > balance}
+                    >
+                      <TrendingDown size={20} />
+                      <span>SHORT</span>
+                    </button>
+                    {positions.length > 0 && (
+                      <button className="btn btn-close-all" onClick={closeAllPositions} disabled={isGameOver}>
+                        <X size={18} />
+                        <span>CLOSE ALL</span>
+                      </button>
+                    )}
+                    <button className="btn btn-skip" onClick={skipDay} disabled={isGameOver}>
+                      <SkipForward size={18} />
+                      <span>SKIP</span>
+                    </button>
+                    <button className="btn btn-stop" onClick={stop} disabled={isGameOver}>
+                      <Square size={18} />
+                      <span>STOP</span>
+                    </button>
+                  </div>
+                </section>
               )}
-              <button className="btn btn-skip" onClick={skipDay} disabled={isGameOver}>
-                <SkipForward size={18} />
-                <span>SKIP</span>
-              </button>
-              <button className="btn btn-stop" onClick={stop} disabled={isGameOver}>
-                <Square size={18} />
-                <span>STOP</span>
-              </button>
-            </div>
-          </section>
-          )}
-          </>
+            </>
           )}
 
           {activeTab === 'calculator' && (
@@ -845,9 +583,9 @@ const AppContent: React.FC = () => {
                 const minBalance = Math.min(...equityCurve);
                 const range = maxBalance - minBalance || 1;
 
-                const chartWidth = 280;
-                const chartHeight = 80;
-                const padding = { top: 10, bottom: 20, left: 10, right: 10 };
+                const chartWidth = 300;
+                const chartHeight = 100;
+                const padding = { top: 10, bottom: 20, left: 15, right: 15 };
 
                 const chartDrawWidth = chartWidth - padding.left - padding.right;
 
@@ -876,7 +614,7 @@ const AppContent: React.FC = () => {
                         </span>
                       </div>
                     </div>
-                    <svg width={chartWidth} height={chartHeight} style={{ overflow: 'visible' }}>
+                    <svg width={chartWidth} height={chartHeight} style={appStyles.equityChart}>
                       {/* Baseline - initial balance reference line */}
                       <line
                         x1="0"
@@ -959,7 +697,7 @@ const AppContent: React.FC = () => {
               <div className="profile-balance-card">
                 <span className="balance-label">Total Portfolio Value</span>
                 <span className="balance-amount">${displayBalance.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
-                <span className="balance-return" style={{ color: totalReturn >= 0 ? '#22c55e' : '#ef4444' }}>
+                <span className="balance-return" style={{ color: totalReturn >= 0 ? Colors.Green : Colors.Red }}>
                   {totalReturn > 0 ? '+' : ''}{totalReturn.toFixed(2)}% Total Return
                 </span>
                 <div className="balance-detail">
@@ -987,43 +725,22 @@ const AppContent: React.FC = () => {
 
                 <div className="theme-selector">
                   <div className="theme-selector-header">
-                    {resolvedTheme === 'dark' ? <Moon size={20} /> : <Sun size={20} />}
+                    {resolvedTheme !== 'sandstone' ? <Moon size={20} /> : <Sun size={20} />}
                     <span>Theme</span>
                   </div>
                   <div className="theme-options">
                     <button
-                      className={`theme-option ${mode === 'light' ? 'active' : ''}`}
-                      onClick={() => setMode('light')}
-                    >
-                      <Sun size={16} />
-                      <span>Light</span>
-                    </button>
-                    <button
                       className={`theme-option ${mode === 'sandstone' ? 'active' : ''}`}
                       onClick={() => setMode('sandstone')}
-                      style={{
-                        background: mode === 'sandstone' ? 'linear-gradient(135deg, #F2EBE3 0%, #E5DDD3 100%)' : undefined,
-                        color: mode === 'sandstone' ? '#C5A059' : undefined,
-                        borderColor: mode === 'sandstone' ? '#C5A059' : undefined,
-                      }}
+                      style={mode === 'sandstone' ? appStyles.themeButtonSandstone : undefined}
                     >
                       <Sun size={16} />
                       <span>Sandstone</span>
                     </button>
                     <button
-                      className={`theme-option ${mode === 'dark' ? 'active' : ''}`}
-                      onClick={() => setMode('dark')}
-                    >
-                      <Moon size={16} />
-                      <span>Dark</span>
-                    </button>
-                    <button
                       className={`theme-option ${mode === 'midnight' ? 'active' : ''}`}
                       onClick={() => setMode('midnight')}
-                      style={{
-                        background: mode === 'midnight' ? 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)' : undefined,
-                        color: mode === 'midnight' ? '#22D3EE' : undefined,
-                      }}
+                      style={mode === 'midnight' ? appStyles.themeButtonMidnight : undefined}
                     >
                       <Moon size={16} />
                       <span>Midnight</span>
@@ -1031,21 +748,10 @@ const AppContent: React.FC = () => {
                     <button
                       className={`theme-option ${mode === 'solarized' ? 'active' : ''}`}
                       onClick={() => setMode('solarized')}
-                      style={{
-                        background: mode === 'solarized' ? 'linear-gradient(135deg, #002b36 0%, #073642 100%)' : undefined,
-                        color: mode === 'solarized' ? '#b58900' : undefined,
-                        borderColor: mode === 'solarized' ? '#b58900' : undefined,
-                      }}
+                      style={mode === 'solarized' ? appStyles.themeButtonSolarized : undefined}
                     >
-                      <Moon size={16} />
+                      <Leaf size={16} />
                       <span>Solarized</span>
-                    </button>
-                    <button
-                      className={`theme-option ${mode === 'system' ? 'active' : ''}`}
-                      onClick={() => setMode('system')}
-                    >
-                      <Monitor size={16} />
-                      <span>System</span>
                     </button>
                   </div>
                 </div>
@@ -1055,43 +761,43 @@ const AppContent: React.FC = () => {
 
           {/* Bottom Navigation */}
           {!isLandscapeTrading && (
-          <nav className="bottom-nav">
-            <button
-              className={`nav-item ${activeTab === 'trade' ? 'active' : ''}`}
-              onClick={() => setActiveTab('trade')}
-            >
-              <BarChart3 size={24} />
-              <span>Trade</span>
-            </button>
-            <button
-              className={`nav-item ${activeTab === 'calculator' ? 'active' : ''}`}
-              onClick={() => setActiveTab('calculator')}
-            >
-              <Calculator size={24} />
-              <span>Calc</span>
-            </button>
-            <button
-              className={`nav-item ${activeTab === 'academy' ? 'active' : ''}`}
-              onClick={() => setActiveTab('academy')}
-            >
-              <BookOpen size={24} />
-              <span>Learn</span>
-            </button>
-            <button
-              className={`nav-item ${activeTab === 'history' ? 'active' : ''}`}
-              onClick={() => setActiveTab('history')}
-            >
-              <Clock size={24} />
-              <span>History</span>
-            </button>
-            <button
-              className={`nav-item ${activeTab === 'profile' ? 'active' : ''}`}
-              onClick={() => setActiveTab('profile')}
-            >
-              <User size={24} />
-              <span>Profile</span>
-            </button>
-          </nav>
+            <nav className="bottom-nav">
+              <button
+                className={`nav-item ${activeTab === 'trade' ? 'active' : ''}`}
+                onClick={() => setActiveTab('trade')}
+              >
+                <BarChart3 size={24} />
+                <span>Trade</span>
+              </button>
+              <button
+                className={`nav-item ${activeTab === 'calculator' ? 'active' : ''}`}
+                onClick={() => setActiveTab('calculator')}
+              >
+                <Calculator size={24} />
+                <span>Calc</span>
+              </button>
+              <button
+                className={`nav-item ${activeTab === 'academy' ? 'active' : ''}`}
+                onClick={() => setActiveTab('academy')}
+              >
+                <BookOpen size={24} />
+                <span>Learn</span>
+              </button>
+              <button
+                className={`nav-item ${activeTab === 'history' ? 'active' : ''}`}
+                onClick={() => setActiveTab('history')}
+              >
+                <Clock size={24} />
+                <span>History</span>
+              </button>
+              <button
+                className={`nav-item ${activeTab === 'profile' ? 'active' : ''}`}
+                onClick={() => setActiveTab('profile')}
+              >
+                <User size={24} />
+                <span>Profile</span>
+              </button>
+            </nav>
           )}
         </main>
 
@@ -1102,7 +808,7 @@ const AppContent: React.FC = () => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               className="modal-overlay"
-              style={{ alignItems: 'center', justifyContent: 'center', padding: 20, zIndex: 1100 }}
+              style={appStyles.infoModalOverlay}
               onClick={() => setShowInfo(false)}
             >
               <motion.div
@@ -1164,7 +870,7 @@ const AppContent: React.FC = () => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               className="modal-overlay"
-              style={{ zIndex: 1200 }}
+              style={appStyles.resetConfirmOverlay}
               onClick={() => setShowResetConfirm(false)}
             >
               <motion.div
@@ -1261,1459 +967,9 @@ const AppContent: React.FC = () => {
         </AnimatePresence>
       </div>
 
-      <style>{`
-        :root {
-          --bg-primary: #FFFFFF;
-          --bg-secondary: #FAFAFA;
-          --bg-tertiary: #F5F5F5;
-          --color-text: #000000;
-          --color-text-secondary: #666666;
-          --color-text-tertiary: #999999;
-          --color-border: #E5E5E5;
-          --color-green: #0E7C7B;
-          --color-red: #D62246;
-          --safe-area-top: env(safe-area-inset-top, 0);
-          --safe-area-bottom: env(safe-area-inset-bottom, 0);
-
-          /* Responsive spacing */
-          --spacing-xs: 0.25rem;
-          --spacing-sm: 0.5rem;
-          --spacing-md: 1rem;
-          --spacing-lg: 1.5rem;
-          --spacing-xl: 2rem;
-
-          /* Dynamic sizes */
-          --header-height: clamp(8rem, 20vh, 12rem);
-          --controls-height: 4rem;
-        }
-
-        /* Dark mode overrides */
-        [data-theme="dark"] {
-          --bg-primary: #1A1A1A;
-          --bg-secondary: #121212;
-          --bg-tertiary: #252525;
-          --color-text: #FFFFFF;
-          --color-text-secondary: #A0A0A0;
-          --color-text-tertiary: #707070;
-          --color-border: #333333;
-          --color-green: #22c55e;
-          --color-red: #ef4444;
-        }
-
-        * {
-          box-sizing: border-box;
-        }
-
-        .mobile-shell {
-          width: 100vw;
-          height: 100vh;
-          background: #F5F5F5;
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          overflow: hidden;
-          position: fixed;
-          top: 0;
-          left: 0;
-        }
-
-        .app-container {
-          width: 100%;
-          max-width: min(430px, 100vw);
-          height: 100vh;
-          max-height: 100vh;
-          background: var(--bg-secondary);
-          position: relative;
-          display: flex;
-          flex-direction: column;
-          box-shadow: 0 0 40px rgba(0,0,0,0.08);
-          overflow: hidden;
-        }
-
-        .header {
-          padding: calc(var(--safe-area-top) + var(--spacing-md)) 5% var(--spacing-md);
-          background: var(--bg-primary);
-          border-bottom: 1px solid var(--color-border);
-          flex-shrink: 0;
-          z-index: 10;
-          min-height: fit-content;
-        }
-
-        .header-top { display: flex; justify-content: space-between; align-items: flex-start; }
-        .header-left-section { display: flex; flex-direction: column; gap: 0.25rem; flex: 1; }
-        .app-title { font-size: clamp(1.1rem, 4vw, 1.4rem); font-weight: 700; letter-spacing: -0.02em; color: var(--color-text); font-family: 'Cormorant Garamond', serif; margin: 0; line-height: 1.2; }
-        .app-subtitle { font-size: clamp(0.65rem, 2.5vw, 0.75rem); color: var(--color-text-secondary); font-weight: 600; margin: 0; }
-        .btn-profile { background: var(--bg-tertiary); border: none; padding: 0.3125rem; cursor: pointer; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-        .btn-profile:active { background: var(--color-border); }
-        .header-actions { display: flex; gap: 0.5rem; flex-shrink: 0; }
-        .btn-icon { background: transparent; border: none; padding: 0.5rem; margin: -0.5rem -0.25rem 0 0; cursor: pointer; border-radius: 50%; flex-shrink: 0; }
-        .btn-icon:active { background: var(--bg-tertiary); }
-        
-        .stats-grid { display: grid; grid-template-columns: 1.2fr 1fr 0.8fr; gap: 2%; margin-top: var(--spacing-md); }
-        .stat-card { padding: 3%; background: var(--bg-tertiary); border-radius: 0.75rem; border: 1px solid var(--color-border); }
-        .stat-label { font-size: clamp(0.6rem, 2vw, 0.65rem); font-weight: 700; color: var(--color-text-tertiary); display: block; margin-bottom: 0.25rem; text-transform: uppercase; letter-spacing: 0.5px; }
-        .stat-value { font-size: clamp(0.9rem, 3vw, 1rem); font-weight: 800; color: var(--color-text); }
-        .header-meta { margin-top: var(--spacing-sm); display: flex; justify-content: space-between; align-items: center; font-size: clamp(0.65rem, 2.5vw, 0.75rem); font-weight: 600; color: var(--color-text-secondary); }
-        .header.compact { padding: calc(var(--safe-area-top) + var(--spacing-sm)) 4% var(--spacing-sm); }
-        .header.compact .stats-grid { margin-top: 0; }
-        .main-content { flex: 1; display: flex; flex-direction: column; padding: 0; min-height: 0; overflow: hidden; }
-        .main-content.fullscreen-mode { padding-top: var(--safe-area-top); }
-
-        /* Broke Card */
-        .broke-card {
-          margin: 16px;
-          padding: 32px 24px;
-          background: var(--bg-primary);
-          border: 2px dashed var(--color-border);
-          border-radius: 16px;
-          text-align: center;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 12px;
-        }
-
-        .broke-emoji {
-          font-size: 4rem;
-          line-height: 1;
-          margin-bottom: 8px;
-          animation: bounce 1s ease infinite;
-        }
-
-        @keyframes bounce {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-10px); }
-        }
-
-        .broke-title {
-          font-size: 1.5rem;
-          font-weight: 800;
-          color: var(--color-red);
-          margin: 0;
-        }
-
-        .broke-balance {
-          font-size: 1rem;
-          color: var(--color-text-secondary);
-          margin: 0;
-        }
-
-        .broke-balance span {
-          font-weight: 800;
-          color: var(--color-text);
-        }
-
-        .broke-message {
-          font-size: 0.9rem;
-          color: var(--color-text-secondary);
-          line-height: 1.6;
-          margin: 8px 0 16px 0;
-        }
-
-        .broke-btn {
-          height: 52px !important;
-          margin-top: 8px !important;
-          font-size: 0.95rem !important;
-        }
-
-        /* Trade Amount Section */
-        .trade-amount-section {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          padding: 10px 16px;
-          background: var(--bg-primary);
-          border-bottom: 1px solid var(--color-border);
-          flex-shrink: 0;
-        }
-
-        .trade-amount-label {
-          font-size: 0.75rem;
-          font-weight: 700;
-          color: var(--color-text-secondary);
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
-        }
-
-        .trade-amount-controls {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-        }
-
-        .amount-btn {
-          width: 36px;
-          height: 36px;
-          border-radius: 8px;
-          border: 1px solid var(--color-border);
-          background: var(--bg-tertiary);
-          color: var(--color-text);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          cursor: pointer;
-          transition: all 0.15s;
-        }
-
-        .amount-btn:active {
-          background: var(--color-border);
-          transform: scale(0.95);
-        }
-
-        .amount-btn:disabled {
-          opacity: 0.3;
-          cursor: not-allowed;
-        }
-
-        .amount-btn-max {
-          height: 36px;
-          padding: 0 12px;
-          border-radius: 8px;
-          border: 1px solid var(--color-border);
-          background: var(--bg-tertiary);
-          color: var(--color-text);
-          font-size: 0.7rem;
-          font-weight: 700;
-          cursor: pointer;
-          transition: all 0.15s;
-        }
-
-        .amount-btn-max:active {
-          background: var(--color-border);
-          transform: scale(0.95);
-        }
-
-        .amount-btn-max:disabled {
-          opacity: 0.3;
-          cursor: not-allowed;
-        }
-
-        .amount-input-wrapper {
-          display: flex;
-          align-items: center;
-          background: var(--bg-tertiary);
-          border: 1px solid var(--color-border);
-          border-radius: 8px;
-          padding: 0 10px;
-          height: 36px;
-        }
-
-        .currency-symbol {
-          font-size: 0.85rem;
-          font-weight: 700;
-          color: var(--color-text-secondary);
-          margin-right: 4px;
-        }
-
-        .amount-input {
-          width: 80px;
-          border: none;
-          background: transparent;
-          font-size: 0.9rem;
-          font-weight: 700;
-          color: var(--color-text);
-          text-align: right;
-          font-family: inherit;
-        }
-
-        .amount-input:focus {
-          outline: none;
-        }
-
-        .amount-input::-webkit-outer-spin-button,
-        .amount-input::-webkit-inner-spin-button {
-          -webkit-appearance: none;
-          margin: 0;
-        }
-
-        .amount-input[type=number] {
-          -moz-appearance: textfield;
-        }
-
-        .chart-wrapper {
-          flex: 1;
-          display: flex;
-          flex-direction: column;
-          gap: var(--spacing-md);
-          overflow: hidden;
-          position: relative;
-          min-height: 0;
-          padding-bottom: calc(var(--controls-height) * 2 + var(--safe-area-bottom) + 2rem);
-        }
-        .scroll-chart-container { flex: 1; padding: 0 4%; min-height: 0; overflow: hidden; position: relative; }
-        .positions-container { display: flex; flex-direction: column; margin: 0 4%; flex-shrink: 0; background: var(--bg-primary); border: 1px solid var(--color-border); border-radius: 0.75rem; overflow: hidden; }
-        .positions-header { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0.75rem; cursor: pointer; background: var(--bg-tertiary); }
-        .positions-header:active { background: var(--color-border); }
-        .positions-summary { display: flex; align-items: center; gap: 0.75rem; }
-        .positions-count { font-size: 0.75rem; font-weight: 700; color: var(--color-text); }
-        .positions-total-pl-group { display: flex; flex-direction: column; align-items: flex-end; gap: 0.1rem; }
-        .positions-total-pl { font-size: 0.8rem; font-weight: 800; }
-        .positions-total-pl-percent { font-size: 0.65rem; font-weight: 600; }
-        .positions-toggle { background: none; border: none; padding: 4px; cursor: pointer; color: var(--color-text-secondary); display: flex; align-items: center; justify-content: center; }
-        .positions-list { display: flex; flex-direction: column; gap: 0.5rem; padding: 0.5rem; }
-        .position-bar { background: var(--bg-primary); padding: 0.5rem 0.75rem; border-radius: 0.75rem; display: flex; justify-content: space-between; align-items: center; border: 2px solid var(--color-border); flex-shrink: 0; }
-        .position-bar.long { border-color: var(--color-green); }
-        .position-bar.short { border-color: var(--color-red); }
-        .pos-info { display: flex; align-items: center; gap: 0.5rem; }
-        .pos-details { display: flex; flex-direction: column; gap: 0.1rem; }
-        .pos-entry { font-size: clamp(0.7rem, 2vw, 0.75rem); font-weight: 600; color: var(--text-primary); }
-        .pos-amount { font-size: clamp(0.6rem, 1.8vw, 0.65rem); color: var(--text-secondary); }
-        .pos-badge { padding: 0.2rem 0.4rem; border-radius: 0.4rem; font-size: clamp(0.55rem, 1.8vw, 0.6rem); font-weight: 800; color: #FFF; }
-        .long .pos-badge { background: var(--color-green); }
-        .short .pos-badge { background: var(--color-red); }
-        .pos-right { display: flex; align-items: center; gap: 0.5rem; }
-        .pos-pl-container { display: flex; flex-direction: column; align-items: flex-end; gap: 0.1rem; }
-        .pos-pl-percent { font-size: clamp(0.6rem, 1.8vw, 0.65rem); font-weight: 600; }
-        .pos-close-btn { background: var(--bg-secondary); border: 1px solid var(--color-border); border-radius: 0.4rem; padding: 0.3rem; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--text-secondary); transition: all 0.2s; }
-        .pos-close-btn:hover { background: var(--color-red); color: #FFF; border-color: var(--color-red); }
-        .pos-close-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-        .controls {
-          position: fixed;
-          bottom: calc(var(--controls-height) + var(--safe-area-bottom));
-          left: 50%;
-          transform: translateX(-50%);
-          width: 100%;
-          max-width: min(430px, 100vw);
-          padding: 10px 16px;
-          background: var(--bg-primary);
-          border-top: 1px solid var(--color-border);
-          display: flex;
-          flex-direction: column;
-          justify-content: center;
-          z-index: 50;
-          height: var(--controls-height);
-          box-sizing: border-box;
-        }
-
-        .action-buttons-single-row {
-          display: flex;
-          gap: 8px;
-          width: 100%;
-          align-items: center;
-        }
-
-        .btn {
-          flex: 1;
-          height: 44px;
-          border-radius: 10px;
-          font-weight: 600;
-          font-size: 0.65rem;
-          border: none;
-          cursor: pointer;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 4px;
-          transition: all 0.15s ease;
-          text-transform: uppercase;
-          letter-spacing: 0.3px;
-          position: relative;
-          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15), 0 1px 3px rgba(0, 0, 0, 0.12);
-        }
-
-        .btn::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          height: 50%;
-          background: linear-gradient(to bottom, rgba(255, 255, 255, 0.2), transparent);
-          border-radius: 10px 10px 0 0;
-          pointer-events: none;
-        }
-
-        .btn svg { width: 14px; height: 14px; position: relative; z-index: 1; }
-        .btn span { position: relative; z-index: 1; }
-
-        .btn:active {
-          transform: translateY(2px);
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15), 0 1px 2px rgba(0, 0, 0, 0.12);
-        }
-
-        .btn:disabled {
-          opacity: 0.35;
-          cursor: not-allowed;
-          transform: none !important;
-        }
-
-        .btn-buy {
-          background: linear-gradient(to bottom, #26d366, #1fa94d);
-          color: white;
-          box-shadow: 0 4px 10px rgba(34, 197, 94, 0.35), 0 2px 4px rgba(0, 0, 0, 0.15), inset 0 -2px 0 rgba(0, 0, 0, 0.2);
-        }
-
-        .btn-buy:active {
-          background: linear-gradient(to bottom, #1fa94d, #1a9043);
-          box-shadow: 0 2px 5px rgba(34, 197, 94, 0.25), 0 1px 2px rgba(0, 0, 0, 0.15), inset 0 1px 3px rgba(0, 0, 0, 0.25);
-        }
-
-        .btn-sell {
-          background: linear-gradient(to bottom, #f04444, #d93939);
-          color: white;
-          box-shadow: 0 4px 10px rgba(239, 68, 68, 0.35), 0 2px 4px rgba(0, 0, 0, 0.15), inset 0 -2px 0 rgba(0, 0, 0, 0.2);
-        }
-
-        .btn-sell:active {
-          background: linear-gradient(to bottom, #d93939, #c93030);
-          box-shadow: 0 2px 5px rgba(239, 68, 68, 0.25), 0 1px 2px rgba(0, 0, 0, 0.15), inset 0 1px 3px rgba(0, 0, 0, 0.25);
-        }
-
-        /* Midnight Slate theme - premium emerald/amber colors */
-        :root[style*="--bg-primary: #0F172A"] .btn-buy {
-          background: linear-gradient(to bottom, #10B981, #059669);
-          box-shadow: 0 4px 10px rgba(16, 185, 129, 0.4), 0 2px 4px rgba(0, 0, 0, 0.2), inset 0 -2px 0 rgba(0, 0, 0, 0.3);
-        }
-
-        :root[style*="--bg-primary: #0F172A"] .btn-buy:active {
-          background: linear-gradient(to bottom, #059669, #047857);
-          box-shadow: 0 2px 5px rgba(16, 185, 129, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2), inset 0 1px 3px rgba(0, 0, 0, 0.35);
-        }
-
-        :root[style*="--bg-primary: #0F172A"] .btn-sell {
-          background: linear-gradient(to bottom, #FF6B6B, #EF5350);
-          box-shadow: 0 4px 10px rgba(255, 107, 107, 0.4), 0 2px 4px rgba(0, 0, 0, 0.2), inset 0 -2px 0 rgba(0, 0, 0, 0.3);
-        }
-
-        :root[style*="--bg-primary: #0F172A"] .btn-sell:active {
-          background: linear-gradient(to bottom, #EF5350, #E53935);
-          box-shadow: 0 2px 5px rgba(255, 107, 107, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2), inset 0 1px 3px rgba(0, 0, 0, 0.35);
-        }
-
-        /* Sandstone theme - luxury warm colors */
-        :root[style*="--bg-primary: #F2EBE3"] .btn-buy {
-          background: linear-gradient(to bottom, #2D7A5A, #246B4D);
-          box-shadow: 0 4px 10px rgba(45, 122, 90, 0.35), 0 2px 4px rgba(0, 0, 0, 0.12), inset 0 -2px 0 rgba(0, 0, 0, 0.2);
-        }
-
-        :root[style*="--bg-primary: #F2EBE3"] .btn-buy:active {
-          background: linear-gradient(to bottom, #246B4D, #1D5A40);
-          box-shadow: 0 2px 5px rgba(45, 122, 90, 0.25), 0 1px 2px rgba(0, 0, 0, 0.12), inset 0 1px 3px rgba(0, 0, 0, 0.25);
-        }
-
-        :root[style*="--bg-primary: #F2EBE3"] .btn-sell {
-          background: linear-gradient(to bottom, #C85A54, #B24A45);
-          box-shadow: 0 4px 10px rgba(200, 90, 84, 0.35), 0 2px 4px rgba(0, 0, 0, 0.12), inset 0 -2px 0 rgba(0, 0, 0, 0.2);
-        }
-
-        :root[style*="--bg-primary: #F2EBE3"] .btn-sell:active {
-          background: linear-gradient(to bottom, #B24A45, #9E3F3B);
-          box-shadow: 0 2px 5px rgba(200, 90, 84, 0.25), 0 1px 2px rgba(0, 0, 0, 0.12), inset 0 1px 3px rgba(0, 0, 0, 0.25);
-        }
-
-        /* Solarized Dark theme - classic terminal colors */
-        :root[style*="--bg-primary: #002b36"] .btn-buy {
-          background: linear-gradient(to bottom, #2aa198, #1f8178);
-          box-shadow: 0 4px 10px rgba(42, 161, 152, 0.4), 0 2px 4px rgba(0, 0, 0, 0.2), inset 0 -2px 0 rgba(0, 0, 0, 0.3);
-        }
-
-        :root[style*="--bg-primary: #002b36"] .btn-buy:active {
-          background: linear-gradient(to bottom, #1f8178, #16625c);
-          box-shadow: 0 2px 5px rgba(42, 161, 152, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2), inset 0 1px 3px rgba(0, 0, 0, 0.35);
-        }
-
-        :root[style*="--bg-primary: #002b36"] .btn-sell {
-          background: linear-gradient(to bottom, #cb4b16, #b03c0f);
-          box-shadow: 0 4px 10px rgba(203, 75, 22, 0.4), 0 2px 4px rgba(0, 0, 0, 0.2), inset 0 -2px 0 rgba(0, 0, 0, 0.3);
-        }
-
-        :root[style*="--bg-primary: #002b36"] .btn-sell:active {
-          background: linear-gradient(to bottom, #b03c0f, #942f0a);
-          box-shadow: 0 2px 5px rgba(203, 75, 22, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2), inset 0 1px 3px rgba(0, 0, 0, 0.35);
-        }
-
-        .btn-close-pos {
-          flex: 2;
-          background: var(--color-text);
-          color: white;
-        }
-
-        .btn-close-pos:active {
-          background: #333;
-        }
-
-        .btn-close-all {
-          background: #000000;
-          color: white;
-        }
-
-        .btn-close-all:active {
-          background: #333333;
-        }
-
-        /* Skip Button with Soft Yellow Pulse Glow + 3D */
-        .btn-skip {
-          background: linear-gradient(to bottom, #fafafa, #e5e5e5);
-          color: var(--color-text-secondary);
-          position: relative;
-          animation: skipButtonGlow 3s ease-in-out infinite;
-          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12), 0 1px 3px rgba(0, 0, 0, 0.08), inset 0 -2px 0 rgba(0, 0, 0, 0.08);
-        }
-
-        [data-theme="dark"] .btn-skip {
-          background: linear-gradient(to bottom, #3a3a3a, #2a2a2a);
-          color: var(--color-text);
-          animation: skipButtonGlowDark 3s ease-in-out infinite;
-        }
-
-        .btn-skip:active {
-          background: linear-gradient(to bottom, #e5e5e5, #d4d4d4);
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.08), inset 0 1px 3px rgba(0, 0, 0, 0.15);
-        }
-
-        [data-theme="dark"] .btn-skip:active {
-          background: linear-gradient(to bottom, #2a2a2a, #1a1a1a);
-        }
-
-        /* Midnight Slate SKIP button */
-        :root[style*="--bg-primary: #0F172A"] .btn-skip {
-          background: linear-gradient(to bottom, #334155, #1E293B);
-          color: #94A3B8;
-          animation: skipButtonGlowMidnight 3s ease-in-out infinite;
-          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3), 0 1px 3px rgba(0, 0, 0, 0.2), inset 0 -2px 0 rgba(0, 0, 0, 0.4);
-        }
-
-        :root[style*="--bg-primary: #0F172A"] .btn-skip:active {
-          background: linear-gradient(to bottom, #1E293B, #0F172A);
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2), inset 0 1px 3px rgba(0, 0, 0, 0.5);
-        }
-
-        /* Sandstone SKIP button */
-        :root[style*="--bg-primary: #F2EBE3"] .btn-skip {
-          background: linear-gradient(to bottom, #E5DDD3, #D1C7BC);
-          color: #8C837A;
-          animation: skipButtonGlowSandstone 3s ease-in-out infinite;
-          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08), inset 0 -2px 0 rgba(0, 0, 0, 0.08);
-        }
-
-        :root[style*="--bg-primary: #F2EBE3"] .btn-skip:active {
-          background: linear-gradient(to bottom, #D1C7BC, #BDB3A8);
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.08), inset 0 1px 3px rgba(0, 0, 0, 0.12);
-        }
-
-        @keyframes skipButtonGlowSandstone {
-          0%, 100% {
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08), inset 0 -2px 0 rgba(0, 0, 0, 0.08), 0 0 0 rgba(197, 160, 89, 0);
-          }
-          50% {
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08), inset 0 -2px 0 rgba(0, 0, 0, 0.08), 0 0 20px rgba(197, 160, 89, 0.4), 0 0 30px rgba(197, 160, 89, 0.2);
-          }
-        }
-
-        /* Solarized SKIP button */
-        :root[style*="--bg-primary: #002b36"] .btn-skip {
-          background: linear-gradient(to bottom, #073642, #002b36);
-          color: #839496;
-          animation: skipButtonGlowSolarized 3s ease-in-out infinite;
-          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3), 0 1px 3px rgba(0, 0, 0, 0.2), inset 0 -2px 0 rgba(0, 0, 0, 0.4);
-        }
-
-        :root[style*="--bg-primary: #002b36"] .btn-skip:active {
-          background: linear-gradient(to bottom, #002b36, #001a21);
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2), inset 0 1px 3px rgba(0, 0, 0, 0.5);
-        }
-
-        @keyframes skipButtonGlowSolarized {
-          0%, 100% {
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3), 0 1px 3px rgba(0, 0, 0, 0.2), inset 0 -2px 0 rgba(0, 0, 0, 0.4), 0 0 0 rgba(181, 137, 0, 0);
-          }
-          50% {
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3), 0 1px 3px rgba(0, 0, 0, 0.2), inset 0 -2px 0 rgba(0, 0, 0, 0.4), 0 0 20px rgba(181, 137, 0, 0.4), 0 0 30px rgba(181, 137, 0, 0.2);
-          }
-        }
-
-        @keyframes skipButtonGlowMidnight {
-          0%, 100% {
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3), 0 1px 3px rgba(0, 0, 0, 0.2), inset 0 -2px 0 rgba(0, 0, 0, 0.4), 0 0 0 rgba(34, 211, 238, 0);
-          }
-          50% {
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3), 0 1px 3px rgba(0, 0, 0, 0.2), inset 0 -2px 0 rgba(0, 0, 0, 0.4), 0 0 20px rgba(34, 211, 238, 0.4), 0 0 30px rgba(34, 211, 238, 0.2);
-          }
-        }
-
-        .btn-skip:disabled {
-          animation: none;
-        }
-
-        @keyframes skipButtonGlow {
-          0%, 100% {
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12), 0 1px 3px rgba(0, 0, 0, 0.08), inset 0 -2px 0 rgba(0, 0, 0, 0.08), 0 0 0 rgba(250, 204, 21, 0);
-          }
-          50% {
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12), 0 1px 3px rgba(0, 0, 0, 0.08), inset 0 -2px 0 rgba(0, 0, 0, 0.08), 0 0 20px rgba(250, 204, 21, 0.4), 0 0 30px rgba(250, 204, 21, 0.2);
-          }
-        }
-
-        @keyframes skipButtonGlowDark {
-          0%, 100% {
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.25), 0 1px 3px rgba(0, 0, 0, 0.15), inset 0 -2px 0 rgba(0, 0, 0, 0.3), 0 0 0 rgba(255, 255, 255, 0);
-          }
-          50% {
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.25), 0 1px 3px rgba(0, 0, 0, 0.15), inset 0 -2px 0 rgba(0, 0, 0, 0.3), 0 0 20px rgba(255, 255, 255, 0.35), 0 0 30px rgba(255, 255, 255, 0.2);
-          }
-        }
-
-        .btn-stop {
-          background: linear-gradient(to bottom, #fafafa, #e5e5e5);
-          color: var(--color-text-secondary);
-          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12), 0 1px 3px rgba(0, 0, 0, 0.08), inset 0 -2px 0 rgba(0, 0, 0, 0.08);
-        }
-
-        [data-theme="dark"] .btn-stop {
-          background: linear-gradient(to bottom, #3a3a3a, #2a2a2a);
-          color: var(--color-text);
-        }
-
-        .btn-stop:active {
-          background: linear-gradient(to bottom, #e5e5e5, #d4d4d4);
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.08), inset 0 1px 3px rgba(0, 0, 0, 0.15);
-        }
-
-        [data-theme="dark"] .btn-stop:active {
-          background: linear-gradient(to bottom, #2a2a2a, #1a1a1a);
-        }
-
-        /* Midnight Slate STOP button */
-        :root[style*="--bg-primary: #0F172A"] .btn-stop {
-          background: linear-gradient(to bottom, #475569, #334155);
-          color: #CBD5E1;
-          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3), 0 1px 3px rgba(0, 0, 0, 0.2), inset 0 -2px 0 rgba(0, 0, 0, 0.4);
-        }
-
-        :root[style*="--bg-primary: #0F172A"] .btn-stop:active {
-          background: linear-gradient(to bottom, #334155, #1E293B);
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2), inset 0 1px 3px rgba(0, 0, 0, 0.5);
-        }
-
-        /* Sandstone STOP button */
-        :root[style*="--bg-primary: #F2EBE3"] .btn-stop {
-          background: linear-gradient(to bottom, #D1C7BC, #C0B6AB);
-          color: #6B6360;
-          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08), inset 0 -2px 0 rgba(0, 0, 0, 0.08);
-        }
-
-        :root[style*="--bg-primary: #F2EBE3"] .btn-stop:active {
-          background: linear-gradient(to bottom, #C0B6AB, #AFA59A);
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.08), inset 0 1px 3px rgba(0, 0, 0, 0.12);
-        }
-
-        /* Solarized STOP button */
-        :root[style*="--bg-primary: #002b36"] .btn-stop {
-          background: linear-gradient(to bottom, #586e75, #073642);
-          color: #93a1a1;
-          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3), 0 1px 3px rgba(0, 0, 0, 0.2), inset 0 -2px 0 rgba(0, 0, 0, 0.4);
-        }
-
-        :root[style*="--bg-primary: #002b36"] .btn-stop:active {
-          background: linear-gradient(to bottom, #073642, #002b36);
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2), inset 0 1px 3px rgba(0, 0, 0, 0.5);
-        }
-
-        .modal-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(8px); display: flex; align-items: flex-end; justify-content: center; z-index: 1000; }
-        .game-over-modal { background: var(--bg-primary); width: 100%; max-width: 100%; border-radius: 24px 24px 0 0; padding: 32px 24px calc(var(--safe-area-bottom) + 24px); max-height: 85vh; overflow-y: auto; }
-        .info-modal { background: var(--bg-primary); width: 100%; max-width: 360px; border-radius: 0.75rem; padding: 0; border: 1px solid var(--color-border); max-height: calc(100vh - 80px); display: flex; flex-direction: column; overflow: hidden; }
-        .info-header { display: flex; justify-content: space-between; align-items: center; padding: 24px 24px 16px; border-bottom: 1px solid var(--color-border); flex-shrink: 0; position: sticky; top: 0; background: var(--bg-primary); z-index: 10; }
-        .info-header h2 { font-size: 1.5rem; font-weight: 800; color: var(--color-text); }
-        .info-content { display: flex; flex-direction: column; gap: 20px; padding: 24px; overflow-y: auto; flex: 1; }
-        .info-item h3 { font-size: 1rem; font-weight: 700; color: var(--color-text); margin-bottom: 6px; }
-        .info-item p, .info-item ul { font-size: 0.9rem; color: var(--color-text-secondary); margin: 0; line-height: 1.5; }
-        .info-item ul { padding-left: 20px; margin-top: 4px; }
-        .info-item.intro { background: linear-gradient(135deg, rgba(14, 124, 123, 0.1) 0%, rgba(14, 124, 123, 0.05) 100%); padding: 16px; border-radius: 0.75rem; border: 1px solid rgba(14, 124, 123, 0.3); }
-        .info-item.intro h3 { color: var(--color-green); font-size: 1rem; }
-        .info-item.warning { background: rgba(214, 34, 70, 0.08); padding: 12px 16px; border-radius: 0.75rem; border: 1px solid rgba(214, 34, 70, 0.3); }
-        .info-item.warning h3 { color: var(--color-red); }
-        .info-item.warning p, .info-item.warning li { color: var(--color-text-secondary); }
-        .info-item.challenge { background: var(--bg-tertiary); padding: 16px; border-radius: 0.75rem; border: 1px solid var(--color-border); text-align: center; }
-        .info-item.challenge h3 { color: var(--color-text); }
-        .info-item .good-luck { font-weight: 700; color: var(--color-green); margin-top: 8px; font-style: italic; }
-
-        /* Reset Confirmation Modal */
-        .reset-confirm-modal { background: var(--bg-primary); width: 90%; max-width: 400px; border-radius: 16px; padding: 28px 24px 24px; border: 1px solid var(--color-border); text-align: center; }
-        .reset-modal-icon { font-size: 3rem; margin-bottom: 12px; }
-        .reset-modal-title { font-size: 1.25rem; font-weight: 800; color: var(--color-text); margin: 0 0 20px 0; }
-        .reset-modal-content { display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px; }
-        .reset-info-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: var(--bg-tertiary); border-radius: 8px; text-align: left; font-size: 0.9rem; color: var(--color-text-secondary); }
-        .reset-info-item.highlight { background: rgba(255, 191, 0, 0.1); border: 1px solid rgba(255, 191, 0, 0.3); }
-        .reset-icon { font-size: 1.2rem; flex-shrink: 0; }
-        .reset-modal-actions { display: flex; gap: 12px; }
-        .btn-reset-cancel { flex: 1; padding: 12px 20px; border: 1px solid var(--color-border); background: var(--bg-secondary); color: var(--color-text); border-radius: 8px; font-size: 0.95rem; font-weight: 700; cursor: pointer; transition: all 0.2s; }
-        .btn-reset-cancel:hover { background: var(--bg-tertiary); }
-        .btn-reset-cancel:active { transform: scale(0.98); }
-        .btn-reset-confirm { flex: 1; padding: 12px 20px; border: none; background: var(--color-red); color: white; border-radius: 8px; font-size: 0.95rem; font-weight: 700; cursor: pointer; transition: all 0.2s; }
-        .btn-reset-confirm:hover { background: #dc2626; }
-        .btn-reset-confirm:active { transform: scale(0.98); }
-
-        .modal-pill { width: 48px; height: 6px; background: var(--color-border); border-radius: 3px; position: absolute; top: 16px; left: 50%; transform: translateX(-50%); }
-        .text-success { color: var(--color-green); }
-        .text-danger { color: var(--color-red); }
-
-        /* History Styles */
-
-        .history-item {
-           display: flex;
-           justify-content: space-between;
-           align-items: center;
-           padding: 16px;
-           background: var(--bg-tertiary);
-           border-radius: 0.75rem;
-           border: 1px solid var(--color-border);
-        }
-
-        .history-title {
-           font-size: 1rem;
-           font-weight: 700;
-           color: var(--color-text);
-           display: block;
-           margin-bottom: 4px;
-           font-family: 'Cormorant Garamond', serif;
-        }
-
-        .history-date {
-           font-size: 0.75rem;
-           color: var(--color-text-secondary);
-           font-weight: 500;
-        }
-
-        .history-return {
-           font-size: 1.1rem;
-           font-weight: 800;
-        }
-
-        .empty-history {
-           text-align: center;
-           padding: 40px;
-           color: var(--color-text-secondary);
-        }
-
-        .btn-clear {
-           margin-top: 10px;
-           background: var(--bg-tertiary);
-           color: var(--color-text);
-           border: 1px solid var(--color-border);
-           padding: 16px;
-           border-radius: 0.75rem;
-           font-weight: 700;
-           display: flex;
-           align-items: center;
-           justify-content: center;
-           gap: 8px;
-        }
-
-        /* Academy Styles */
-        .academy-grid {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 12px;
-        }
-
-        .academy-card {
-          background: var(--bg-tertiary);
-          border-radius: 0.75rem;
-          padding: 16px;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          text-align: center;
-          border: 1px solid var(--color-border);
-        }
-
-        /* Profile Page Styles */
-
-        .profile-avatar-large {
-          width: 80px;
-          height: 80px;
-          background: var(--bg-tertiary);
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          margin: 0 auto 16px;
-        }
-
-        .profile-header h2 {
-          font-size: 1.5rem;
-          font-weight: 800;
-          color: var(--color-text);
-          margin: 0 0 4px 0;
-        }
-
-        .member-since {
-          font-size: 0.85rem;
-          color: var(--color-text-secondary);
-          font-weight: 500;
-        }
-
-        .profile-balance-card {
-          background: var(--bg-tertiary);
-          border: 1px solid var(--color-border);
-          border-radius: 0.75rem;
-          padding: 24px;
-          margin-bottom: 24px;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-        }
-
-        .balance-label {
-          font-size: 0.75rem;
-          color: var(--color-text-secondary);
-          font-weight: 600;
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
-          margin-bottom: 8px;
-        }
-
-        .balance-amount {
-          font-size: 2rem;
-          font-weight: 900;
-          color: var(--color-text);
-          margin-bottom: 4px;
-        }
-
-        .balance-return {
-          font-size: 0.9rem;
-          font-weight: 700;
-        }
-
-        .balance-detail {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 4px;
-          margin-top: 12px;
-          padding-top: 12px;
-          border-top: 1px solid var(--color-border);
-          width: 100%;
-        }
-
-        .balance-detail span {
-          font-size: 0.8rem;
-          color: var(--color-text-secondary);
-          font-weight: 600;
-        }
-
-        .profile-actions {
-          display: flex;
-          flex-direction: column;
-          gap: 12px;
-        }
-
-        .profile-action-btn {
-          background: var(--bg-tertiary);
-          border: 1px solid var(--color-border);
-          border-radius: 0.75rem;
-          padding: 16px 20px;
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          cursor: pointer;
-          transition: all 0.15s;
-          font-size: 0.95rem;
-          font-weight: 600;
-          color: var(--color-text);
-        }
-
-        .profile-action-btn:active {
-          background: var(--color-border);
-          transform: scale(0.98);
-        }
-
-        .profile-action-btn span {
-          flex: 1;
-        }
-
-        .toggle-switch {
-          width: 44px;
-          height: 24px;
-          background: var(--color-border);
-          border-radius: 12px;
-          position: relative;
-          transition: background 0.3s;
-        }
-
-        .toggle-switch.active {
-          background: var(--color-green);
-        }
-
-        .toggle-knob {
-          width: 20px;
-          height: 20px;
-          background: #FFF;
-          border-radius: 50%;
-          position: absolute;
-          top: 2px;
-          left: 2px;
-          transition: left 0.3s;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        .toggle-switch.active .toggle-knob {
-          left: 22px;
-        }
-
-        .academy-svg-wrapper {
-          width: 120px;
-          height: 75px;
-          margin-bottom: 12px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-
-        .academy-svg {
-          width: 100%;
-          height: 100%;
-        }
-
-        .academy-info h3 {
-          font-size: 0.9rem;
-          font-weight: 700;
-          color: var(--color-text);
-          margin-bottom: 4px;
-        }
-
-        .academy-info p {
-          font-size: 0.7rem;
-          color: var(--color-text-secondary);
-          line-height: 1.3;
-        }
-
-        /* Summary Modal Additions */
-        .game-over-modal.cream-theme { background: var(--bg-primary); color: var(--color-text); text-align: center; padding-top: 32px; border: 1px solid var(--color-border); border-bottom: none; }
-        .title-section { margin-bottom: 30px; }
-        .summary-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 2px; opacity: 0.6; margin-bottom: 8px; font-weight: 600; }
-        .trading-title { font-size: 2.2rem; line-height: 1.1; font-family: 'Cormorant Garamond', serif; font-weight: 700; color: var(--color-text); margin: 0; }
-        .stats-row { display: flex; justify-content: center; align-items: center; gap: 16px; margin-bottom: 30px; padding: 16px; background: var(--bg-tertiary); border-radius: 0.75rem; border: 1px solid var(--color-border); }
-        .mini-stat { display: flex; flex-direction: column; align-items: center; }
-        .mini-stat .label { font-size: 0.6rem; font-weight: 700; color: var(--color-text-tertiary); letter-spacing: 0.5px; margin-bottom: 2px; text-transform: uppercase; }
-        .mini-stat .value { font-size: 1.1rem; font-weight: 800; }
-        .pos { color: var(--color-green); }
-        .neg { color: var(--color-red); }
-        .mini-divider { width: 1px; height: 24px; background: var(--color-border); }
-        .reveal-section-compact {
-          margin-bottom: 24px;
-          padding: 16px;
-          background: rgba(0,0,0,0.02);
-          border-radius: 0.75rem;
-        }
-        .stock-reveal {
-          font-size: 1.4rem;
-          font-weight: 900;
-          margin: 0 0 4px 0;
-          color: var(--color-text);
-        }
-        .stock-name-reveal {
-          font-size: 0.85rem;
-          color: var(--color-text-secondary);
-          margin: 0 0 8px 0;
-        }
-        .date-reveal {
-          font-size: 0.75rem;
-          color: var(--color-text-tertiary);
-          margin: 0;
-          font-weight: 600;
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
-        }
-
-        .btn-primary {
-          background: var(--color-text);
-          color: var(--bg-primary);
-          height: 72px;
-          font-size: 1.1rem;
-          font-weight: 700;
-          border-radius: 0.75rem;
-          margin-top: 10px;
-          width: 100%;
-          border: none;
-          cursor: pointer;
-          text-transform: uppercase;
-          letter-spacing: 1px;
-        }
-
-        .btn-primary:active {
-          background: var(--color-text-secondary);
-        }
-
-        [data-theme="dark"] .btn-primary {
-          background: #FFFFFF;
-          color: #000000;
-        }
-
-        [data-theme="dark"] .btn-primary:active {
-          background: #E0E0E0;
-        }
-
-        /* Zoom Controls - Floating */
-        .zoom-controls-floating {
-          position: absolute;
-          top: 8px;
-          left: 8px;
-          display: flex;
-          flex-direction: column;
-          gap: 4px;
-          z-index: 100;
-        }
-
-        /* Info Button - Floating */
-        .info-btn-floating {
-          position: absolute;
-          bottom: 8px;
-          left: 8px;
-          z-index: 100;
-        }
-
-        .zoom-btn-mini {
-          background: rgba(255, 255, 255, 0.9);
-          border: 1px solid var(--color-border);
-          border-radius: 6px;
-          width: 28px;
-          height: 28px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          cursor: pointer;
-          transition: all 0.15s;
-          color: var(--color-text);
-          box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        }
-
-        [data-theme="dark"] .zoom-btn-mini {
-          background: rgba(60, 60, 60, 0.95);
-          border: 1px solid rgba(100, 100, 100, 0.5);
-          color: #FFFFFF;
-          box-shadow: 0 1px 3px rgba(0,0,0,0.3);
-        }
-
-        .zoom-btn-mini:active {
-          background: var(--bg-tertiary);
-          transform: scale(0.95);
-        }
-
-        [data-theme="dark"] .zoom-btn-mini:active {
-          background: rgba(80, 80, 80, 0.95);
-        }
-
-        .zoom-btn-mini:disabled {
-          opacity: 0.4;
-          cursor: not-allowed;
-        }
-
-        .zoom-btn:active {
-          transform: scale(0.95);
-          background: var(--color-border);
-        }
-
-        .zoom-btn:disabled {
-          opacity: 0.3;
-          cursor: not-allowed;
-        }
-
-        .zoom-btn:disabled:active {
-          transform: none;
-        }
-
-        .zoom-label {
-          font-size: 0.8rem;
-          font-weight: 700;
-          color: var(--color-text-secondary);
-          min-width: 50px;
-          text-align: center;
-        }
-
-        /* Bottom Navigation */
-        .bottom-nav {
-          position: fixed;
-          bottom: 0;
-          left: 50%;
-          transform: translateX(-50%);
-          width: 100%;
-          max-width: min(430px, 100vw);
-          height: calc(var(--controls-height) + var(--safe-area-bottom));
-          background: var(--bg-primary);
-          border-top: 1px solid var(--color-border);
-          display: flex;
-          justify-content: space-around;
-          align-items: flex-start;
-          padding: 8px 2% 0;
-          padding-bottom: var(--safe-area-bottom);
-          z-index: 1000;
-          box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
-        }
-
-        .nav-item {
-          flex: 1;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          gap: 2px;
-          background: transparent;
-          border: none;
-          padding: 6px 2px;
-          cursor: pointer;
-          color: var(--color-text-tertiary);
-          transition: all 0.15s;
-          min-width: 0;
-        }
-
-        .nav-item svg {
-          flex-shrink: 0;
-        }
-
-        .nav-item span {
-          font-size: 0.6rem;
-          font-weight: 700;
-          text-transform: uppercase;
-          letter-spacing: 0.3px;
-          white-space: nowrap;
-        }
-
-        .nav-item.active {
-          color: var(--color-text);
-        }
-
-        .nav-item:active {
-          transform: scale(0.95);
-        }
-
-        /* Tab Content Wrapper */
-        .tab-content-wrapper {
-          flex: 1;
-          display: flex;
-          flex-direction: column;
-          padding: 4%;
-          overflow-y: auto;
-          padding-bottom: calc(var(--controls-height) + var(--safe-area-bottom) + 1rem);
-        }
-
-        .tab-header {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          text-align: center;
-          margin-bottom: 2rem;
-          padding-bottom: 1rem;
-          border-bottom: 1px solid var(--color-border);
-        }
-
-        .tab-header h2 {
-          font-size: 1.5rem;
-          font-weight: 800;
-          color: var(--color-text);
-          margin: 0.5rem 0 0.25rem 0;
-        }
-
-        .tab-subtitle {
-          font-size: 0.85rem;
-          color: var(--color-text-secondary);
-          margin: 0;
-        }
-
-        .profile-header-inline {
-          text-align: center;
-          padding: 20px 0;
-          margin-bottom: 1.5rem;
-          border-bottom: 1px solid var(--color-border);
-        }
-
-        .profile-header-inline h2 {
-          font-size: 1.5rem;
-          font-weight: 800;
-          color: var(--color-text);
-          margin: 0.75rem 0 0.25rem 0;
-        }
-
-        .equity-chart-card {
-          background: var(--bg-secondary);
-          border: 1px solid var(--color-border);
-          border-radius: 12px;
-          padding: 16px;
-          margin-bottom: 16px;
-          display: flex;
-          flex-direction: column;
-          gap: 12px;
-        }
-
-        .equity-stats {
-          display: flex;
-          gap: 16px;
-        }
-
-        .equity-stat {
-          flex: 1;
-          display: flex;
-          flex-direction: column;
-          gap: 4px;
-        }
-
-        .equity-label {
-          font-size: 0.75rem;
-          color: var(--color-text-secondary);
-          font-weight: 600;
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
-        }
-
-        .equity-value {
-          font-size: 1.25rem;
-          font-weight: 700;
-        }
-
-        .equity-value.pos {
-          color: #22c55e;
-        }
-
-        .equity-value.neg {
-          color: #ef4444;
-        }
-
-        .history-list-inline {
-          display: flex;
-          flex-direction: column;
-          gap: 12px;
-        }
-
-        /* Chat Container */
-        .chat-container {
-          flex: 1;
-          display: flex;
-          flex-direction: column;
-          background: var(--bg-secondary);
-          overflow: hidden;
-        }
-
-        .chat-header {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          padding: 4%;
-          background: var(--bg-primary);
-          border-bottom: 1px solid var(--color-border);
-        }
-
-        .chat-header h2 {
-          font-size: 1.1rem;
-          font-weight: 800;
-          color: var(--color-text);
-          margin: 0;
-        }
-
-        .chat-subtitle {
-          font-size: 0.75rem;
-          color: var(--color-text-secondary);
-          margin: 0;
-        }
-
-        .chat-messages {
-          flex: 1;
-          overflow-y: auto;
-          padding: 4%;
-          padding-bottom: calc(var(--controls-height) * 2 + var(--safe-area-bottom) + 1rem);
-        }
-
-        .welcome-message {
-          display: flex;
-          gap: 12px;
-          align-items: flex-start;
-        }
-
-        .ai-avatar {
-          width: 40px;
-          height: 40px;
-          background: var(--bg-primary);
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 1.5rem;
-          flex-shrink: 0;
-          border: 1px solid var(--color-border);
-        }
-
-        .message-bubble {
-          background: var(--bg-primary);
-          border: 1px solid var(--color-border);
-          border-radius: 0.75rem;
-          padding: 16px;
-          flex: 1;
-        }
-
-        .message-bubble p {
-          margin: 0 0 12px 0;
-          color: var(--color-text);
-          font-size: 0.9rem;
-          line-height: 1.5;
-        }
-
-        .message-bubble p:last-child {
-          margin-bottom: 0;
-        }
-
-        .message-bubble ul {
-          margin: 8px 0;
-          padding-left: 20px;
-          color: var(--color-text-secondary);
-          font-size: 0.85rem;
-        }
-
-        .message-bubble li {
-          margin: 6px 0;
-        }
-
-        .coming-soon {
-          margin-top: 16px !important;
-          padding: 12px;
-          background: var(--bg-tertiary);
-          border-radius: 0.5rem;
-          font-weight: 700;
-          color: var(--color-text-secondary) !important;
-          font-size: 0.8rem !important;
-          text-align: center;
-        }
-
-        .chat-input-area {
-          position: fixed;
-          bottom: var(--controls-height);
-          left: 50%;
-          transform: translateX(-50%);
-          width: 100%;
-          max-width: min(430px, 100vw);
-          display: flex;
-          gap: 8px;
-          padding: 12px 4%;
-          background: var(--bg-primary);
-          border-top: 1px solid var(--color-border);
-          z-index: 900;
-        }
-
-        .chat-input {
-          flex: 1;
-          padding: 12px 16px;
-          border: 1px solid var(--color-border);
-          border-radius: 0.75rem;
-          background: var(--bg-tertiary);
-          color: var(--color-text);
-          font-family: inherit;
-          font-size: 0.9rem;
-        }
-
-        .chat-input:disabled {
-          opacity: 0.5;
-          cursor: not-allowed;
-        }
-
-        .chat-input::placeholder {
-          color: var(--color-text-tertiary);
-        }
-
-        .chat-send-btn {
-          padding: 12px 24px;
-          background: var(--color-text);
-          color: white;
-          border: none;
-          border-radius: 0.75rem;
-          font-weight: 700;
-          font-size: 0.85rem;
-          cursor: pointer;
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
-        }
-
-        .chat-send-btn:disabled {
-          opacity: 0.5;
-          cursor: not-allowed;
-        }
-
-        /* Theme Selector Styles */
-        .theme-selector {
-          background: var(--bg-tertiary);
-          border: 1px solid var(--color-border);
-          border-radius: 0.75rem;
-          padding: 16px 20px;
-          display: flex;
-          flex-direction: column;
-          gap: 12px;
-        }
-
-        .theme-selector-header {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          font-size: 0.95rem;
-          font-weight: 600;
-          color: var(--color-text);
-        }
-
-        .theme-options {
-          display: grid;
-          grid-template-columns: repeat(2, 1fr);
-          gap: 8px;
-        }
-
-        .theme-option {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 6px;
-          padding: 12px 8px;
-          background: var(--bg-primary);
-          border: 2px solid var(--color-border);
-          border-radius: 0.75rem;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          color: var(--color-text-secondary);
-        }
-
-        .theme-option span {
-          font-size: 0.65rem;
-          font-weight: 700;
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
-        }
-
-        .theme-option:hover {
-          border-color: var(--color-text-tertiary);
-        }
-
-        .theme-option.active {
-          border-color: var(--color-green);
-          background: rgba(14, 124, 123, 0.1);
-          color: var(--color-green);
-        }
-
-        [data-theme="dark"] .theme-option.active {
-          background: rgba(34, 197, 94, 0.15);
-        }
-
-        .theme-option:active {
-          transform: scale(0.95);
-        }
-
-        /* Smooth theme transitions */
-        .mobile-shell,
-        .app-container,
-        .header,
-        .main-content,
-        .bottom-nav,
-        .controls,
-        .modal-overlay,
-        .game-over-modal,
-        .info-modal,
-        .stat-card,
-        .position-bar,
-        .positions-container,
-        .academy-card,
-        .history-item,
-        .profile-balance-card,
-        .profile-action-btn,
-        .theme-selector,
-        .theme-option,
-        .btn,
-        .zoom-btn-mini {
-          transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
-        }
-      `}</style>
+      <style>{GLOBAL_STYLES}</style>
+      <style>{UI_STYLES}</style>
+      <style>{MODAL_STYLES}</style>
     </div>
   );
 };

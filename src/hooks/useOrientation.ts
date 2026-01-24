@@ -1,30 +1,46 @@
 import { useState, useEffect } from 'react';
 
-export type OrientationType = 'portrait' | 'landscape';
+export interface OrientationState {
+  isLandscape: boolean;
+  isTablet: boolean;
+}
 
-export const useOrientation = (): OrientationType => {
-  const [orientation, setOrientation] = useState<OrientationType>(() => {
-    // Initial orientation check
-    return window.innerWidth > window.innerHeight ? 'landscape' : 'portrait';
+export const useOrientation = (): OrientationState => {
+  const [state, setState] = useState<OrientationState>(() => {
+    // Initial check
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+    return {
+      isLandscape: width > height,
+      isTablet: Math.min(width, height) >= 768
+    };
   });
 
   useEffect(() => {
-    const handleOrientationChange = () => {
-      const newOrientation = window.innerWidth > window.innerHeight ? 'landscape' : 'portrait';
-      setOrientation(newOrientation);
+    const handleResize = () => {
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+
+      setState({
+        isLandscape: width > height,
+        isTablet: Math.min(width, height) >= 768
+      });
     };
 
     // Listen for resize events (works on all platforms)
-    window.addEventListener('resize', handleOrientationChange);
+    window.addEventListener('resize', handleResize);
 
     // Listen for orientation change events (mobile specific)
-    window.addEventListener('orientationchange', handleOrientationChange);
+    window.addEventListener('orientationchange', handleResize);
+
+    // Initial check in case something changed
+    handleResize();
 
     return () => {
-      window.removeEventListener('resize', handleOrientationChange);
-      window.removeEventListener('orientationchange', handleOrientationChange);
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('orientationchange', handleResize);
     };
   }, []);
 
-  return orientation;
+  return state;
 };

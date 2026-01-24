@@ -38,6 +38,7 @@ export const Chart: React.FC<ChartProps> = ({ data, zoom = 1 }) => {
           candleDown: '#FF6B6B',
         };
       case 'sandstone':
+      default:
         return {
           background: '#F2EBE3',
           backgroundOverlay: 'rgba(242, 235, 227, 0.95)',
@@ -45,25 +46,6 @@ export const Chart: React.FC<ChartProps> = ({ data, zoom = 1 }) => {
           labelText: '#8C837A',
           candleUp: '#2D7A5A',
           candleDown: '#C85A54',
-        };
-      case 'dark':
-        return {
-          background: '#1A1A1A',
-          backgroundOverlay: 'rgba(26, 26, 26, 0.95)',
-          gridLine: '#333333',
-          labelText: '#707070',
-          candleUp: '#22c55e',
-          candleDown: '#ef4444',
-        };
-      case 'light':
-      default:
-        return {
-          background: '#FFFFFF',
-          backgroundOverlay: 'rgba(255, 255, 255, 0.95)',
-          gridLine: '#F2F2F2',
-          labelText: '#8E8E93',
-          candleUp: '#22c55e',
-          candleDown: '#ef4444',
         };
     }
   };
