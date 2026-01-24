@@ -17,13 +17,14 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boole
 import { appStyles, Colors, GLOBAL_STYLES, LOADING_STYLES, UI_STYLES, MODAL_STYLES } from './styles/appStyles';
 import { ACADEMY_PATTERNS, CHART_PATTERNS } from './constants/patterns';
 import type { ChartPattern } from './constants/patterns';
+import { POSITION_SIZING_GUIDES, SCALE_IN_OUT_GUIDES } from './constants/guides';
 import { Chart } from './components/Chart';
 import PositionSizeCalculator from './components/PositionSizeCalculator';
 import { fetchRandomStockData } from './utils/data';
 import type { StockData } from './utils/data';
 import { useTradingSession, resetSavedBalance } from './hooks/useTradingSession';
 import { useOrientation } from './hooks/useOrientation';
-import { SkipForward, Square, TrendingUp, TrendingDown, Loader2, Info, X, Trash2, Volume2, VolumeX, ZoomIn, ZoomOut, BarChart3, BookOpen, Clock, User, Plus, Minus, Calculator, ChevronDown, ChevronUp, Sun, Moon, Leaf } from 'lucide-react';
+import { SkipForward, Square, TrendingUp, TrendingDown, Loader2, Info, X, Trash2, Volume2, VolumeX, ZoomIn, ZoomOut, BarChart3, BookOpen, Clock, User, Plus, Minus, Calculator, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, ArrowLeft, Sun, Moon, Leaf } from 'lucide-react';
 import { ScreenOrientation } from '@capacitor/screen-orientation';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -73,8 +74,11 @@ const AppContent: React.FC = () => {
   const [soundEnabled, setSoundEnabled] = useState(soundService.isEnabled());
   const [tradeAmount, setTradeAmount] = useState(1000);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
-  const [academySection, setAcademySection] = useState<'candle' | 'chart'>('candle');
+  const [academySection, setAcademySection] = useState<'candle' | 'chart' | 'risk'>('candle');
   const [selectedChartPattern, setSelectedChartPattern] = useState<ChartPattern | null>(null);
+  const [riskCategory, setRiskCategory] = useState<'sizing' | 'scaling' | null>(null);
+  const [riskGuideIndex, setRiskGuideIndex] = useState(0);
+  const riskCarouselRef = useRef<HTMLDivElement>(null);
 
   // Check if in landscape mode and on trade screen
   const isLandscapeTrading = orientation.isLandscape && activeTab === 'trade';
@@ -309,7 +313,7 @@ const AppContent: React.FC = () => {
   return (
     <div className={`mobile-shell ${isLandscapeTrading ? 'landscape-mode' : ''}`}>
       <div className="app-container">
-        {activeTab !== 'calculator' && !isLandscapeTrading && (
+        {activeTab !== 'calculator' && activeTab !== 'academy' && !isLandscapeTrading && (
           <header className="header compact">
             <div className="stats-grid">
               <div className="stat-card">
@@ -539,11 +543,11 @@ const AppContent: React.FC = () => {
           )}
 
           {activeTab === 'academy' && (
-            <div className="tab-content-wrapper">
+            <div className="tab-content-wrapper academy-mode">
               <div className="tab-header">
                 <BookOpen size={28} />
-                <h2>Pattern Academy</h2>
-                <p className="tab-subtitle">Master trading patterns</p>
+                <h2>Candle Academy</h2>
+                <p className="tab-subtitle">Learn to become next Candle Master</p>
               </div>
 
               {/* Academy Section Tabs */}
@@ -559,6 +563,12 @@ const AppContent: React.FC = () => {
                   onClick={() => setAcademySection('chart')}
                 >
                   Chart Patterns
+                </button>
+                <button
+                  className={`academy-tab ${academySection === 'risk' ? 'active' : ''}`}
+                  onClick={() => { setAcademySection('risk'); setRiskCategory(null); }}
+                >
+                  Risk Mgmt
                 </button>
               </div>
 
@@ -612,6 +622,258 @@ const AppContent: React.FC = () => {
                       </div>
                     );
                   })}
+                </div>
+              )}
+
+              {/* Risk Management */}
+              {academySection === 'risk' && (
+                <div className="risk-section">
+                  {riskCategory === null ? (
+                    <div className="risk-category-selection">
+                      <button
+                        className="risk-category-card"
+                        onClick={() => { setRiskCategory('sizing'); setRiskGuideIndex(0); }}
+                      >
+                        <span className="risk-category-icon">📊</span>
+                        <div className="risk-category-info">
+                          <h4>Position Sizing</h4>
+                          <p>Learn proper position sizing</p>
+                        </div>
+                        <span className="risk-category-count">{POSITION_SIZING_GUIDES.length} tips</span>
+                      </button>
+                      <button
+                        className="risk-category-card"
+                        onClick={() => { setRiskCategory('scaling'); setRiskGuideIndex(0); }}
+                      >
+                        <span className="risk-category-icon">📈</span>
+                        <div className="risk-category-info">
+                          <h4>Scale In/Out</h4>
+                          <p>Build & exit positions smartly</p>
+                        </div>
+                        <span className="risk-category-count">{SCALE_IN_OUT_GUIDES.length} tips</span>
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="risk-carousel-header">
+                        <button className="risk-back-btn" onClick={() => setRiskCategory(null)}>
+                          <ArrowLeft size={18} />
+                          <span>Back</span>
+                        </button>
+                        <span className="risk-carousel-title">
+                          {riskCategory === 'sizing' ? 'Position Sizing' : 'Scale In/Out'}
+                        </span>
+                      </div>
+
+                      <div className="risk-carousel-container">
+                        <button
+                          className="risk-carousel-arrow left"
+                          onClick={() => {
+                            const newIndex = Math.max(0, riskGuideIndex - 1);
+                            setRiskGuideIndex(newIndex);
+                            if (riskCarouselRef.current) {
+                              riskCarouselRef.current.scrollTo({ left: riskCarouselRef.current.offsetWidth * newIndex, behavior: 'smooth' });
+                            }
+                          }}
+                          disabled={riskGuideIndex === 0}
+                        >
+                          <ChevronLeft size={20} />
+                        </button>
+
+                        <div
+                          className="risk-carousel-track"
+                          ref={riskCarouselRef}
+                          onScroll={() => {
+                            if (riskCarouselRef.current) {
+                              const cardWidth = riskCarouselRef.current.offsetWidth;
+                              const newIndex = Math.round(riskCarouselRef.current.scrollLeft / cardWidth);
+                              const guides = riskCategory === 'sizing' ? POSITION_SIZING_GUIDES : SCALE_IN_OUT_GUIDES;
+                              if (newIndex !== riskGuideIndex && newIndex >= 0 && newIndex < guides.length) {
+                                setRiskGuideIndex(newIndex);
+                              }
+                            }
+                          }}
+                        >
+                          {(riskCategory === 'sizing' ? POSITION_SIZING_GUIDES : SCALE_IN_OUT_GUIDES).map((guide: any) => (
+                            <div key={guide.id} className="risk-guide-card">
+                              <span className="risk-guide-icon">{guide.icon}</span>
+                              <h4 className="risk-guide-title">{guide.title}</h4>
+                              {guide.subtitle && <p className="risk-guide-subtitle">{guide.subtitle}</p>}
+                              {guide.content && <p className="risk-guide-content">{guide.content}</p>}
+
+                              {guide.bullets && (
+                                <ul className="risk-guide-bullets">
+                                  {guide.bullets.map((bullet: string, i: number) => (
+                                    <li key={i}>{bullet}</li>
+                                  ))}
+                                </ul>
+                              )}
+
+                              {guide.dosDonts && (
+                                <div className="risk-dos-donts">
+                                  <p className="dont">❌ Never: {guide.dosDonts.dont}</p>
+                                  <p className="do">✓ Always: {guide.dosDonts.do}</p>
+                                </div>
+                              )}
+
+                              {guide.examples && (
+                                <div className="risk-examples">
+                                  {guide.examples.map((ex: any, i: number) => (
+                                    <div key={i} className="risk-example-row">
+                                      <span className="ratio">{ex.ratio}</span>
+                                      <span className="desc">{ex.winRate}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+
+                              {guide.leverageExamples && (
+                                <div className="risk-leverage">
+                                  {guide.leverageExamples.map((ex: any, i: number) => (
+                                    <div key={i} className="risk-leverage-row">
+                                      <span className="lev">{ex.leverage}</span>
+                                      <span className="impact">{ex.impact}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+
+                              {guide.warnings && (
+                                <div className="risk-warnings">
+                                  {guide.warnings.map((w: string, i: number) => (
+                                    <p key={i}>{i === 0 ? '⚠️' : '💡'} {w}</p>
+                                  ))}
+                                </div>
+                              )}
+
+                              {guide.scaleExplanation && (
+                                <div className="risk-scale-explanation">
+                                  <div className="scale-item scale-in">
+                                    <span className="scale-label">{guide.scaleExplanation.scaleIn.label}</span>
+                                    <span className="scale-desc">{guide.scaleExplanation.scaleIn.desc}</span>
+                                    <span className="scale-visual">{guide.scaleExplanation.scaleIn.visual}</span>
+                                  </div>
+                                  <div className="scale-item scale-out">
+                                    <span className="scale-label">{guide.scaleExplanation.scaleOut.label}</span>
+                                    <span className="scale-desc">{guide.scaleExplanation.scaleOut.desc}</span>
+                                    <span className="scale-visual">{guide.scaleExplanation.scaleOut.visual}</span>
+                                  </div>
+                                </div>
+                              )}
+
+                              {guide.benefits && (
+                                <div className="risk-benefits">
+                                  <p className="benefits-title">Why it works:</p>
+                                  {guide.benefits.map((b: string, i: number) => (
+                                    <p key={i} className="benefit-item">✓ {b}</p>
+                                  ))}
+                                </div>
+                              )}
+
+                              {guide.scaleExample && (
+                                <div className="risk-scale-example">
+                                  <p className="example-title">{guide.scaleExample.title}</p>
+                                  <div className="example-steps">
+                                    {guide.scaleExample.steps.map((step: any, i: number) => (
+                                      <div key={i} className="step-row">
+                                        <span className="step-action">{step.action}</span>
+                                        <span className="step-percent">{step.percent}</span>
+                                        <span className="step-price">{step.price}</span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                  <p className="example-result">{guide.scaleExample.result}</p>
+                                </div>
+                              )}
+
+                              {guide.pullbackInfo && (
+                                <div className="risk-pullback-info">
+                                  <p className="pullback-intro">{guide.pullbackInfo.intro}</p>
+                                  <div className="pullback-reasons">
+                                    {guide.pullbackInfo.reasons.map((r: string, i: number) => (
+                                      <p key={i} className="pullback-reason">→ {r}</p>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+
+                              {guide.qualityChecklist && (
+                                <div className="risk-quality-checklist">
+                                  <p className="checklist-title">Quality pullback checklist:</p>
+                                  {guide.qualityChecklist.map((item: string, i: number) => (
+                                    <p key={i} className="checklist-item good">✓ {item}</p>
+                                  ))}
+                                </div>
+                              )}
+
+                              {guide.redFlags && (
+                                <div className="risk-red-flags">
+                                  <p className="flags-title">Red flags - DON'T add:</p>
+                                  {guide.redFlags.map((item: string, i: number) => (
+                                    <p key={i} className="flag-item">✗ {item}</p>
+                                  ))}
+                                </div>
+                              )}
+
+                              {guide.rules && (
+                                <div className="risk-rules">
+                                  <div className="rules-never">
+                                    <p className="rules-label">❌ NEVER:</p>
+                                    {guide.rules.never.map((r: string, i: number) => (
+                                      <p key={i} className="rule-item">{r}</p>
+                                    ))}
+                                  </div>
+                                  <div className="rules-always">
+                                    <p className="rules-label">✓ ALWAYS:</p>
+                                    {guide.rules.always.map((r: string, i: number) => (
+                                      <p key={i} className="rule-item">{r}</p>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+
+                              {guide.keyPoint && (
+                                <div className="risk-keypoint">
+                                  <strong>Key Rule:</strong> {guide.keyPoint}
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+
+                        <button
+                          className="risk-carousel-arrow right"
+                          onClick={() => {
+                            const guides = riskCategory === 'sizing' ? POSITION_SIZING_GUIDES : SCALE_IN_OUT_GUIDES;
+                            const newIndex = Math.min(guides.length - 1, riskGuideIndex + 1);
+                            setRiskGuideIndex(newIndex);
+                            if (riskCarouselRef.current) {
+                              riskCarouselRef.current.scrollTo({ left: riskCarouselRef.current.offsetWidth * newIndex, behavior: 'smooth' });
+                            }
+                          }}
+                          disabled={riskGuideIndex === (riskCategory === 'sizing' ? POSITION_SIZING_GUIDES : SCALE_IN_OUT_GUIDES).length - 1}
+                        >
+                          <ChevronRight size={20} />
+                        </button>
+                      </div>
+
+                      <div className="risk-carousel-dots">
+                        {(riskCategory === 'sizing' ? POSITION_SIZING_GUIDES : SCALE_IN_OUT_GUIDES).map((_: any, index: number) => (
+                          <button
+                            key={index}
+                            className={`dot ${index === riskGuideIndex ? 'active' : ''}`}
+                            onClick={() => {
+                              setRiskGuideIndex(index);
+                              if (riskCarouselRef.current) {
+                                riskCarouselRef.current.scrollTo({ left: riskCarouselRef.current.offsetWidth * index, behavior: 'smooth' });
+                              }
+                            }}
+                          />
+                        ))}
+                      </div>
+                      <p className="risk-swipe-hint">Swipe for more tips</p>
+                    </>
+                  )}
                 </div>
               )}
             </div>
