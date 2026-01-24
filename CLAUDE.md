@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Candle Master v1.5.1** is a **Trading Simulator Game & Education Platform**.
+**Candle Master v1.6.0** is a **Trading Simulator Game & Education Platform**.
 - **Core Concept**: Users practice trading on historical data without knowing the stock beforehand (Blind Trading).
 - **Gameplay**:
     - Users see candlesticks, MA indicators (20/50), and Volume.
@@ -19,8 +19,24 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - [x] Core Trading Engine (Blind historical trading)
 - [x] Basic Mobile/Desktop UI
-- [ ] **Tablet Support**: Currently unimplemented.
-- [ ] **Tablet Design Goal**: **Landscape Mode ONLY** for optimal UI layout.
+- [x] Pattern Academy with tabs (Candlestick + Chart Patterns)
+- [x] Chart Patterns with theme-aware images (`public/patterns/`)
+- [ ] **Subscription System**: RevenueCat integration pending
+- [ ] **Tablet Support**: Landscape mode for optimal UI
+
+## Monetization Plan (Freemium, No Ads)
+
+| Feature | Free | Pro |
+|---------|------|-----|
+| Stocks | 20 | 300+ |
+| Games/day | 3 | Unlimited |
+| Candlestick Patterns | 10 | 20 |
+| Chart Patterns | ❌ | ✅ All |
+| Themes | Sandstone | All |
+| Trade History | 5 records | Unlimited |
+
+**Storage**: LocalStorage only (no backend/database)
+**Subscriptions**: RevenueCat (planned)
 
 ## Tech Stack
 
@@ -46,15 +62,24 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
     - **Fallback**: Generates mock geometric brownian motion data if API fails.
 
 ### Application Structure
-- **Core Logic (`App.tsx`)**: Significantly refactored and slimmed down (under 1000 lines). Contains active gameplay logic, tab navigation, and Game Over logic.
-- **Styles (`src/styles/appStyles.ts`)**: Centralized style repository containing Global, UI, and Modal CSS constants.
+- **Core Logic (`App.tsx`)**: Under 1000 lines. Contains gameplay, tab navigation, Pattern Academy, Game Over.
+- **Styles (`src/styles/appStyles.ts`)**: Centralized CSS constants.
+- **Constants (`src/constants/patterns.tsx`)**:
+    - `ACADEMY_PATTERNS`: 20 candlestick patterns (SVG-based)
+    - `CHART_PATTERNS`: Image-based patterns (webp in `public/patterns/`)
 - **Components**:
-    - `Chart.tsx`: SVG-based candlestick chart with MA20/MA50 lines, volume bars, theme-aware colors, horizontal scroll.
+    - `Chart.tsx`: SVG candlestick chart with MA20/MA50, volume bars.
     - `PositionSizeCalculator.tsx`: Risk management tool.
 - **Hooks**:
-    - `useTradingSession.ts`: Core trading state (positions, balance, P&L, game over logic).
-    - `useOrientation.ts`: Device orientation detection.
-- **Theme**: Managed via `ThemeContext`. Supported themes: **Sandstone** (Default), **Midnight**, and **Solarized**.
+    - `useTradingSession.ts`: Core trading state.
+    - `useOrientation.ts`: Device orientation.
+- **Theme**: `ThemeContext` - Sandstone (default), Midnight, Solarized.
+
+### Chart Pattern Images
+- Location: `public/patterns/`
+- Format: `{pattern-name}-l.webp` (light) / `{pattern-name}-d.webp` (dark)
+- Size: 600 x 360 px
+- Current patterns: double-top, double-bottom, ascending-triangle, descending-triangle
 
 ## Common Commands
 
