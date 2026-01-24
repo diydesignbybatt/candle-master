@@ -46,14 +46,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
     - **Fallback**: Generates mock geometric brownian motion data if API fails.
 
 ### Application Structure
-- **Monolithic `App.tsx`** (~2700 lines): Contains core logic, Academy patterns (20 candlestick patterns), stock selector, trading journal, game over screen.
+- **Core Logic (`App.tsx`)**: Significantly refactored and slimmed down (under 1000 lines). Contains active gameplay logic, tab navigation, and Game Over logic.
+- **Styles (`src/styles/appStyles.ts`)**: Centralized style repository containing Global, UI, and Modal CSS constants.
 - **Components**:
     - `Chart.tsx`: SVG-based candlestick chart with MA20/MA50 lines, volume bars, theme-aware colors, horizontal scroll.
     - `PositionSizeCalculator.tsx`: Risk management tool.
 - **Hooks**:
     - `useTradingSession.ts`: Core trading state (positions, balance, P&L, game over logic).
     - `useOrientation.ts`: Device orientation detection.
-- **Theme**: Managed via `ThemeContext` (Light/Dark/Midnight/Sandstone/Solarized).
+- **Theme**: Managed via `ThemeContext`. Supported themes: **Sandstone** (Default), **Midnight**, and **Solarized**.
 
 ## Common Commands
 
