@@ -15,7 +15,7 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boole
 }
 
 import { appStyles, Colors, GLOBAL_STYLES, LOADING_STYLES, UI_STYLES, MODAL_STYLES } from './styles/appStyles';
-import { ACADEMY_PATTERNS } from './constants/patterns';
+import { ACADEMY_PATTERNS, CHART_PATTERNS } from './constants/patterns';
 import { Chart } from './components/Chart';
 import PositionSizeCalculator from './components/PositionSizeCalculator';
 import { fetchRandomStockData } from './utils/data';
@@ -72,6 +72,7 @@ const AppContent: React.FC = () => {
   const [soundEnabled, setSoundEnabled] = useState(soundService.isEnabled());
   const [tradeAmount, setTradeAmount] = useState(1000);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [academySection, setAcademySection] = useState<'candle' | 'chart'>('candle');
 
   // Check if in landscape mode and on trade screen
   const isLandscapeTrading = orientation.isLandscape && activeTab === 'trade';
@@ -539,22 +540,71 @@ const AppContent: React.FC = () => {
             <div className="tab-content-wrapper">
               <div className="tab-header">
                 <BookOpen size={28} />
-                <h2>Candle Academy</h2>
-                <p className="tab-subtitle">Master candlestick patterns</p>
+                <h2>Pattern Academy</h2>
+                <p className="tab-subtitle">Master trading patterns</p>
               </div>
-              <div className="academy-grid">
-                {ACADEMY_PATTERNS.map((pattern) => (
-                  <div key={pattern.id} className="academy-card">
-                    <div className="academy-svg-wrapper">
-                      {pattern.render()}
-                    </div>
-                    <div className="academy-info">
-                      <h3>{pattern.name}</h3>
-                      <p>{pattern.desc}</p>
-                    </div>
-                  </div>
-                ))}
+
+              {/* Academy Section Tabs */}
+              <div className="academy-tabs">
+                <button
+                  className={`academy-tab ${academySection === 'candle' ? 'active' : ''}`}
+                  onClick={() => setAcademySection('candle')}
+                >
+                  Candlestick
+                </button>
+                <button
+                  className={`academy-tab ${academySection === 'chart' ? 'active' : ''}`}
+                  onClick={() => setAcademySection('chart')}
+                >
+                  Chart Patterns
+                </button>
               </div>
+
+              {/* Candle Patterns */}
+              {academySection === 'candle' && (
+                <div className="academy-grid">
+                  {ACADEMY_PATTERNS.map((pattern) => (
+                    <div key={pattern.id} className="academy-card">
+                      <div className="academy-svg-wrapper">
+                        {pattern.render()}
+                      </div>
+                      <div className="academy-info">
+                        <h3>{pattern.name}</h3>
+                        <p>{pattern.desc}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Chart Patterns */}
+              {academySection === 'chart' && (
+                <div className="academy-grid">
+                  {CHART_PATTERNS.map((pattern) => {
+                    const suffix = resolvedTheme === 'sandstone' ? 'l' : 'd';
+                    const imgSrc = `/patterns/${pattern.imageKey}-${suffix}.webp`;
+                    return (
+                      <div key={pattern.id} className="academy-card">
+                        <div className="academy-img-wrapper">
+                          <img
+                            src={imgSrc}
+                            alt={pattern.name}
+                            loading="lazy"
+                            onError={(e) => {
+                              // Fallback: show placeholder if image not found
+                              (e.target as HTMLImageElement).style.display = 'none';
+                            }}
+                          />
+                        </div>
+                        <div className="academy-info">
+                          <h3>{pattern.name}</h3>
+                          <p>{pattern.desc}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           )}
 

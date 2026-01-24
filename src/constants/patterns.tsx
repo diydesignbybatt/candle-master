@@ -246,3 +246,44 @@ export const ACADEMY_PATTERNS: AcademyPattern[] = [
     )
 },
 ];
+
+// ============================================
+// CHART PATTERNS (Image-based)
+// ============================================
+// ไฟล์ภาพอยู่ที่: public/patterns/
+// Format: {imageKey}-l.webp (light/sandstone) และ {imageKey}-d.webp (dark/midnight/solarized)
+// ขนาด: 600 x 360 px
+
+export interface ChartPattern {
+    id: number;
+    name: string;
+    desc: string;
+    imageKey: string; // e.g., "double-top" -> double-top-l.webp / double-top-d.webp
+}
+
+export const CHART_PATTERNS: ChartPattern[] = [
+    {
+        id: 1,
+        name: "Double Top",
+        desc: "Bearish reversal. Two peaks at same level.",
+        imageKey: "double-top"
+    },
+    {
+        id: 2,
+        name: "Double Bottom",
+        desc: "Bullish reversal. Two troughs at same level.",
+        imageKey: "double-bottom"
+    },
+    {
+        id: 3,
+        name: "Ascending Triangle",
+        desc: "Bullish continuation. Flat top, rising lows.",
+        imageKey: "ascending-triangle"
+    },
+    {
+        id: 4,
+        name: "Descending Triangle",
+        desc: "Bearish continuation. Flat bottom, falling highs.",
+        imageKey: "descending-triangle"
+    },
+];

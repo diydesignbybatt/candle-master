@@ -623,8 +623,57 @@ export const MODAL_STYLES = `
     height: 100%;
   }
 
+  .academy-img-wrapper {
+    width: 100%;
+    aspect-ratio: 600 / 360;
+    margin-bottom: 12px;
+    border-radius: 8px;
+    overflow: hidden;
+    background: var(--bg-secondary);
+  }
+
+  .academy-img-wrapper img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
   .academy-info h3 { font-size: 0.9rem; font-weight: 700; color: var(--color-text); margin-bottom: 4px; }
   .academy-info p { font-size: 0.7rem; color: var(--color-text-secondary); line-height: 1.3; }
+
+  .academy-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+    padding: 4px;
+    background: var(--bg-tertiary);
+    border-radius: 12px;
+    border: 1px solid var(--color-border);
+  }
+
+  .academy-tab {
+    flex: 1;
+    padding: 10px 16px;
+    border: none;
+    background: transparent;
+    color: var(--color-text-secondary);
+    font-size: 0.875rem;
+    font-weight: 600;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .academy-tab.active {
+    background: var(--bg-primary);
+    color: var(--color-text);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+
+  .academy-tab:not(.active):hover {
+    color: var(--color-text);
+    background: var(--bg-secondary);
+  }
 
   .history-item { display: flex; justify-content: space-between; align-items: center; padding: 16px; background: var(--bg-tertiary); border-radius: 0.75rem; border: 1px solid var(--color-border); }
   .history-title { font-size: 1rem; font-weight: 700; color: var(--color-text); display: block; margin-bottom: 4px; font-family: 'Cormorant Garamond', serif; }
