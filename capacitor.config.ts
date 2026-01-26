@@ -6,9 +6,14 @@ const config: CapacitorConfig = {
   webDir: 'dist',
   server: {
     androidScheme: 'https',
+    iosScheme: 'https',
     // Uncomment for local dev testing:
     // url: 'http://192.168.1.x:5173',
     // cleartext: true
+  },
+  ios: {
+    contentInset: 'always',
+    allowsLinkPreview: false,
   },
   plugins: {
     SplashScreen: {

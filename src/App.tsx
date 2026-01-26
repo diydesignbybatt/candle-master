@@ -1,4 +1,4 @@
-import React, { useState, useEffect, Component, useCallback, useRef } from 'react';
+import React, { useState, useEffect, Component, useCallback, useRef, Suspense, lazy } from 'react';
 import type { ErrorInfo, ReactNode } from 'react';
 
 class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean }> {
@@ -14,12 +14,11 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boole
   }
 }
 
-import { appStyles, Colors, GLOBAL_STYLES, LOADING_STYLES, UI_STYLES, MODAL_STYLES } from './styles/appStyles';
+import { appStyles, Colors, GLOBAL_STYLES, LOADING_STYLES, UI_STYLES, MODAL_STYLES, TABLET_STYLES } from './styles/appStyles';
 import { ACADEMY_PATTERNS, CHART_PATTERNS } from './constants/patterns';
 import type { ChartPattern } from './constants/patterns';
 import { POSITION_SIZING_GUIDES, SCALE_IN_OUT_GUIDES } from './constants/guides';
 import { Chart } from './components/Chart';
-import PositionSizeCalculator from './components/PositionSizeCalculator';
 import { fetchRandomStockData } from './utils/data';
 import type { StockData } from './utils/data';
 import { useTradingSession, resetSavedBalance } from './hooks/useTradingSession';
@@ -29,8 +28,11 @@ import { useSubscription } from './hooks/useSubscription';
 import { ScreenOrientation } from '@capacitor/screen-orientation';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
-import { WelcomeScreen } from './components/WelcomeScreen';
-import { OnboardingTutorial } from './components/OnboardingTutorial';
+
+// Lazy load components that are not needed immediately
+const WelcomeScreen = lazy(() => import('./components/WelcomeScreen').then(m => ({ default: m.WelcomeScreen })));
+const OnboardingTutorial = lazy(() => import('./components/OnboardingTutorial').then(m => ({ default: m.OnboardingTutorial })));
+const PositionSizeCalculator = lazy(() => import('./components/PositionSizeCalculator'));
 import { motion, AnimatePresence } from 'framer-motion';
 import { soundService, playSound } from './services/soundService';
 import { format } from 'date-fns';
@@ -102,6 +104,9 @@ const AppContent: React.FC = () => {
 
   // Check if in landscape mode and on trade screen
   const isLandscapeTrading = orientation.isLandscape && activeTab === 'trade';
+  // Check if tablet in landscape mode (special layout)
+  const isTabletLandscape = orientation.isTablet && orientation.isLandscape && activeTab === 'trade';
+
 
 
   // Load history on mount
@@ -186,15 +191,18 @@ const AppContent: React.FC = () => {
     stop: originalStop
   } = useTradingSession(stock);
 
-  // Screen Orientation Lock/Unlock based on active tab
+  // Screen Orientation Lock/Unlock based on device type and active tab
   useEffect(() => {
     const handleOrientation = async () => {
       try {
-        if (activeTab === 'trade' && !isLoading && !isGameOver) {
-          // Unlock orientation for trade screen (allow rotation)
+        if (orientation.isTablet) {
+          // Tablet: Always lock to landscape
+          await ScreenOrientation.lock({ orientation: 'landscape' });
+        } else if (activeTab === 'trade' && !isLoading && !isGameOver) {
+          // Phone on trade screen: Allow rotation
           await ScreenOrientation.unlock();
         } else {
-          // Lock to portrait for other screens (Loading, Calc, Academy, etc.)
+          // Phone on other screens: Lock to portrait
           await ScreenOrientation.lock({ orientation: 'portrait' });
         }
       } catch (error) {
@@ -204,7 +212,7 @@ const AppContent: React.FC = () => {
     };
 
     handleOrientation();
-  }, [activeTab, isLoading, isGameOver]);
+  }, [activeTab, isLoading, isGameOver, orientation.isTablet]);
 
   // Reset tradeAmount when new game starts
   useEffect(() => {
@@ -313,18 +321,34 @@ const AppContent: React.FC = () => {
     }
   }, [isGameOver, title, totalReturn, tradeCount]);
 
+  // Suspense fallback for lazy-loaded components
+  const LazyFallback = (
+    <div className="loading-screen">
+      <div className="loading-content">
+        <Loader2 className="spinner" size={48} />
+      </div>
+      <style>{LOADING_STYLES}</style>
+    </div>
+  );
+
   // Show welcome screen if not authenticated (after all hooks)
   if (!isAuthenticated) {
-    return <WelcomeScreen />;
+    return (
+      <Suspense fallback={LazyFallback}>
+        <WelcomeScreen />
+      </Suspense>
+    );
   }
 
   // Show onboarding tutorial for first-time users
   if (!hasCompletedOnboarding) {
     return (
-      <OnboardingTutorial
-        onComplete={completeOnboarding}
-        onSkip={completeOnboarding}
-      />
+      <Suspense fallback={LazyFallback}>
+        <OnboardingTutorial
+          onComplete={completeOnboarding}
+          onSkip={completeOnboarding}
+        />
+      </Suspense>
     );
   }
 
@@ -341,6 +365,304 @@ const AppContent: React.FC = () => {
           <p>Finding a mystery stock and random time window</p>
         </motion.div>
         <style>{LOADING_STYLES}</style>
+      </div>
+    );
+  }
+
+  // Tablet Landscape Layout
+  if (isTabletLandscape && !isGameOver) {
+    return (
+      <div className="tablet-layout">
+        {/* Tablet Header - Stats + Trade Amount + Action Buttons */}
+        <div className="tablet-header">
+          <div className="tablet-header-left">
+            <div className="tablet-stat">
+              <span className="tablet-stat-label">Total</span>
+              <span className="tablet-stat-value">${displayBalance.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+            </div>
+            <div className="tablet-stat">
+              <span className="tablet-stat-label">Available</span>
+              <span className="tablet-stat-value">${balance.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+            </div>
+            <div className={`tablet-stat ${totalReturn >= 0 ? 'positive' : 'negative'}`}>
+              <span className="tablet-stat-label">Return</span>
+              <span className="tablet-stat-value">{totalReturn.toFixed(1)}%</span>
+            </div>
+            <div className="tablet-meta">
+              <span>Price: ${currentCandle.close.toFixed(2)}</span>
+              <span>Fee: 0.15% | Comm: ${totalCommissions.toFixed(2)}</span>
+            </div>
+          </div>
+
+          <div className="tablet-header-right">
+            {/* Trade Amount */}
+            {positions.length < maxPositions && (
+              <div className="tablet-trade-amount">
+                <span className="tablet-trade-amount-label">Amount</span>
+                <button
+                  className="tablet-amount-btn"
+                  onClick={() => adjustTradeAmount(-1000)}
+                  disabled={tradeAmount <= 0}
+                >
+                  <Minus size={14} />
+                </button>
+                <input
+                  type="number"
+                  className="tablet-amount-input"
+                  value={tradeAmount}
+                  onChange={handleTradeAmountChange}
+                  min={0}
+                  max={balance}
+                />
+                <button
+                  className="tablet-amount-btn"
+                  onClick={() => adjustTradeAmount(1000)}
+                  disabled={tradeAmount >= balance}
+                >
+                  <Plus size={14} />
+                </button>
+              </div>
+            )}
+
+            {/* Action Buttons */}
+            <div className="tablet-actions">
+              <button
+                className="tablet-btn tablet-btn-long"
+                onClick={long}
+                disabled={positions.length >= maxPositions || tradeAmount <= 0 || tradeAmount > balance}
+              >
+                <TrendingUp size={16} />
+                LONG
+              </button>
+              <button
+                className="tablet-btn tablet-btn-short"
+                onClick={short}
+                disabled={positions.length >= maxPositions || tradeAmount <= 0 || tradeAmount > balance}
+              >
+                <TrendingDown size={16} />
+                SHORT
+              </button>
+              <button className="tablet-btn tablet-btn-skip" onClick={skipDay}>
+                <SkipForward size={16} />
+                SKIP
+              </button>
+              <button className="tablet-btn tablet-btn-stop" onClick={stop}>
+                <Square size={16} />
+                STOP
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Positions Row - Only show when positions exist */}
+        {positions.length > 0 && (
+          <div className="tablet-positions-row">
+            <span className="tablet-positions-label">{positions.length} Position{positions.length > 1 ? 's' : ''}</span>
+            <div className="tablet-positions-grid">
+              {[0, 1, 2].map((index) => {
+                const pos = positions[index];
+                if (pos) {
+                  const positionPL = getPositionPL(pos);
+                  return (
+                    <div key={pos.id} className={`tablet-position-card ${pos.type.toLowerCase()}`}>
+                      <div className="tablet-pos-info">
+                        <span className={`tablet-pos-type ${pos.type.toLowerCase()}`}>{pos.type}</span>
+                        <span className="tablet-pos-entry">@${pos.entryPrice.toFixed(2)} • {pos.amount.toFixed(2)} units</span>
+                      </div>
+                      <span className={`tablet-pos-pl ${positionPL >= 0 ? 'text-success' : 'text-danger'}`}>
+                        {positionPL >= 0 ? '+' : ''}${positionPL.toFixed(2)}
+                      </span>
+                      <button
+                        className="tablet-pos-close"
+                        onClick={() => closePosition(pos.id)}
+                      >
+                        <X size={12} />
+                      </button>
+                    </div>
+                  );
+                }
+                return (
+                  <div key={index} className="tablet-position-card empty">
+                    Empty
+                  </div>
+                );
+              })}
+            </div>
+            <button className="tablet-close-all-btn" onClick={closeAllPositions}>
+              CLOSE ALL
+            </button>
+          </div>
+        )}
+
+        {/* Main Chart Area */}
+        <div className="tablet-main">
+          <div className="tablet-chart-area">
+            {/* Floating Controls - Left */}
+            <div className="tablet-floating-left">
+              <button
+                className="tablet-floating-btn"
+                onClick={() => setZoom(prev => Math.min(3, prev + 0.25))}
+                disabled={zoom >= 3}
+              >
+                <ZoomIn size={18} />
+              </button>
+              <button
+                className="tablet-floating-btn"
+                onClick={() => setZoom(prev => Math.max(0.5, prev - 0.25))}
+                disabled={zoom <= 0.5}
+              >
+                <ZoomOut size={18} />
+              </button>
+              <button
+                className="tablet-floating-btn"
+                onClick={() => setShowInfo(true)}
+              >
+                <Info size={18} />
+              </button>
+            </div>
+
+            {/* Chart */}
+            <div className="tablet-chart-container">
+              <ErrorBoundary>
+                {visibleData.length > 0 ? <Chart data={visibleData} zoom={zoom} /> : <div>Loading chart...</div>}
+              </ErrorBoundary>
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom Section */}
+        <div className="tablet-bottom">
+          {/* Promo Banner */}
+          {!isPro && (
+            <div className="tablet-promo-banner" onClick={() => setShowUpgradeModal('general')}>
+              <div className="promo-marquee">
+                <span className="promo-text">
+                  <span className="promo-highlight">UPGRADE PRO</span> to unlock Academy and 300+ famous stocks
+                </span>
+              </div>
+            </div>
+          )}
+
+          {/* Bottom Nav */}
+          <div className="tablet-bottom-nav">
+            <button
+              className={`tablet-nav-item ${activeTab === 'trade' ? 'active' : ''}`}
+              onClick={() => setActiveTab('trade')}
+            >
+              <BarChart3 size={22} />
+              <span>TRADE</span>
+            </button>
+            <button
+              className={`tablet-nav-item ${activeTab === 'calculator' ? 'active' : ''}`}
+              onClick={() => isPro ? setActiveTab('calculator') : setShowUpgradeModal('calc')}
+            >
+              <div className="tablet-nav-icon-wrapper">
+                <Calculator size={22} />
+                {!isPro && <Star size={10} className="tablet-pro-badge" fill="currentColor" />}
+              </div>
+              <span>CALC</span>
+            </button>
+            <button
+              className={`tablet-nav-item ${activeTab === 'academy' ? 'active' : ''}`}
+              onClick={() => isPro ? setActiveTab('academy') : setShowUpgradeModal('learn')}
+            >
+              <div className="tablet-nav-icon-wrapper">
+                <BookOpen size={22} />
+                {!isPro && <Star size={10} className="tablet-pro-badge" fill="currentColor" />}
+              </div>
+              <span>LEARN</span>
+            </button>
+            <button
+              className={`tablet-nav-item ${activeTab === 'history' ? 'active' : ''}`}
+              onClick={() => setActiveTab('history')}
+            >
+              <Clock size={22} />
+              <span>HISTORY</span>
+            </button>
+            <button
+              className={`tablet-nav-item ${activeTab === 'profile' ? 'active' : ''}`}
+              onClick={() => setActiveTab('profile')}
+            >
+              <User size={22} />
+              <span>PROFILE</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Info Modal */}
+        <AnimatePresence>
+          {showInfo && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="modal-overlay"
+              style={appStyles.infoModalOverlay}
+              onClick={() => setShowInfo(false)}
+            >
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                className="info-modal"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="info-header">
+                  <h2>How to Play</h2>
+                  <button className="btn-icon" onClick={() => setShowInfo(false)}>
+                    <X size={24} />
+                  </button>
+                </div>
+                <div className="info-content">
+                  <p>Trade on real historical data. Open up to 3 positions with 0.15% commission per trade.</p>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+
+          {/* Upgrade Modal */}
+          {showUpgradeModal && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="modal-overlay"
+              onClick={() => setShowUpgradeModal(null)}
+            >
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                className="upgrade-modal"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <button className="upgrade-modal-close" onClick={() => setShowUpgradeModal(null)}>
+                  <X size={20} />
+                </button>
+                <div className="upgrade-modal-icon">
+                  <Star size={48} fill="currentColor" />
+                </div>
+                <h2 className="upgrade-modal-title">Upgrade to PRO</h2>
+                <p className="upgrade-modal-desc">Unlock all features including Academy, Calculator, and 300+ stocks.</p>
+                <button
+                  className="upgrade-modal-btn"
+                  onClick={() => {
+                    setShowUpgradeModal(null);
+                    setActiveTab('profile');
+                  }}
+                >
+                  <Star size={18} fill="currentColor" />
+                  <span>Upgrade to PRO</span>
+                </button>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <style>{GLOBAL_STYLES}</style>
+        <style>{UI_STYLES}</style>
+        <style>{MODAL_STYLES}</style>
+        <style>{TABLET_STYLES}</style>
       </div>
     );
   }
@@ -595,7 +917,9 @@ const AppContent: React.FC = () => {
           )}
 
           {activeTab === 'calculator' && (
-            <PositionSizeCalculator />
+            <Suspense fallback={LazyFallback}>
+              <PositionSizeCalculator />
+            </Suspense>
           )}
 
           {activeTab === 'academy' && (
@@ -1488,6 +1812,7 @@ const AppContent: React.FC = () => {
       <style>{GLOBAL_STYLES}</style>
       <style>{UI_STYLES}</style>
       <style>{MODAL_STYLES}</style>
+      <style>{TABLET_STYLES}</style>
     </div>
   );
 };

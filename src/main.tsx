@@ -4,16 +4,21 @@ import { StatusBar, Style } from '@capacitor/status-bar'
 import './index.css'
 import App from './App.tsx'
 
-// Setup safe area for Android
+// Detect if running on iOS (native or PWA/Safari)
+const isIOSDevice = () => {
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+};
+
+// Setup safe area for all platforms
 const setupSafeArea = async () => {
   const platform = Capacitor.getPlatform();
   const root = document.documentElement;
+  const isIOS = isIOSDevice();
 
   if (platform === 'android') {
-    // Android: Set fixed safe area values
-    // Status bar is typically 24dp (about 34px on most devices)
-    // Navigation bar is typically 48dp (about 68px)
-    root.style.setProperty('--safe-area-top', '34px');
+    // Android Native: Set fixed safe area values
+    root.style.setProperty('--safe-area-top', '48px');
     root.style.setProperty('--safe-area-bottom', '20px');
 
     // Make status bar transparent
@@ -25,11 +30,22 @@ const setupSafeArea = async () => {
       console.log('StatusBar setup error:', e);
     }
   } else if (platform === 'ios') {
-    // iOS: env() works natively, but set fallback
+    // iOS Native: Use env() for safe area
+    root.style.setProperty('--safe-area-top', 'env(safe-area-inset-top, 47px)');
+    root.style.setProperty('--safe-area-bottom', 'env(safe-area-inset-bottom, 34px)');
+
+    try {
+      await StatusBar.setStyle({ style: Style.Dark });
+      await StatusBar.setOverlaysWebView({ overlay: true });
+    } catch (e) {
+      console.log('iOS StatusBar setup error:', e);
+    }
+  } else if (isIOS) {
+    // iOS PWA/Safari: Use env() for safe area (works with viewport-fit=cover)
     root.style.setProperty('--safe-area-top', 'env(safe-area-inset-top, 47px)');
     root.style.setProperty('--safe-area-bottom', 'env(safe-area-inset-bottom, 34px)');
   } else {
-    // Web: No safe area needed
+    // Desktop Web: No safe area needed
     root.style.setProperty('--safe-area-top', '0px');
     root.style.setProperty('--safe-area-bottom', '0px');
   }

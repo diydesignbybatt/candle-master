@@ -236,6 +236,7 @@ export const UI_STYLES = `
     padding: 10px 16px;
     background: var(--bg-primary);
     border-bottom: 1px solid var(--color-border);
+    margin-bottom: 8px;
     flex-shrink: 0;
   }
 
@@ -291,7 +292,7 @@ export const UI_STYLES = `
     overflow: hidden;
     position: relative;
     min-height: 0;
-    padding-bottom: calc(var(--controls-height) * 2 + var(--safe-area-bottom) + 2rem);
+    padding-bottom: calc(var(--controls-height) * 2 + var(--safe-area-bottom) * 0.6 + 2rem);
   }
   
   .scroll-chart-container { flex: 1; padding: 0 4%; min-height: 0; overflow: hidden; position: relative; }
@@ -373,7 +374,7 @@ export const UI_STYLES = `
 
   .controls {
     position: fixed;
-    bottom: calc(var(--controls-height) + var(--safe-area-bottom));
+    bottom: calc(var(--controls-height) + var(--safe-area-bottom) * 0.6);
     left: 50%;
     transform: translateX(-50%);
     width: 100%;
@@ -503,14 +504,14 @@ export const UI_STYLES = `
     transform: translateX(-50%);
     width: 100%;
     max-width: min(430px, 100vw);
-    height: calc(var(--controls-height) + var(--safe-area-bottom));
+    height: calc(var(--controls-height) + var(--safe-area-bottom) * 0.6);
     background: var(--bg-primary);
     border-top: 1px solid var(--color-border);
     display: flex;
     justify-content: space-around;
-    align-items: flex-start;
-    padding: 8px 2% 0;
-    padding-bottom: var(--safe-area-bottom);
+    align-items: center;
+    padding: 0 2%;
+    padding-bottom: calc(var(--safe-area-bottom) * 0.6);
     z-index: 1000;
     box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
   }
@@ -664,7 +665,7 @@ export const UI_STYLES = `
   /* PRO Promotion Banner */
   .promo-banner {
     position: fixed;
-    bottom: calc(var(--controls-height) * 2 + var(--safe-area-bottom));
+    bottom: calc(var(--controls-height) * 2 + var(--safe-area-bottom) * 0.6);
     left: 50%;
     transform: translateX(-50%);
     width: 100%;
@@ -722,7 +723,7 @@ export const UI_STYLES = `
   /* PRO Status Badge */
   .pro-status-badge {
     position: fixed;
-    bottom: calc(var(--controls-height) * 2 + var(--safe-area-bottom));
+    bottom: calc(var(--controls-height) * 2 + var(--safe-area-bottom) * 0.6);
     left: 50%;
     transform: translateX(-50%);
     width: 100%;
@@ -1739,5 +1740,377 @@ export const MODAL_STYLES = `
     background: linear-gradient(135deg, #FFD700 0%, #FFA500 50%, #FFD700 100%);
     color: #1a1a1a;
     box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3);
+  }
+`;
+
+// Tablet Landscape Layout Styles
+export const TABLET_STYLES = `
+  /* Tablet Layout - Only for landscape mode on tablets */
+  .tablet-layout {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    background: var(--bg-primary);
+    margin: 0;
+    padding: 0;
+  }
+
+  /* Tablet Header - All controls in one row */
+  .tablet-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    padding-top: calc(env(safe-area-inset-top, 0px) + 8px);
+    background: var(--bg-primary);
+    border-bottom: 1px solid var(--color-border);
+    flex-shrink: 0;
+    gap: 8px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .tablet-header-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  .tablet-stat {
+    background: var(--bg-secondary);
+    padding: 8px 16px;
+    border-radius: 8px;
+    min-width: 110px;
+  }
+
+  .tablet-stat-label {
+    font-size: 0.7rem;
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 2px;
+  }
+
+  .tablet-stat-value {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--color-text-primary);
+  }
+
+  .tablet-stat.positive .tablet-stat-value { color: var(--color-green); }
+  .tablet-stat.negative .tablet-stat-value { color: var(--color-red); }
+
+  .tablet-meta {
+    display: flex;
+    flex-direction: row;
+    gap: 12px;
+    font-size: 0.85rem;
+    color: var(--color-text-secondary);
+    white-space: nowrap;
+    font-weight: 500;
+  }
+
+  .tablet-header-right {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
+  /* Tablet Trade Amount */
+  .tablet-trade-amount {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--bg-secondary);
+    padding: 4px 6px;
+    border-radius: 6px;
+  }
+
+  .tablet-trade-amount-label {
+    font-size: 0.65rem;
+    color: var(--color-text-secondary);
+    white-space: nowrap;
+  }
+
+  .tablet-amount-btn {
+    width: 26px;
+    height: 26px;
+    border-radius: 4px;
+    border: 1px solid var(--color-border);
+    background: var(--bg-primary);
+    color: var(--color-text-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+
+  .tablet-amount-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .tablet-amount-input {
+    width: 70px;
+    height: 26px;
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    text-align: center;
+    font-weight: 600;
+    font-size: 0.85rem;
+    background: var(--bg-primary);
+    color: var(--color-text-primary);
+  }
+
+  /* Tablet Action Buttons */
+  .tablet-actions {
+    display: flex;
+    gap: 4px;
+  }
+
+  .tablet-btn {
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 0.75rem;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    transition: transform 0.1s, opacity 0.2s;
+    white-space: nowrap;
+  }
+
+  .tablet-btn:active { transform: scale(0.95); }
+  .tablet-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .tablet-btn-long { background: var(--color-green); color: white; }
+  .tablet-btn-short { background: var(--color-red); color: white; }
+  .tablet-btn-skip { background: var(--bg-secondary); color: var(--color-text-primary); border: 1px solid var(--color-border); }
+  .tablet-btn-stop { background: var(--bg-secondary); color: var(--color-text-primary); border: 1px solid var(--color-border); }
+
+  /* Tablet Positions Row */
+  .tablet-positions-row {
+    display: flex;
+    align-items: center;
+    padding: 8px 16px;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--color-border);
+    gap: 12px;
+    flex-shrink: 0;
+  }
+
+  .tablet-positions-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    white-space: nowrap;
+  }
+
+  .tablet-positions-grid {
+    display: flex;
+    flex: 1;
+    gap: 8px;
+  }
+
+  .tablet-position-card {
+    flex: 1;
+    background: var(--bg-primary);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 44px;
+  }
+
+  .tablet-position-card.long { border-left: 3px solid var(--color-green); }
+  .tablet-position-card.short { border-left: 3px solid var(--color-red); }
+  .tablet-position-card.empty {
+    border: 1px dashed var(--color-border);
+    justify-content: center;
+    color: var(--color-text-secondary);
+    font-size: 0.75rem;
+  }
+
+  .tablet-pos-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .tablet-pos-type {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+
+  .tablet-pos-type.long { color: var(--color-green); }
+  .tablet-pos-type.short { color: var(--color-red); }
+
+  .tablet-pos-entry {
+    font-size: 0.7rem;
+    color: var(--color-text-secondary);
+  }
+
+  .tablet-pos-pl {
+    font-size: 0.85rem;
+    font-weight: 700;
+  }
+
+  .tablet-pos-close {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: none;
+    background: var(--bg-secondary);
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 8px;
+  }
+
+  .tablet-pos-close:hover { background: var(--color-red); color: white; }
+
+  .tablet-close-all-btn {
+    padding: 8px 16px;
+    border-radius: 8px;
+    background: #000;
+    color: white;
+    font-weight: 700;
+    font-size: 0.8rem;
+    border: none;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  /* Tablet Main Content */
+  .tablet-main {
+    flex: 1;
+    display: flex;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .tablet-chart-area {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .tablet-chart-container {
+    width: 100%;
+    height: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+
+  /* Tablet Floating Controls (zoom, indicators) */
+  .tablet-floating-left {
+    position: absolute;
+    left: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    z-index: 10;
+  }
+
+  .tablet-floating-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    border: 1px solid var(--color-border);
+    background: var(--bg-primary);
+    color: var(--color-text-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+
+  .tablet-floating-btn.active {
+    background: #f59e0b;
+    color: white;
+    border-color: #f59e0b;
+  }
+
+  .tablet-floating-btn:disabled { opacity: 0.5; }
+
+  /* Tablet Bottom Section */
+  .tablet-bottom {
+    flex-shrink: 0;
+  }
+
+  .tablet-promo-banner {
+    height: 28px;
+    background: linear-gradient(90deg, var(--color-green) 0%, #0a9d9c 50%, var(--color-green) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  .tablet-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 24px;
+    border-radius: 8px;
+    background: transparent;
+    border: none;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .tablet-nav-item.active {
+    color: var(--color-accent);
+  }
+
+  .tablet-nav-item span {
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+
+  .tablet-nav-icon-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .tablet-pro-badge {
+    position: absolute;
+    top: -4px;
+    right: -8px;
+    color: #f59e0b;
+  }
+
+  .tablet-bottom-nav {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 8px 16px;
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 8px);
+    background: var(--bg-primary);
+    border-top: 1px solid var(--color-border);
+    gap: 16px;
   }
 `;
