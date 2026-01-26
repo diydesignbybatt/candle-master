@@ -6,7 +6,7 @@ export type SubscriptionTier = 'free' | 'pro';
 // Feature limits for each tier
 export const TIER_LIMITS = {
   free: {
-    gamesPerDay: 3,
+    gamesPerDay: 10,
     stockAccess: 'free', // Only stocks in 'free' tier
     candlePatterns: 10,
     chartPatterns: false,

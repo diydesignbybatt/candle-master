@@ -29,7 +29,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | Feature | Free | Pro |
 |---------|------|-----|
 | Stocks | 20 | 300+ |
-| Games/day | 3 | Unlimited |
+| Games/day | 10 | Unlimited |
 | Candlestick Patterns | 10 | 20 |
 | Chart Patterns | ❌ | ✅ All |
 | Themes | Sandstone | All |

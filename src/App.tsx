@@ -24,7 +24,8 @@ import { fetchRandomStockData } from './utils/data';
 import type { StockData } from './utils/data';
 import { useTradingSession, resetSavedBalance } from './hooks/useTradingSession';
 import { useOrientation } from './hooks/useOrientation';
-import { SkipForward, Square, TrendingUp, TrendingDown, Loader2, Info, X, Trash2, Volume2, VolumeX, ZoomIn, ZoomOut, BarChart3, BookOpen, Clock, User, Plus, Minus, Calculator, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, ArrowLeft, Sun, Moon, Leaf } from 'lucide-react';
+import { SkipForward, Square, TrendingUp, TrendingDown, Loader2, Info, X, Trash2, Volume2, VolumeX, ZoomIn, ZoomOut, BarChart3, BookOpen, Clock, User, Plus, Minus, Calculator, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, ArrowLeft, Sun, Moon, Leaf, Star } from 'lucide-react';
+import { useSubscription } from './hooks/useSubscription';
 import { ScreenOrientation } from '@capacitor/screen-orientation';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -64,6 +65,7 @@ const getTradingTitle = (pnl: number, trades: number) => {
 const AppContent: React.FC = () => {
   const { mode, setMode, resolvedTheme } = useTheme();
   const orientation = useOrientation();
+  const { isPro, upgradeToPro, resetToFree } = useSubscription();
   const [stock, setStock] = useState<StockData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showInfo, setShowInfo] = useState(false);
@@ -79,6 +81,7 @@ const AppContent: React.FC = () => {
   const [riskCategory, setRiskCategory] = useState<'sizing' | 'scaling' | null>(null);
   const [riskGuideIndex, setRiskGuideIndex] = useState(0);
   const riskCarouselRef = useRef<HTMLDivElement>(null);
+  const [showUpgradeModal, setShowUpgradeModal] = useState<'calc' | 'learn' | 'general' | null>(null);
 
   // Check if in landscape mode and on trade screen
   const isLandscapeTrading = orientation.isLandscape && activeTab === 'trade';
@@ -498,6 +501,27 @@ const AppContent: React.FC = () => {
                   </ErrorBoundary>
                 </div>
               </div>
+
+              {/* PRO Promotion Banner / PRO Status Badge */}
+              {!isLandscapeTrading && !isGameOver && (
+                isPro ? (
+                  <div className="pro-status-badge">
+                    <Star size={14} fill="currentColor" />
+                    <span>PRO Member</span>
+                  </div>
+                ) : (
+                  <div className="promo-banner" onClick={() => setShowUpgradeModal('general')}>
+                    <div className="promo-marquee">
+                      <span className="promo-text">
+                        <span className="promo-highlight">UPGRADE PRO</span> to unlock Academy and 300+ famous stocks and ETF from all over the globe
+                      </span>
+                      <span className="promo-text">
+                        <span className="promo-highlight">UPGRADE PRO</span> to unlock Academy and 300+ famous stocks and ETF from all over the globe
+                      </span>
+                    </div>
+                  </div>
+                )
+              )}
 
               {!isLandscapeTrading && (
                 <section className="controls">
@@ -1044,6 +1068,18 @@ const AppContent: React.FC = () => {
                   </div>
                 </button>
 
+                {/* PRO Subscription Toggle (Testing) */}
+                <button
+                  className={`profile-action-btn pro-toggle ${isPro ? 'is-pro' : ''}`}
+                  onClick={() => isPro ? resetToFree() : upgradeToPro()}
+                >
+                  <Star size={20} fill={isPro ? 'currentColor' : 'none'} />
+                  <span>{isPro ? 'PRO Member' : 'Upgrade to PRO'}</span>
+                  <div className={`toggle-switch ${isPro ? 'active pro' : ''}`}>
+                    <div className="toggle-knob"></div>
+                  </div>
+                </button>
+
                 <div className="theme-selector">
                   <div className="theme-selector-header">
                     {resolvedTheme !== 'sandstone' ? <Moon size={20} /> : <Sun size={20} />}
@@ -1092,16 +1128,22 @@ const AppContent: React.FC = () => {
               </button>
               <button
                 className={`nav-item ${activeTab === 'calculator' ? 'active' : ''}`}
-                onClick={() => setActiveTab('calculator')}
+                onClick={() => isPro ? setActiveTab('calculator') : setShowUpgradeModal('calc')}
               >
-                <Calculator size={24} />
+                <div className="nav-icon-wrapper">
+                  <Calculator size={24} />
+                  {!isPro && <Star size={10} className="pro-badge-icon" fill="currentColor" />}
+                </div>
                 <span>Calc</span>
               </button>
               <button
                 className={`nav-item ${activeTab === 'academy' ? 'active' : ''}`}
-                onClick={() => setActiveTab('academy')}
+                onClick={() => isPro ? setActiveTab('academy') : setShowUpgradeModal('learn')}
               >
-                <BookOpen size={24} />
+                <div className="nav-icon-wrapper">
+                  <BookOpen size={24} />
+                  {!isPro && <Star size={10} className="pro-badge-icon" fill="currentColor" />}
+                </div>
                 <span>Learn</span>
               </button>
               <button
@@ -1275,11 +1317,60 @@ const AppContent: React.FC = () => {
             </motion.div>
           )}
 
+          {/* PRO Upgrade Modal */}
+          {showUpgradeModal && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="modal-overlay"
+              onClick={() => setShowUpgradeModal(null)}
+            >
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                className="upgrade-modal"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <button className="upgrade-modal-close" onClick={() => setShowUpgradeModal(null)}>
+                  <X size={20} />
+                </button>
+                <div className="upgrade-modal-icon">
+                  <Star size={48} fill="currentColor" />
+                </div>
+                <h2 className="upgrade-modal-title">
+                  {showUpgradeModal === 'calc' && 'Position Sizing Calculator'}
+                  {showUpgradeModal === 'learn' && 'Candle Academy'}
+                  {showUpgradeModal === 'general' && 'Upgrade to PRO'}
+                </h2>
+                <p className="upgrade-modal-subtitle">
+                  {showUpgradeModal === 'general' ? 'Unlock Everything' : 'PRO Feature'}
+                </p>
+                <p className="upgrade-modal-desc">
+                  {showUpgradeModal === 'calc' && 'Use it for your real trading every day. Calculate precise entry positions safely with proper Risk Management principles.'}
+                  {showUpgradeModal === 'learn' && 'Master candlestick patterns, chart patterns, and risk management strategies. Learn from comprehensive guides to become a better trader.'}
+                  {showUpgradeModal === 'general' && 'Unlock Academy, Position Calculator, 300+ famous stocks and ETFs from markets worldwide. Take your trading skills to the next level.'}
+                </p>
+                <button
+                  className="upgrade-modal-btn"
+                  onClick={() => {
+                    setShowUpgradeModal(null);
+                    setActiveTab('profile');
+                  }}
+                >
+                  <Star size={18} fill="currentColor" />
+                  <span>Upgrade to PRO</span>
+                </button>
+              </motion.div>
+            </motion.div>
+          )}
+
           {isGameOver && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="modal-overlay"
+              className="modal-overlay bottom-sheet"
             >
               <motion.div
                 initial={{ y: 100 }}
