@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Candle Master v1.6.1** is a **Trading Simulator Game & Education Platform**.
+**Candle Master v1.8.0** is a **Trading Simulator Game & Education Platform**.
 - **Core Concept**: Users practice trading on historical data without knowing the stock beforehand (Blind Trading).
 - **Gameplay**:
     - Users see candlesticks, MA indicators (20/50), and Volume.
@@ -19,24 +19,44 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - [x] Core Trading Engine (Blind historical trading)
 - [x] Basic Mobile/Desktop UI
-- [x] Pattern Academy with tabs (Candlestick + Chart Patterns)
+- [x] Pattern Academy with tabs (Candlestick + Chart Patterns + Risk Management)
 - [x] Chart Patterns with theme-aware images (`public/patterns/`)
-- [ ] **Subscription System**: RevenueCat integration pending
+- [x] **Authentication**: Google Sign-In (Firebase) - working on Android
+- [x] **Safe Area**: Android notch/camera cutout support
+- [x] **Onboarding Tutorial**: 9-slide tutorial for new users
+- [ ] **Apple Sign-In**: Required by Apple (if Google Sign-In exists)
+- [ ] **Subscription System**: RevenueCat scaffold ready, needs API keys
 - [ ] **Tablet Support**: Landscape mode for optimal UI
+- [ ] **iOS Testing**: Requires Mac + Xcode
+
+## Authentication & Services
+
+### Firebase (Google Sign-In)
+- **Project**: candle-master-d4bbd
+- **Android SHA-1**: `43:12:BE:1E:37:14:05:37:4A:98:71:80:80:E5:38:66:AD:3D:79:8E`
+- **Web Client ID**: `951460493496-cs5h9e7e517m4lea6q9lcd49jplfvhv5.apps.googleusercontent.com`
+- **Config Files**:
+  - Android: `android/app/google-services.json`
+  - iOS: `ios/App/App/GoogleService-Info.plist`
+
+### RevenueCat (Subscription - Scaffold Ready)
+- **Service File**: `src/services/revenueCatService.ts`
+- **Hook**: `src/hooks/useSubscription.ts`
+- **Status**: Scaffold ready, needs API keys from RevenueCat dashboard
 
 ## Monetization Plan (Freemium, No Ads)
 
 | Feature | Free | Pro |
 |---------|------|-----|
 | Stocks | 20 | 300+ |
-| Games/day | 10 | Unlimited |
+| Games/day | 3 | Unlimited |
 | Candlestick Patterns | 10 | 20 |
 | Chart Patterns | ❌ | ✅ All |
 | Themes | Sandstone | All |
 | Trade History | 5 records | Unlimited |
 
 **Storage**: LocalStorage only (no backend/database)
-**Subscriptions**: RevenueCat (planned)
+**Subscriptions**: RevenueCat (scaffold ready)
 
 ## Tech Stack
 
@@ -82,20 +102,44 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Tap-to-expand: Each pattern has detailed usage info (When to use, Confirmation, Target)
 - **14 patterns**: double-top, double-bottom, head-shoulders, invert-head-shoulders, diamond-top, diamond-bottom, round-top, round-bottom, ascending-triangle, descending-triangle, bull-flag, bear-flag, rising-wedge, cup-handle
 
+## Important: Working Directory
+
+**Use this folder (no Thai characters in path):**
+```
+D:\CANDLE MASTER\PROJECT\Candle Master
+```
+
+**Do NOT use the old folder:**
+```
+D:\000 BATT\เรียนสร้าง Application\Candle Master
+```
+(Thai characters cause Gradle build issues)
+
 ## Common Commands
 
 ```bash
 npm run dev              # Start Vite dev server
+npm run dev -- --host    # Dev server accessible from mobile
 npm run build            # Type check + Build
 npm run lint             # Linting
 npm run cap:sync         # Sync to Capacitor
-npm run cap:run:android  # Run on Android
-npm run cap:run:ios      # Run on iOS
+npx cap sync android     # Sync Android only
+npx cap sync ios         # Sync iOS only
 ```
+
+## Android Build Steps
+
+1. `npm run build` - Build web assets
+2. `npx cap sync android` - Sync to Android
+3. Open Android Studio: `D:\CANDLE MASTER\PROJECT\Candle Master\android`
+4. Wait for Gradle Sync
+5. Build → Clean Project
+6. Build → Build APK(s)
+7. APK location: `android/app/build/outputs/apk/debug/app-debug.apk`
 
 ## Deployment Info
 - **Android/iOS**: Native projects in `android/` and `ios/`.
-- **Always** run `npm run cap:sync` after building for mobile.
+- **Always** run `npm run build && npx cap sync` after code changes for mobile.
 
 ---
 

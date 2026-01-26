@@ -28,9 +28,13 @@ import { SkipForward, Square, TrendingUp, TrendingDown, Loader2, Info, X, Trash2
 import { useSubscription } from './hooks/useSubscription';
 import { ScreenOrientation } from '@capacitor/screen-orientation';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { WelcomeScreen } from './components/WelcomeScreen';
+import { OnboardingTutorial } from './components/OnboardingTutorial';
 import { motion, AnimatePresence } from 'framer-motion';
 import { soundService, playSound } from './services/soundService';
 import { format } from 'date-fns';
+import { LogOut, Link } from 'lucide-react';
 
 interface TradeRecord {
   id: string;
@@ -63,9 +67,22 @@ const getTradingTitle = (pnl: number, trades: number) => {
 };
 
 const AppContent: React.FC = () => {
+  // All hooks must be called before any conditional returns (React Rules of Hooks)
   const { mode, setMode, resolvedTheme } = useTheme();
+  const { user, isAuthenticated, isGuest, signOut, linkAccount } = useAuth();
   const orientation = useOrientation();
   const { isPro, upgradeToPro, resetToFree } = useSubscription();
+
+  // Onboarding state - check if user has completed the tutorial
+  const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(() => {
+    return localStorage.getItem('candle_master_onboarding_complete') === 'true';
+  });
+
+  const completeOnboarding = () => {
+    localStorage.setItem('candle_master_onboarding_complete', 'true');
+    setHasCompletedOnboarding(true);
+  };
+
   const [stock, setStock] = useState<StockData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showInfo, setShowInfo] = useState(false);
@@ -295,6 +312,21 @@ const AppContent: React.FC = () => {
       }
     }
   }, [isGameOver, title, totalReturn, tradeCount]);
+
+  // Show welcome screen if not authenticated (after all hooks)
+  if (!isAuthenticated) {
+    return <WelcomeScreen />;
+  }
+
+  // Show onboarding tutorial for first-time users
+  if (!hasCompletedOnboarding) {
+    return (
+      <OnboardingTutorial
+        onComplete={completeOnboarding}
+        onSkip={completeOnboarding}
+      />
+    );
+  }
 
   if (isLoading || !stock || !currentCandle) {
     return (
@@ -1033,10 +1065,20 @@ const AppContent: React.FC = () => {
             <div className="tab-content-wrapper">
               <div className="profile-header-inline">
                 <div className="profile-avatar-large">
-                  <User size={48} color="#666" />
+                  {user?.photoUrl ? (
+                    <img src={user.photoUrl} alt="Profile" className="profile-photo" />
+                  ) : (
+                    <User size={48} color="#666" />
+                  )}
                 </div>
-                <h2>Player</h2>
-                <p className="member-since">Member since {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</p>
+                <h2>{user?.displayName || 'Player'}</h2>
+                <p className="member-since">
+                  {isGuest ? (
+                    <span className="guest-badge">Guest Mode</span>
+                  ) : (
+                    <>Signed in with {user?.provider === 'google' ? 'Google' : 'Apple'}</>
+                  )}
+                </p>
               </div>
 
               <div className="profile-balance-card">
@@ -1052,6 +1094,10 @@ const AppContent: React.FC = () => {
               </div>
 
               <div className="profile-actions">
+                <button className="profile-action-btn" onClick={() => setHasCompletedOnboarding(false)}>
+                  <BookOpen size={20} />
+                  <span>View Tutorial</span>
+                </button>
                 <button className="profile-action-btn" onClick={() => setShowInfo(true)}>
                   <Info size={20} />
                   <span>How to Play</span>
@@ -1112,6 +1158,26 @@ const AppContent: React.FC = () => {
                     </button>
                   </div>
                 </div>
+
+                {/* Account Actions */}
+                {isGuest ? (
+                  <button
+                    className="profile-action-btn link-account-btn"
+                    onClick={() => linkAccount('google')}
+                  >
+                    <Link size={20} />
+                    <span>Link Google Account</span>
+                    <span className="link-benefit">Sync PRO across devices</span>
+                  </button>
+                ) : (
+                  <button
+                    className="profile-action-btn sign-out-btn"
+                    onClick={signOut}
+                  >
+                    <LogOut size={20} />
+                    <span>Sign Out</span>
+                  </button>
+                )}
               </div>
             </div>
           )}
@@ -1429,7 +1495,9 @@ const AppContent: React.FC = () => {
 const App: React.FC = () => {
   return (
     <ThemeProvider>
-      <AppContent />
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
     </ThemeProvider>
   );
 };

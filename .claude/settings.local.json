@@ -25,7 +25,9 @@
       "Bash(ping:*)",
       "Bash(gh repo view:*)",
       "Bash(netstat:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(npm search:*)",
+      "Bash(./gradlew.bat signingReport)"
     ]
   }
 }

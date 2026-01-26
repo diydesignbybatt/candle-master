@@ -71,8 +71,8 @@ export const GLOBAL_STYLES = `
     --color-border: #E5E5E5;
     --color-green: #0E7C7B;
     --color-red: #D62246;
-    --safe-area-top: env(safe-area-inset-top, 0);
-    --safe-area-bottom: env(safe-area-inset-bottom, 0);
+    --safe-area-top: 0px;
+    --safe-area-bottom: 0px;
 
     /* Responsive spacing */
     --spacing-xs: 0.25rem;
@@ -451,6 +451,48 @@ export const UI_STYLES = `
   /* Theme Specific Button Overrides */
   :root[style*="--bg-primary: #F2EBE3"] .btn-buy { background: linear-gradient(to bottom, #2D7A5A, #246B4D); box-shadow: 0 4px 10px rgba(45, 122, 90, 0.35); }
   :root[style*="--bg-primary: #F2EBE3"] .btn-sell { background: linear-gradient(to bottom, #C85A54, #B24A45); box-shadow: 0 4px 10px rgba(200, 90, 84, 0.35); }
+
+  /* Midnight Theme - Neon/Cyber style */
+  :root[style*="--bg-primary: #0F172A"] .btn-buy {
+    background: linear-gradient(to bottom, #00E5CC, #00B8A3);
+    box-shadow: 0 4px 15px rgba(0, 229, 204, 0.4), 0 2px 4px rgba(0, 0, 0, 0.3), inset 0 -2px 0 rgba(0, 0, 0, 0.3);
+    color: #0F172A;
+    text-shadow: none;
+  }
+  :root[style*="--bg-primary: #0F172A"] .btn-buy:active {
+    background: linear-gradient(to bottom, #00B8A3, #009688);
+    box-shadow: 0 2px 8px rgba(0, 229, 204, 0.3), inset 0 1px 3px rgba(0, 0, 0, 0.4);
+  }
+  :root[style*="--bg-primary: #0F172A"] .btn-sell {
+    background: linear-gradient(to bottom, #FF4081, #E91E63);
+    box-shadow: 0 4px 15px rgba(255, 64, 129, 0.4), 0 2px 4px rgba(0, 0, 0, 0.3), inset 0 -2px 0 rgba(0, 0, 0, 0.3);
+    color: #FFFFFF;
+  }
+  :root[style*="--bg-primary: #0F172A"] .btn-sell:active {
+    background: linear-gradient(to bottom, #E91E63, #C2185B);
+    box-shadow: 0 2px 8px rgba(255, 64, 129, 0.3), inset 0 1px 3px rgba(0, 0, 0, 0.4);
+  }
+
+  /* Solarized Theme - Classic terminal style */
+  :root[style*="--bg-primary: #002b36"] .btn-buy {
+    background: linear-gradient(to bottom, #2aa198, #268b84);
+    box-shadow: 0 4px 12px rgba(42, 161, 152, 0.4), 0 2px 4px rgba(0, 0, 0, 0.3), inset 0 -2px 0 rgba(0, 0, 0, 0.25);
+    color: #002b36;
+    font-weight: 700;
+  }
+  :root[style*="--bg-primary: #002b36"] .btn-buy:active {
+    background: linear-gradient(to bottom, #268b84, #1f7872);
+    box-shadow: 0 2px 6px rgba(42, 161, 152, 0.3), inset 0 1px 3px rgba(0, 0, 0, 0.35);
+  }
+  :root[style*="--bg-primary: #002b36"] .btn-sell {
+    background: linear-gradient(to bottom, #cb4b16, #b84313);
+    box-shadow: 0 4px 12px rgba(203, 75, 22, 0.4), 0 2px 4px rgba(0, 0, 0, 0.3), inset 0 -2px 0 rgba(0, 0, 0, 0.25);
+    color: #fdf6e3;
+  }
+  :root[style*="--bg-primary: #002b36"] .btn-sell:active {
+    background: linear-gradient(to bottom, #b84313, #a13b10);
+    box-shadow: 0 2px 6px rgba(203, 75, 22, 0.3), inset 0 1px 3px rgba(0, 0, 0, 0.35);
+  }
 
   .btn-close-all { background: #000000; color: white; }
   
@@ -849,7 +891,19 @@ export const MODAL_STYLES = `
   .equity-value.pos { color: var(--color-green); }
   .equity-value.neg { color: var(--color-red); }
 
-  .profile-avatar-large { width: 80px; height: 80px; background: var(--bg-tertiary); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; }
+  .profile-avatar-large { width: 80px; height: 80px; background: var(--bg-tertiary); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; overflow: hidden; }
+  .profile-avatar-large .profile-photo { width: 100%; height: 100%; object-fit: cover; }
+
+  .guest-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--color-border);
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+  }
   .profile-balance-card { background: var(--bg-tertiary); border: 1px solid var(--color-border); border-radius: 0.75rem; padding: 24px; margin-bottom: 24px; display: flex; flex-direction: column; align-items: center; }
   .balance-label { font-size: 0.75rem; color: var(--color-text-secondary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
   .balance-amount { font-size: 2rem; font-weight: 900; color: var(--color-text); margin-bottom: 4px; }
@@ -905,6 +959,35 @@ export const MODAL_STYLES = `
 
   [data-theme="dark"] .profile-action-btn.pro-toggle.is-pro svg {
     color: #FFD700;
+  }
+
+  /* Link Account Button */
+  .profile-action-btn.link-account-btn {
+    flex-wrap: wrap;
+    background: linear-gradient(135deg, rgba(66, 133, 244, 0.1) 0%, rgba(66, 133, 244, 0.05) 100%);
+    border-color: #4285F4;
+  }
+
+  .profile-action-btn.link-account-btn svg {
+    color: #4285F4;
+  }
+
+  .link-benefit {
+    width: 100%;
+    font-size: 0.7rem;
+    color: var(--color-text-tertiary);
+    font-weight: 500;
+    margin-top: 2px;
+    margin-left: 32px;
+  }
+
+  /* Sign Out Button */
+  .profile-action-btn.sign-out-btn {
+    color: var(--color-red);
+  }
+
+  .profile-action-btn.sign-out-btn svg {
+    color: var(--color-red);
   }
 
   /* Chart Pattern Detail Modal */
