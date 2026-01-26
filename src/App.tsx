@@ -93,7 +93,7 @@ const AppContent: React.FC = () => {
   const [positionsCollapsed, setPositionsCollapsed] = useState(false);
   const [activeTab, setActiveTab] = useState<'trade' | 'calculator' | 'academy' | 'history' | 'profile'>('trade');
   const [soundEnabled, setSoundEnabled] = useState(soundService.isEnabled());
-  const [tradeAmount, setTradeAmount] = useState(1000);
+  const [tradeAmount, setTradeAmount] = useState(20000);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [academySection, setAcademySection] = useState<'candle' | 'chart' | 'risk'>('candle');
   const [selectedChartPattern, setSelectedChartPattern] = useState<ChartPattern | null>(null);
@@ -138,7 +138,7 @@ const AppContent: React.FC = () => {
 
   const confirmReset = () => {
     setShowResetConfirm(false);
-    // Reset balance to $10,000
+    // Reset balance to $100,000
     resetSavedBalance();
     // Clear trade history (so equity curve shows true performance)
     clearHistory();
@@ -189,7 +189,7 @@ const AppContent: React.FC = () => {
     closeAllPositions: originalCloseAllPositions,
     skipDay: originalSkipDay,
     stop: originalStop
-  } = useTradingSession(stock);
+  } = useTradingSession(stock, isPro);
 
   // Screen Orientation Lock/Unlock based on device type and active tab
   useEffect(() => {
@@ -217,7 +217,7 @@ const AppContent: React.FC = () => {
   // Reset tradeAmount when new game starts
   useEffect(() => {
     if (stock) {
-      setTradeAmount(1000);
+      setTradeAmount(20000);
     }
   }, [stock]);
 
@@ -642,8 +642,29 @@ const AppContent: React.FC = () => {
                 <div className="upgrade-modal-icon">
                   <Star size={48} fill="currentColor" />
                 </div>
-                <h2 className="upgrade-modal-title">Upgrade to PRO</h2>
-                <p className="upgrade-modal-desc">Unlock all features including Academy, Calculator, and 300+ stocks.</p>
+                <h2 className="upgrade-modal-title">
+                  {showUpgradeModal === 'calc' && 'Position Sizing Calculator'}
+                  {showUpgradeModal === 'learn' && 'Candle Academy'}
+                  {showUpgradeModal === 'general' && 'Upgrade to PRO'}
+                </h2>
+                <p className="upgrade-modal-subtitle">
+                  {showUpgradeModal === 'general' ? 'Unlock Everything' : 'PRO Feature'}
+                </p>
+                {showUpgradeModal === 'calc' && (
+                  <p className="upgrade-modal-desc">Use it for your real trading every day. Calculate precise entry positions safely with proper Risk Management principles.</p>
+                )}
+                {showUpgradeModal === 'learn' && (
+                  <p className="upgrade-modal-desc">Master candlestick patterns, chart patterns, and risk management strategies. Learn from comprehensive guides to become a better trader.</p>
+                )}
+                {showUpgradeModal === 'general' && (
+                  <ul className="upgrade-benefits-list">
+                    <li><span className="benefit-icon">📈</span>200 Trading Days per game</li>
+                    <li><span className="benefit-icon">🎓</span>Full Academy Access</li>
+                    <li><span className="benefit-icon">🧮</span>Position Size Calculator</li>
+                    <li><span className="benefit-icon">🌍</span>300+ Global Stocks & ETFs</li>
+                    <li><span className="benefit-icon">🔄</span>Reset Game Data anytime</li>
+                  </ul>
+                )}
                 <button
                   className="upgrade-modal-btn"
                   onClick={() => {
@@ -853,6 +874,11 @@ const AppContent: React.FC = () => {
                   <ErrorBoundary>
                     {visibleData.length > 0 ? <Chart data={visibleData} zoom={zoom} /> : <div className="loading-placeholder">Initializing chart...</div>}
                   </ErrorBoundary>
+                  <div className="chart-footer">
+                    <span>CANDLE MASTER</span>
+                    <span className="separator">•</span>
+                    <span>Historical Data Trading Simulator</span>
+                  </div>
                 </div>
               </div>
 
@@ -1268,7 +1294,7 @@ const AppContent: React.FC = () => {
               </div>
 
               {history.length > 0 && (() => {
-                const INITIAL_BALANCE = 10000;
+                const INITIAL_BALANCE = 100000;
                 const equityCurve = [INITIAL_BALANCE];
                 let runningBalance = INITIAL_BALANCE;
 
@@ -1296,7 +1322,7 @@ const AppContent: React.FC = () => {
                   return `${x},${y}`;
                 }).join(' ');
 
-                // Calculate Y position for the initial balance line (10,000)
+                // Calculate Y position for the initial balance line (100,000)
                 const initialBalanceY = chartHeight - padding.bottom - ((INITIAL_BALANCE - minBalance) / range) * (chartHeight - padding.top - padding.bottom);
 
                 return (
@@ -1426,9 +1452,13 @@ const AppContent: React.FC = () => {
                   <Info size={20} />
                   <span>How to Play</span>
                 </button>
-                <button className="profile-action-btn" onClick={resetGameData}>
+                <button
+                  className="profile-action-btn"
+                  onClick={() => isPro ? resetGameData() : setShowUpgradeModal('general')}
+                >
                   <Trash2 size={20} />
                   <span>Reset Game Data</span>
+                  {!isPro && <span className="pro-only-badge">PRO</span>}
                 </button>
                 <button className="profile-action-btn" onClick={toggleSoundEffect}>
                   {soundEnabled ? <Volume2 size={20} /> : <VolumeX size={20} />}
@@ -1584,7 +1614,7 @@ const AppContent: React.FC = () => {
                   </div>
                   <div className="info-item">
                     <h3>🎯 Your Mission</h3>
-                    <p><strong>Starting Capital:</strong> $10,000 virtual money</p>
+                    <p><strong>Starting Capital:</strong> $100,000 virtual money</p>
                     <ul>
                       <li>Open up to <strong>3 positions</strong> simultaneously</li>
                       <li>Set your own position size per trade</li>
@@ -1637,16 +1667,16 @@ const AppContent: React.FC = () => {
                 <h2 className="reset-modal-title">Reset Game Data?</h2>
                 <div className="reset-modal-content">
                   <div className="reset-info-item">
-                    <span className="reset-icon">✅</span>
-                    <span>Balance will reset to <strong>$10,000</strong></span>
+                    <span className="reset-icon">💰</span>
+                    <span>Balance will reset to <strong>$100,000</strong></span>
                   </div>
                   <div className="reset-info-item">
-                    <span className="reset-icon">✅</span>
+                    <span className="reset-icon">🎮</span>
                     <span>Current game will restart</span>
                   </div>
-                  <div className="reset-info-item highlight">
-                    <span className="reset-icon">📊</span>
-                    <span>Your trading history will <strong>NOT</strong> be deleted</span>
+                  <div className="reset-info-item warning">
+                    <span className="reset-icon">⚠️</span>
+                    <span>Trading history will be <strong>DELETED</strong></span>
                   </div>
                 </div>
                 <div className="reset-modal-actions">
@@ -1737,11 +1767,21 @@ const AppContent: React.FC = () => {
                 <p className="upgrade-modal-subtitle">
                   {showUpgradeModal === 'general' ? 'Unlock Everything' : 'PRO Feature'}
                 </p>
-                <p className="upgrade-modal-desc">
-                  {showUpgradeModal === 'calc' && 'Use it for your real trading every day. Calculate precise entry positions safely with proper Risk Management principles.'}
-                  {showUpgradeModal === 'learn' && 'Master candlestick patterns, chart patterns, and risk management strategies. Learn from comprehensive guides to become a better trader.'}
-                  {showUpgradeModal === 'general' && 'Unlock Academy, Position Calculator, 300+ famous stocks and ETFs from markets worldwide. Take your trading skills to the next level.'}
-                </p>
+                {showUpgradeModal === 'calc' && (
+                  <p className="upgrade-modal-desc">Use it for your real trading every day. Calculate precise entry positions safely with proper Risk Management principles.</p>
+                )}
+                {showUpgradeModal === 'learn' && (
+                  <p className="upgrade-modal-desc">Master candlestick patterns, chart patterns, and risk management strategies. Learn from comprehensive guides to become a better trader.</p>
+                )}
+                {showUpgradeModal === 'general' && (
+                  <ul className="upgrade-benefits-list">
+                    <li><span className="benefit-icon">📈</span>200 Trading Days per game</li>
+                    <li><span className="benefit-icon">🎓</span>Full Academy Access</li>
+                    <li><span className="benefit-icon">🧮</span>Position Size Calculator</li>
+                    <li><span className="benefit-icon">🌍</span>300+ Global Stocks & ETFs</li>
+                    <li><span className="benefit-icon">🔄</span>Reset Game Data anytime</li>
+                  </ul>
+                )}
                 <button
                   className="upgrade-modal-btn"
                   onClick={() => {

@@ -17,7 +17,8 @@ export interface Position {
     openedAt: string;
 }
 
-const INITIAL_BALANCE = 10000;
+const INITIAL_BALANCE = 100000;
+const OLD_INITIAL_BALANCE = 10000; // For migration
 const BALANCE_STORAGE_KEY = 'candle_master_balance';
 const MAX_POSITIONS = 3;
 
@@ -27,6 +28,11 @@ const getSavedBalance = (): number => {
     if (saved) {
         const parsed = parseFloat(saved);
         if (!isNaN(parsed) && parsed > 0) {
+            // Migration: if balance is exactly old initial, upgrade to new initial
+            if (parsed === OLD_INITIAL_BALANCE) {
+                localStorage.setItem(BALANCE_STORAGE_KEY, INITIAL_BALANCE.toString());
+                return INITIAL_BALANCE;
+            }
             return parsed;
         }
     }
@@ -48,8 +54,9 @@ const generatePositionId = (): string => {
     return `pos_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 };
 
-export const useTradingSession = (stock: StockData | null) => {
-    const [currentIndex, setCurrentIndex] = useState(99);
+export const useTradingSession = (stock: StockData | null, isPro: boolean = false) => {
+    const START_INDEX = 199; // Show 200 candles initially
+    const [currentIndex, setCurrentIndex] = useState(START_INDEX);
     const [balance, setBalance] = useState(() => getSavedBalance());
     const [positions, setPositions] = useState<Position[]>([]);
     const [isGameOver, setIsGameOver] = useState(false);
@@ -64,7 +71,7 @@ export const useTradingSession = (stock: StockData | null) => {
     useEffect(() => {
         if (stock) {
             const savedBalance = getSavedBalance();
-            setCurrentIndex(99);
+            setCurrentIndex(START_INDEX);
             setBalance(savedBalance);
             setStartingBalance(savedBalance);
             setPositions([]);
@@ -176,8 +183,8 @@ export const useTradingSession = (stock: StockData | null) => {
         setPositions([]);
     }, [currentCandle, positions, isGameOver]);
 
-    const startIndex = 99;
-    const maxMoves = 100;
+    const startIndex = START_INDEX;
+    const maxMoves = isPro ? 200 : 100; // PRO: 200 moves, Free: 100 moves
 
     const skipDay = useCallback(() => {
         if (currentIndex >= startIndex + maxMoves || currentIndex >= allData.length - 1 || isGameOver) {

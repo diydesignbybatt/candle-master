@@ -4,16 +4,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Candle Master v1.8.0** is a **Trading Simulator Game & Education Platform**.
+**Candle Master v1.10.0** is a **Trading Simulator Game & Education Platform**.
 - **Core Concept**: Users practice trading on historical data without knowing the stock beforehand (Blind Trading).
 - **Gameplay**:
     - Users see candlesticks, MA indicators (20/50), and Volume.
     - Can open up to **3 positions** simultaneously (`MAX_POSITIONS = 3`).
-    - Session starts at candle 100 (`startIndex = 99`) with **100 moves forward** (`maxMoves = 100`).
+    - Session starts at candle 200 (`startIndex = 199`) with trading days based on subscription.
+    - **Free**: 100 trading days | **PRO**: 200 trading days
+    - Starting capital: **$100,000** | Default trade amount: **$20,000**
     - Trades execute at the **close price** of the current candle.
     - Commission: 0.15% per trade.
 - **Philosophy**: Focus on **Market Direction & Strategy**, not clicking speed.
-- **Platform**: Designed for fluid experience across devices (PWA/Mobile).
+- **Platform**: Designed for fluid experience across devices (PWA/Mobile/Tablet).
 
 ## Current Status (Active Development)
 
@@ -22,12 +24,24 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - [x] Pattern Academy with tabs (Candlestick + Chart Patterns + Risk Management)
 - [x] Chart Patterns with theme-aware images (`public/patterns/`)
 - [x] **Authentication**: Google Sign-In (Firebase) - working on Android
-- [x] **Safe Area**: Android notch/camera cutout support
+- [x] **Safe Area**: Android/iOS notch/camera cutout support
 - [x] **Onboarding Tutorial**: 9-slide tutorial for new users
+- [x] **Tablet Support**: Landscape mode with optimized UI
+- [x] **Theme System**: Background color follows theme across all screens
 - [ ] **Apple Sign-In**: Required by Apple (if Google Sign-In exists)
 - [ ] **Subscription System**: RevenueCat scaffold ready, needs API keys
-- [ ] **Tablet Support**: Landscape mode for optimal UI
 - [ ] **iOS Testing**: Requires Mac + Xcode
+
+## PRO Features
+
+| Feature | Free | PRO |
+|---------|------|-----|
+| Trading Days/Game | 100 | 200 |
+| Stocks | 20 | 300+ |
+| Academy (Learn) | Locked | Full Access |
+| Position Calculator | Locked | Full Access |
+| Reset Game Data | Locked | Available |
+| Themes | Sandstone only | All themes |
 
 ## Authentication & Services
 
@@ -43,20 +57,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Service File**: `src/services/revenueCatService.ts`
 - **Hook**: `src/hooks/useSubscription.ts`
 - **Status**: Scaffold ready, needs API keys from RevenueCat dashboard
-
-## Monetization Plan (Freemium, No Ads)
-
-| Feature | Free | Pro |
-|---------|------|-----|
-| Stocks | 20 | 300+ |
-| Games/day | 3 | Unlimited |
-| Candlestick Patterns | 10 | 20 |
-| Chart Patterns | ❌ | ✅ All |
-| Themes | Sandstone | All |
-| Trade History | 5 records | Unlimited |
-
-**Storage**: LocalStorage only (no backend/database)
-**Subscriptions**: RevenueCat (scaffold ready)
 
 ## Tech Stack
 
@@ -82,17 +82,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
     - **Fallback**: Generates mock geometric brownian motion data if API fails.
 
 ### Application Structure
-- **Core Logic (`App.tsx`)**: Under 1000 lines. Contains gameplay, tab navigation, Pattern Academy, Game Over.
-- **Styles (`src/styles/appStyles.ts`)**: Centralized CSS constants.
+- **Core Logic (`App.tsx`)**: ~1,800 lines. Contains gameplay, tab navigation, Pattern Academy, Game Over, Tablet layout.
+- **Styles (`src/styles/appStyles.ts`)**: ~2,100 lines. Centralized CSS constants including TABLET_STYLES.
 - **Constants (`src/constants/patterns.tsx`)**:
     - `ACADEMY_PATTERNS`: 20 candlestick patterns (SVG-based)
     - `CHART_PATTERNS`: Image-based patterns (webp in `public/patterns/`)
 - **Components**:
     - `Chart.tsx`: SVG candlestick chart with MA20/MA50, volume bars.
-    - `PositionSizeCalculator.tsx`: Risk management tool.
+    - `PositionSizeCalculator.tsx`: Risk management tool (PRO feature).
 - **Hooks**:
-    - `useTradingSession.ts`: Core trading state.
-    - `useOrientation.ts`: Device orientation.
+    - `useTradingSession.ts`: Core trading state, accepts `isPro` for dynamic maxMoves.
+    - `useOrientation.ts`: Device orientation detection.
+    - `useSubscription.ts`: PRO subscription state.
 - **Theme**: `ThemeContext` - Sandstone (default), Midnight, Solarized.
 
 ### Chart Pattern Images

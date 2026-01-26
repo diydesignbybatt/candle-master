@@ -26,7 +26,7 @@ const PositionSizeCalculator: React.FC = () => {
   const [showInfo, setShowInfo] = useState(false);
 
   const [inputs, setInputs] = useState<CalculatorInputs>({
-    portfolioValue: 10000,
+    portfolioValue: 100000,
     maxLossType: 'percent',
     maxLossValue: 2,
     entryPrice: 100,
