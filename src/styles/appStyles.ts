@@ -295,7 +295,7 @@ export const UI_STYLES = `
     padding-bottom: calc(var(--controls-height) * 2 + var(--safe-area-bottom) * 0.6 + 2rem);
   }
   
-  .scroll-chart-container { flex: 1; padding: 0 4%; min-height: 0; overflow: hidden; position: relative; }
+  .scroll-chart-container { flex: 1; padding: 0 4%; min-height: 0; overflow: visible; position: relative; }
 
   .chart-footer {
     position: absolute;

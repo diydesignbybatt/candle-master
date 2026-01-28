@@ -21,7 +21,7 @@ import { POSITION_SIZING_GUIDES, SCALE_IN_OUT_GUIDES } from './constants/guides'
 import { Chart } from './components/Chart';
 import { fetchRandomStockData } from './utils/data';
 import type { StockData } from './utils/data';
-import { useTradingSession, resetSavedBalance } from './hooks/useTradingSession';
+import { useTradingSession, resetSavedBalance, getSavedSession, clearSession } from './hooks/useTradingSession';
 import { useOrientation } from './hooks/useOrientation';
 import { SkipForward, Square, TrendingUp, TrendingDown, Loader2, Info, X, Trash2, Volume2, VolumeX, ZoomIn, ZoomOut, BarChart3, BookOpen, Clock, User, Plus, Minus, Calculator, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, ArrowLeft, Sun, Moon, Leaf, Star } from 'lucide-react';
 import { useSubscription } from './hooks/useSubscription';
@@ -41,9 +41,11 @@ import { LogOut, Link } from 'lucide-react';
 interface TradeRecord {
   id: string;
   date: string;
-  title: string;
+  stockSymbol: string;
+  stockName: string;
   returnPercentage: number;
   tradeCount: number;
+  winRate: number;
 }
 
 
@@ -142,8 +144,8 @@ const AppContent: React.FC = () => {
     resetSavedBalance();
     // Clear trade history (so equity curve shows true performance)
     clearHistory();
-    // Reload with new stock to apply the reset
-    loadNewStock();
+    // Reload with new stock to apply the reset (force fetch ใหม่)
+    loadNewStock(true);
   };
 
   const toggleSoundEffect = () => {
@@ -155,15 +157,29 @@ const AppContent: React.FC = () => {
     }
   };
 
-  const loadNewStock = useCallback(async () => {
+  // ฟังก์ชัน load stock (ใช้ saved session ถ้ามี หรือ fetch ใหม่)
+  const loadNewStock = useCallback(async (forceNew: boolean = false) => {
     setIsLoading(true);
+
+    // ถ้าไม่ force fetch ใหม่ → ลอง restore จาก saved session ก่อน
+    if (!forceNew) {
+      const savedSession = getSavedSession();
+      if (savedSession) {
+        setStock(savedSession.stock);
+        setIsLoading(false);
+        return;
+      }
+    }
+
+    // ถ้า force หรือไม่มี saved session → fetch ใหม่
+    clearSession(); // Clear old session เมื่อ fetch ใหม่
     const data = await fetchRandomStockData();
     setStock(data);
     setIsLoading(false);
   }, []);
 
   useEffect(() => {
-    loadNewStock();
+    loadNewStock(false); // ครั้งแรกลอง restore session ก่อน
   }, [loadNewStock]);
 
   const {
@@ -307,9 +323,11 @@ const AppContent: React.FC = () => {
       saveHistory({
         id: Date.now().toString(),
         date: new Date().toISOString(),
-        title,
+        stockSymbol,
+        stockName,
         returnPercentage: totalReturn,
-        tradeCount
+        tradeCount,
+        winRate
       });
 
       // Play win or lose sound
@@ -1393,9 +1411,9 @@ const AppContent: React.FC = () => {
                     {history.map((record) => (
                       <div key={record.id} className="history-item">
                         <div className="history-left">
-                          <span className="history-title">{record.title}</span>
+                          <span className="history-title">{record.stockSymbol || record.stockName || 'Unknown'}</span>
                           <span className="history-date">
-                            {new Date(record.date).toLocaleDateString()} • {record.tradeCount} Trades
+                            {new Date(record.date).toLocaleDateString()} • {record.tradeCount} Trades • WR {record.winRate?.toFixed(0) ?? 0}%
                           </span>
                         </div>
                         <div className="history-right">
@@ -1842,7 +1860,7 @@ const AppContent: React.FC = () => {
                   )}
                 </div>
 
-                <button className="btn btn-primary" onClick={loadNewStock}>START NEW GAME</button>
+                <button className="btn btn-primary" onClick={() => loadNewStock(true)}>START NEW GAME</button>
               </motion.div>
             </motion.div>
           )}

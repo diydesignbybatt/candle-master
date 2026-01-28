@@ -1,5 +1,5 @@
-import { useState, useCallback, useEffect } from 'react';
-import type { StockData } from '../utils/data';
+import { useState, useCallback, useEffect, useRef } from 'react';
+import type { StockData, Candle } from '../utils/data';
 
 export interface Trade {
     type: 'LONG' | 'SHORT' | 'EXIT';
@@ -17,10 +17,28 @@ export interface Position {
     openedAt: string;
 }
 
+// Session state ที่จะถูก persist (รวม stock data เพื่อให้ resume ได้)
+interface SessionState {
+    stockSymbol: string;
+    stockName: string;
+    stockData: Candle[]; // เก็บ data ทั้งหมดเพื่อ resume ได้แม่นยำ
+    currentIndex: number;
+    positions: Position[];
+    balance: number;
+    startingBalance: number;
+    totalCommissions: number;
+    tradeCount: number;
+    winCount: number;
+    isGameOver: boolean;
+    savedAt: number; // timestamp
+}
+
 const INITIAL_BALANCE = 100000;
 const OLD_INITIAL_BALANCE = 10000; // For migration
 const BALANCE_STORAGE_KEY = 'candle_master_balance';
+const SESSION_STORAGE_KEY = 'candle_master_session';
 const MAX_POSITIONS = 3;
+const SESSION_EXPIRY_MS = 24 * 60 * 60 * 1000; // 24 ชั่วโมง
 
 // Helper to get saved balance
 const getSavedBalance = (): number => {
@@ -47,6 +65,57 @@ const saveBalance = (balance: number) => {
 // Helper to reset balance
 export const resetSavedBalance = () => {
     localStorage.setItem(BALANCE_STORAGE_KEY, INITIAL_BALANCE.toString());
+    // Clear session เมื่อ reset balance
+    localStorage.removeItem(SESSION_STORAGE_KEY);
+};
+
+// Helper to save session state
+const saveSession = (session: SessionState) => {
+    localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(session));
+};
+
+// Helper to load session state
+const loadSession = (): SessionState | null => {
+    const saved = localStorage.getItem(SESSION_STORAGE_KEY);
+    if (!saved) return null;
+
+    try {
+        const session = JSON.parse(saved) as SessionState;
+        // ตรวจสอบว่า session ยังไม่หมดอายุ (24 ชั่วโมง)
+        if (Date.now() - session.savedAt > SESSION_EXPIRY_MS) {
+            localStorage.removeItem(SESSION_STORAGE_KEY);
+            return null;
+        }
+        // ตรวจสอบว่า game ยังไม่จบ
+        if (session.isGameOver) {
+            localStorage.removeItem(SESSION_STORAGE_KEY);
+            return null;
+        }
+        return session;
+    } catch {
+        localStorage.removeItem(SESSION_STORAGE_KEY);
+        return null;
+    }
+};
+
+// Helper to clear session
+export const clearSession = () => {
+    localStorage.removeItem(SESSION_STORAGE_KEY);
+};
+
+// Helper to get saved stock data (สำหรับ App.tsx เพื่อ restore session)
+export const getSavedSession = (): { stock: StockData; session: SessionState } | null => {
+    const session = loadSession();
+    if (!session || !session.stockData || session.stockData.length === 0) return null;
+
+    return {
+        stock: {
+            symbol: session.stockSymbol,
+            name: session.stockName,
+            data: session.stockData
+        },
+        session
+    };
 };
 
 // Generate unique ID for positions
@@ -56,6 +125,11 @@ const generatePositionId = (): string => {
 
 export const useTradingSession = (stock: StockData | null, isPro: boolean = false) => {
     const START_INDEX = 199; // Show 200 candles initially
+
+    // ใช้ ref เพื่อ track ว่า restore session แล้วหรือยัง
+    const sessionRestored = useRef(false);
+    const lastStockSymbol = useRef<string | null>(null);
+
     const [currentIndex, setCurrentIndex] = useState(START_INDEX);
     const [balance, setBalance] = useState(() => getSavedBalance());
     const [positions, setPositions] = useState<Position[]>([]);
@@ -67,9 +141,33 @@ export const useTradingSession = (stock: StockData | null, isPro: boolean = fals
 
     const COMMISSION_RATE = 0.0015; // 0.15%
 
-    // Reset internal game state when the stock changes (New Session)
+    // Restore session state เมื่อ stock ตรงกับ saved session
     useEffect(() => {
-        if (stock) {
+        if (!stock) return;
+
+        const savedSession = loadSession();
+
+        // ถ้า stock symbol ตรงกับ session ที่ save ไว้ → restore state
+        if (savedSession && savedSession.stockSymbol === stock.symbol && !sessionRestored.current) {
+            sessionRestored.current = true;
+            lastStockSymbol.current = stock.symbol;
+
+            setCurrentIndex(savedSession.currentIndex);
+            setBalance(savedSession.balance);
+            setStartingBalance(savedSession.startingBalance);
+            setPositions(savedSession.positions);
+            setIsGameOver(savedSession.isGameOver);
+            setTotalCommissions(savedSession.totalCommissions);
+            setTradeCount(savedSession.tradeCount);
+            setWinCount(savedSession.winCount);
+            return;
+        }
+
+        // ถ้า stock เปลี่ยนเป็นตัวใหม่ (ไม่ใช่การ restore) → reset state
+        if (lastStockSymbol.current !== stock.symbol) {
+            sessionRestored.current = false;
+            lastStockSymbol.current = stock.symbol;
+
             const savedBalance = getSavedBalance();
             setCurrentIndex(START_INDEX);
             setBalance(savedBalance);
@@ -79,6 +177,9 @@ export const useTradingSession = (stock: StockData | null, isPro: boolean = fals
             setTotalCommissions(0);
             setTradeCount(0);
             setWinCount(0);
+
+            // Clear old session เมื่อเริ่มเกมใหม่
+            clearSession();
         }
     }, [stock]);
 
@@ -232,8 +333,31 @@ export const useTradingSession = (stock: StockData | null, isPro: boolean = fals
     useEffect(() => {
         if (isGameOver && displayBalance > 0) {
             saveBalance(displayBalance);
+            // Clear session เมื่อเกมจบ
+            clearSession();
         }
     }, [isGameOver, displayBalance]);
+
+    // Auto-save session ทุกครั้งที่ state เปลี่ยน (เฉพาะเมื่อเกมยังไม่จบ)
+    useEffect(() => {
+        if (!stock || isGameOver) return;
+
+        const session: SessionState = {
+            stockSymbol: stock.symbol,
+            stockName: stock.name,
+            stockData: stock.data, // เก็บ data ทั้งหมดเพื่อ resume ได้
+            currentIndex,
+            positions,
+            balance,
+            startingBalance,
+            totalCommissions,
+            tradeCount,
+            winCount,
+            isGameOver,
+            savedAt: Date.now()
+        };
+        saveSession(session);
+    }, [stock, currentIndex, positions, balance, startingBalance, totalCommissions, tradeCount, winCount, isGameOver]);
 
     return {
         stockName: stock?.name || '',
