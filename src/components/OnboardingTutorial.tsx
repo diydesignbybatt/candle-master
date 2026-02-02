@@ -100,6 +100,20 @@ export const OnboardingTutorial: React.FC<OnboardingTutorialProps> = ({ onComple
     setCurrentSlide(index);
   };
 
+  // Handle swipe gesture
+  const handleDragEnd = (_: never, info: { offset: { x: number }; velocity: { x: number } }) => {
+    const swipeThreshold = 50;
+    const velocityThreshold = 500;
+
+    if (info.offset.x < -swipeThreshold || info.velocity.x < -velocityThreshold) {
+      // Swiped left -> go next
+      if (!isLastSlide) goNext();
+    } else if (info.offset.x > swipeThreshold || info.velocity.x > velocityThreshold) {
+      // Swiped right -> go prev
+      if (!isFirstSlide) goPrev();
+    }
+  };
+
   const slideVariants = {
     enter: (direction: number) => ({
       x: direction > 0 ? 300 : -300,
@@ -134,6 +148,10 @@ export const OnboardingTutorial: React.FC<OnboardingTutorialProps> = ({ onComple
             exit="exit"
             transition={{ duration: 0.3, ease: 'easeInOut' }}
             className="onboarding-slide"
+            drag="x"
+            dragConstraints={{ left: 0, right: 0 }}
+            dragElastic={0.2}
+            onDragEnd={handleDragEnd}
           >
             {/* Image */}
             <div className="onboarding-image-container">
@@ -159,30 +177,34 @@ export const OnboardingTutorial: React.FC<OnboardingTutorialProps> = ({ onComple
 
       {/* Navigation */}
       <div className="onboarding-nav">
-        {/* Dots */}
-        <div className="onboarding-dots">
-          {ONBOARDING_SLIDES.map((_, index) => (
-            <button
-              key={index}
-              className={`onboarding-dot ${index === currentSlide ? 'active' : ''}`}
-              onClick={() => goToSlide(index)}
-            />
-          ))}
-        </div>
+        {/* Nav Row: Back - Dots - Next */}
+        <div className="onboarding-nav-row">
+          {/* Back Button (Left) */}
+          <div className="onboarding-nav-left">
+            {!isFirstSlide && (
+              <button className="onboarding-btn onboarding-btn-prev" onClick={goPrev}>
+                <ChevronLeft size={20} />
+              </button>
+            )}
+          </div>
 
-        {/* Buttons */}
-        <div className="onboarding-buttons">
-          {!isFirstSlide && (
-            <button className="onboarding-btn onboarding-btn-prev" onClick={goPrev}>
-              <ChevronLeft size={20} />
-              <span>Back</span>
+          {/* Dots (Center) */}
+          <div className="onboarding-dots">
+            {ONBOARDING_SLIDES.map((_, index) => (
+              <button
+                key={index}
+                className={`onboarding-dot ${index === currentSlide ? 'active' : ''}`}
+                onClick={() => goToSlide(index)}
+              />
+            ))}
+          </div>
+
+          {/* Next Button (Right) */}
+          <div className="onboarding-nav-right">
+            <button className="onboarding-btn onboarding-btn-next" onClick={goNext}>
+              {isLastSlide ? "Start" : <ChevronRight size={20} />}
             </button>
-          )}
-
-          <button className="onboarding-btn onboarding-btn-next" onClick={goNext}>
-            <span>{isLastSlide ? "Let's Trade!" : 'Next'}</span>
-            {!isLastSlide && <ChevronRight size={20} />}
-          </button>
+          </div>
         </div>
 
         {/* Skip Tutorial Link */}
@@ -247,6 +269,12 @@ const ONBOARDING_STYLES = `
     flex-direction: column;
     align-items: center;
     text-align: center;
+    cursor: grab;
+    user-select: none;
+  }
+
+  .onboarding-slide:active {
+    cursor: grabbing;
   }
 
   .onboarding-image-container {
@@ -290,11 +318,25 @@ const ONBOARDING_STYLES = `
     padding-top: 24px;
   }
 
+  .onboarding-nav-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .onboarding-nav-left,
+  .onboarding-nav-right {
+    width: 52px;
+    flex-shrink: 0;
+  }
+
   .onboarding-dots {
     display: flex;
     justify-content: center;
     gap: 8px;
-    margin-bottom: 20px;
+    flex: 1;
   }
 
   .onboarding-dot {
@@ -314,29 +356,23 @@ const ONBOARDING_STYLES = `
     background: var(--color-text);
   }
 
-  .onboarding-buttons {
-    display: flex;
-    gap: 12px;
-    justify-content: center;
-  }
-
   .onboarding-btn {
+    width: 52px;
     height: 52px;
-    padding: 0 24px;
-    border-radius: 12px;
+    padding: 0;
+    border-radius: 50%;
     font-size: 1rem;
     font-weight: 600;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
     transition: all 0.2s;
     border: none;
   }
 
   .onboarding-btn:active {
-    transform: scale(0.98);
+    transform: scale(0.95);
   }
 
   .onboarding-btn-prev {
@@ -348,7 +384,6 @@ const ONBOARDING_STYLES = `
   .onboarding-btn-next {
     background: var(--color-text);
     color: var(--bg-primary);
-    min-width: 140px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   }
 
