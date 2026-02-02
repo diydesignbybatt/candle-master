@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Candle Master v1.9.3** is a **Trading Simulator Game & Education Platform**.
+**Candle Master v1.9.4** is a **Trading Simulator Game & Education Platform**.
 - **Core Concept**: Users practice trading on historical data without knowing the stock beforehand (Blind Trading).
 - **Gameplay**:
     - Users see candlesticks, MA indicators (20/50), and Volume.
@@ -30,6 +30,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - [x] **Theme System**: Background color follows theme across all screens
 - [x] **PWA Deployment**: Live on Vercel (auto-deploy from GitHub)
 - [x] **Random Time Window**: Fixed data sorting for true random historical periods
+- [x] **Onboarding Tutorial**: 9 slides with swipe gestures, 9:16 images
+- [x] **PWA Icons**: PNG icons for iOS/Android home screen support
 - [ ] **Apple Sign-In**: Required by Apple (if Google Sign-In exists)
 - [ ] **Subscription System**: RevenueCat scaffold ready, needs API keys
 - [ ] **iOS Testing**: Requires Mac + Xcode
