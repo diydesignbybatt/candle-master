@@ -56,6 +56,55 @@ const generateMockHistory = (info: { symbol: string, name: string }): StockData 
 };
 
 /**
+ * CORS proxy list for web - try multiple if one fails
+ */
+const CORS_PROXIES = [
+  (url: string) => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+  (url: string) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+  (url: string) => `https://cors-anywhere.herokuapp.com/${url}`,
+];
+
+/**
+ * Try fetching with multiple CORS proxies
+ */
+const fetchWithCorsProxy = async (url: string): Promise<string> => {
+  for (let i = 0; i < CORS_PROXIES.length; i++) {
+    try {
+      const proxyUrl = CORS_PROXIES[i](url);
+      console.log(`[Data] Trying proxy ${i + 1}/${CORS_PROXIES.length}: ${proxyUrl.substring(0, 50)}...`);
+
+      const response = await fetch(proxyUrl, {
+        signal: AbortSignal.timeout(10000) // 10 second timeout
+      });
+
+      if (!response.ok) {
+        console.warn(`[Data] Proxy ${i + 1} returned status ${response.status}`);
+        continue;
+      }
+
+      const text = await response.text();
+
+      // Verify it's CSV data (starts with "Date" header), not an error page
+      if (text.startsWith('Date,') || text.startsWith('"Date"')) {
+        console.log(`[Data] Proxy ${i + 1} succeeded!`);
+        return text;
+      }
+
+      // Check if it's a JSON error response
+      if (text.startsWith('{') || text.startsWith('<')) {
+        console.warn(`[Data] Proxy ${i + 1} returned non-CSV data`);
+        continue;
+      }
+
+      console.warn(`[Data] Proxy ${i + 1} returned unexpected format`);
+    } catch (error) {
+      console.warn(`[Data] Proxy ${i + 1} failed:`, error);
+    }
+  }
+  throw new Error('All CORS proxies failed');
+};
+
+/**
  * Fetches real historical data from the elite pool using a reliable proxy
  * Supports both web (CORS proxy) and native app (Capacitor HTTP)
  */
@@ -75,11 +124,8 @@ export const fetchRandomStockData = async (): Promise<StockData> => {
       const response = await CapacitorHttp.get({ url: stooqUrl });
       csvData = response.data;
     } else {
-      // Web: Use CORS proxy
-      const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(stooqUrl)}`;
-      const response = await fetch(proxyUrl);
-      if (!response.ok) throw new Error('Network error');
-      csvData = await response.text();
+      // Web: Try multiple CORS proxies
+      csvData = await fetchWithCorsProxy(stooqUrl);
     }
 
     if (!csvData || csvData.length < 100) throw new Error('Bad data format');
