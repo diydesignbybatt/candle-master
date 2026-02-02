@@ -99,6 +99,9 @@ export const fetchRandomStockData = async (): Promise<StockData> => {
       } as Candle;
     }).filter((c): c is Candle => c !== null && !isNaN(c.close));
 
+    // Sort by date ascending (oldest first) - Stooq returns descending order
+    allCandles.sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime());
+
     // Ensure we have enough data to pick a window
     if (allCandles.length < 300) throw new Error('Data too short');
 
@@ -106,6 +109,9 @@ export const fetchRandomStockData = async (): Promise<StockData> => {
     const windowSize = 250;
     const maxStartIndex = allCandles.length - windowSize;
     const randomStartIndex = Math.floor(Math.random() * maxStartIndex);
+
+    // Debug log to verify randomness
+    console.log(`[Data] Stock: ${stockInfo.symbol}, Total candles: ${allCandles.length}, Random start: ${randomStartIndex}, Date range: ${allCandles[randomStartIndex].time} to ${allCandles[randomStartIndex + windowSize - 1].time}`);
 
     return {
       symbol: stockInfo.symbol.split('.')[0],
