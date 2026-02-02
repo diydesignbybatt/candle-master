@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Candle Master v1.10.0** is a **Trading Simulator Game & Education Platform**.
+**Candle Master v1.9.0** is a **Trading Simulator Game & Education Platform**.
 - **Core Concept**: Users practice trading on historical data without knowing the stock beforehand (Blind Trading).
 - **Gameplay**:
     - Users see candlesticks, MA indicators (20/50), and Volume.
@@ -28,6 +28,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - [x] **Onboarding Tutorial**: 9-slide tutorial for new users
 - [x] **Tablet Support**: Landscape mode with optimized UI
 - [x] **Theme System**: Background color follows theme across all screens
+- [x] **PWA Deployment**: Live on Vercel (auto-deploy from GitHub)
+- [x] **Random Time Window**: Fixed data sorting for true random historical periods
 - [ ] **Apple Sign-In**: Required by Apple (if Google Sign-In exists)
 - [ ] **Subscription System**: RevenueCat scaffold ready, needs API keys
 - [ ] **iOS Testing**: Requires Mac + Xcode
@@ -75,10 +77,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
     - Separated into `free` (20 stocks) and `pro` (287 stocks) tiers.
     - Covers global markets: US, HK, JP, TH, UK, EU, etc.
 - **Data Fetching**: `data.ts`
-    - source: **Stooq API** (Free historical data).
+    - Source: **Stooq API** (Free historical data).
     - Method:
         - **Web**: Uses `corsproxy.io` to bypass CORS.
         - **Native**: Uses `CapacitorHttp` for direct requests.
+    - **Data Processing**: Sorts candles by date ascending (Stooq returns descending).
+    - **Random Window**: Selects random 250-candle window from full history.
     - **Fallback**: Generates mock geometric brownian motion data if API fails.
 
 ### Application Structure
@@ -139,7 +143,14 @@ npx cap sync ios         # Sync iOS only
 7. APK location: `android/app/build/outputs/apk/debug/app-debug.apk`
 
 ## Deployment Info
-- **Android/iOS**: Native projects in `android/` and `ios/`.
+
+### PWA (Vercel)
+- **Live URL**: https://candle-master.vercel.app/
+- **Auto-deploy**: Push to `main` branch → Vercel deploys automatically
+- **GitHub Repo**: https://github.com/diydesignbybatt/candle-master (public)
+
+### Android/iOS
+- Native projects in `android/` and `ios/`.
 - **Always** run `npm run build && npx cap sync` after code changes for mobile.
 
 ---
