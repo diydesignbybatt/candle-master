@@ -107,7 +107,9 @@ const AppContent: React.FC = () => {
   // Check if in landscape mode and on trade screen
   const isLandscapeTrading = orientation.isLandscape && activeTab === 'trade';
   // Check if tablet in landscape mode (special layout)
-  const isTabletLandscape = orientation.isTablet && orientation.isLandscape && activeTab === 'trade';
+  const isTabletLandscape = orientation.isTablet && orientation.isLandscape;
+  // Track active tab separately for tablet (avoid TypeScript narrowing)
+  const tabletActiveTab = activeTab;
 
 
 
@@ -387,8 +389,8 @@ const AppContent: React.FC = () => {
     );
   }
 
-  // Tablet Landscape Layout
-  if (isTabletLandscape && !isGameOver) {
+  // Tablet Landscape Layout (only on trade tab)
+  if (isTabletLandscape && tabletActiveTab === 'trade' && !isGameOver) {
     return (
       <div className="tablet-layout">
         {/* Tablet Header - Stats + Trade Amount + Action Buttons */}
@@ -561,17 +563,17 @@ const AppContent: React.FC = () => {
             </div>
           )}
 
-          {/* Bottom Nav */}
+          {/* Bottom Nav - Trade is always active in tablet landscape mode */}
           <div className="tablet-bottom-nav">
             <button
-              className={`tablet-nav-item ${activeTab === 'trade' ? 'active' : ''}`}
+              className="tablet-nav-item active"
               onClick={() => setActiveTab('trade')}
             >
               <BarChart3 size={22} />
               <span>TRADE</span>
             </button>
             <button
-              className={`tablet-nav-item ${activeTab === 'calculator' ? 'active' : ''}`}
+              className="tablet-nav-item"
               onClick={() => isPro ? setActiveTab('calculator') : setShowUpgradeModal('calc')}
             >
               <div className="tablet-nav-icon-wrapper">
@@ -581,7 +583,7 @@ const AppContent: React.FC = () => {
               <span>CALC</span>
             </button>
             <button
-              className={`tablet-nav-item ${activeTab === 'academy' ? 'active' : ''}`}
+              className="tablet-nav-item"
               onClick={() => isPro ? setActiveTab('academy') : setShowUpgradeModal('learn')}
             >
               <div className="tablet-nav-icon-wrapper">
@@ -591,14 +593,14 @@ const AppContent: React.FC = () => {
               <span>LEARN</span>
             </button>
             <button
-              className={`tablet-nav-item ${activeTab === 'history' ? 'active' : ''}`}
+              className="tablet-nav-item"
               onClick={() => setActiveTab('history')}
             >
               <Clock size={22} />
               <span>HISTORY</span>
             </button>
             <button
-              className={`tablet-nav-item ${activeTab === 'profile' ? 'active' : ''}`}
+              className="tablet-nav-item"
               onClick={() => setActiveTab('profile')}
             >
               <User size={22} />
