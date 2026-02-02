@@ -153,11 +153,8 @@ export const OnboardingTutorial: React.FC<OnboardingTutorialProps> = ({ onComple
             dragElastic={0.2}
             onDragEnd={handleDragEnd}
           >
-            {/* Image - 9:16 aspect ratio */}
-            <div
-              className="onboarding-image-container"
-              style={{ height: '550px', width: '309px' }}
-            >
+            {/* Image - 9:16 aspect ratio, responsive */}
+            <div className="onboarding-image-container">
               <img
                 src={slide.image}
                 alt={slide.title}
@@ -210,10 +207,6 @@ export const OnboardingTutorial: React.FC<OnboardingTutorialProps> = ({ onComple
           </div>
         </div>
 
-        {/* Skip Tutorial Link */}
-        <button className="onboarding-skip-text" onClick={onSkip}>
-          Skip Tutorial
-        </button>
       </div>
 
       <style>{ONBOARDING_STYLES}</style>
@@ -281,12 +274,13 @@ const ONBOARDING_STYLES = `
   }
 
   .onboarding-image-container {
-    height: 50vh;
-    width: calc(50vh * 9 / 16);
+    --img-height: min(55vh, 500px);
+    height: var(--img-height);
+    width: calc(var(--img-height) * 9 / 16);
     border-radius: 16px;
     overflow: hidden;
     background: var(--bg-tertiary);
-    margin-bottom: 24px;
+    margin-bottom: 20px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
     flex-shrink: 0;
   }
@@ -392,22 +386,6 @@ const ONBOARDING_STYLES = `
 
   .onboarding-btn-next:active {
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-  }
-
-  .onboarding-skip-text {
-    background: none;
-    border: none;
-    color: var(--color-text-tertiary);
-    font-size: 0.875rem;
-    font-weight: 500;
-    cursor: pointer;
-    padding: 12px;
-    margin-top: 8px;
-    transition: color 0.2s;
-  }
-
-  .onboarding-skip-text:active {
-    color: var(--color-text-secondary);
   }
 `;
 
