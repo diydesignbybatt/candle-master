@@ -56,52 +56,45 @@ const generateMockHistory = (info: { symbol: string, name: string }): StockData 
 };
 
 /**
- * CORS proxy list for web - try multiple if one fails
+ * Fetch stock data using our own Vercel API route (most reliable)
+ * Falls back to direct CORS proxy if API route fails
  */
-const CORS_PROXIES = [
-  (url: string) => `https://corsproxy.io/?${encodeURIComponent(url)}`,
-  (url: string) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
-  (url: string) => `https://cors-anywhere.herokuapp.com/${url}`,
-];
+const fetchStockCSV = async (symbol: string): Promise<string> => {
+  // Try our own API route first (Vercel serverless function)
+  try {
+    console.log(`[Data] Fetching via API route: /api/stock?symbol=${symbol}`);
+    const response = await fetch(`/api/stock?symbol=${encodeURIComponent(symbol)}`, {
+      signal: AbortSignal.timeout(15000)
+    });
 
-/**
- * Try fetching with multiple CORS proxies
- */
-const fetchWithCorsProxy = async (url: string): Promise<string> => {
-  for (let i = 0; i < CORS_PROXIES.length; i++) {
-    try {
-      const proxyUrl = CORS_PROXIES[i](url);
-      console.log(`[Data] Trying proxy ${i + 1}/${CORS_PROXIES.length}: ${proxyUrl.substring(0, 50)}...`);
-
-      const response = await fetch(proxyUrl, {
-        signal: AbortSignal.timeout(10000) // 10 second timeout
-      });
-
-      if (!response.ok) {
-        console.warn(`[Data] Proxy ${i + 1} returned status ${response.status}`);
-        continue;
-      }
-
+    if (response.ok) {
       const text = await response.text();
-
-      // Verify it's CSV data (starts with "Date" header), not an error page
-      if (text.startsWith('Date,') || text.startsWith('"Date"')) {
-        console.log(`[Data] Proxy ${i + 1} succeeded!`);
+      if (text.startsWith('Date')) {
+        console.log('[Data] API route succeeded!');
         return text;
       }
-
-      // Check if it's a JSON error response
-      if (text.startsWith('{') || text.startsWith('<')) {
-        console.warn(`[Data] Proxy ${i + 1} returned non-CSV data`);
-        continue;
-      }
-
-      console.warn(`[Data] Proxy ${i + 1} returned unexpected format`);
-    } catch (error) {
-      console.warn(`[Data] Proxy ${i + 1} failed:`, error);
     }
+    console.warn('[Data] API route failed, trying fallback...');
+  } catch (error) {
+    console.warn('[Data] API route error:', error);
   }
-  throw new Error('All CORS proxies failed');
+
+  // Fallback to CORS proxy
+  const stooqUrl = `https://stooq.com/q/d/l/?s=${symbol.toLowerCase()}&i=d`;
+  const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(stooqUrl)}`;
+
+  console.log('[Data] Trying CORS proxy fallback...');
+  const response = await fetch(proxyUrl, {
+    signal: AbortSignal.timeout(10000)
+  });
+
+  if (!response.ok) throw new Error('CORS proxy failed');
+
+  const text = await response.text();
+  if (!text.startsWith('Date')) throw new Error('Invalid CSV format');
+
+  console.log('[Data] CORS proxy succeeded!');
+  return text;
 };
 
 /**
@@ -124,8 +117,8 @@ export const fetchRandomStockData = async (): Promise<StockData> => {
       const response = await CapacitorHttp.get({ url: stooqUrl });
       csvData = response.data;
     } else {
-      // Web: Try multiple CORS proxies
-      csvData = await fetchWithCorsProxy(stooqUrl);
+      // Web: Use our API route (with CORS proxy fallback)
+      csvData = await fetchStockCSV(stockInfo.symbol);
     }
 
     if (!csvData || csvData.length < 100) throw new Error('Bad data format');
