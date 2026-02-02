@@ -1318,7 +1318,9 @@ const AppContent: React.FC = () => {
                 const equityCurve = [INITIAL_BALANCE];
                 let runningBalance = INITIAL_BALANCE;
 
-                history.forEach(record => {
+                // Reverse history to show oldest first (chronological order for equity curve)
+                const chronologicalHistory = [...history].reverse();
+                chronologicalHistory.forEach(record => {
                   runningBalance = runningBalance * (1 + record.returnPercentage / 100);
                   equityCurve.push(runningBalance);
                 });
