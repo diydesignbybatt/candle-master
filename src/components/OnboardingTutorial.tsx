@@ -153,8 +153,11 @@ export const OnboardingTutorial: React.FC<OnboardingTutorialProps> = ({ onComple
             dragElastic={0.2}
             onDragEnd={handleDragEnd}
           >
-            {/* Image */}
-            <div className="onboarding-image-container">
+            {/* Image - 9:16 aspect ratio */}
+            <div
+              className="onboarding-image-container"
+              style={{ height: '550px', width: '309px' }}
+            >
               <img
                 src={slide.image}
                 alt={slide.title}
@@ -278,21 +281,21 @@ const ONBOARDING_STYLES = `
   }
 
   .onboarding-image-container {
-    width: 100%;
-    max-width: 320px;
-    aspect-ratio: 9 / 16;
-    max-height: 50vh;
+    height: 50vh;
+    width: calc(50vh * 9 / 16);
     border-radius: 16px;
     overflow: hidden;
     background: var(--bg-tertiary);
     margin-bottom: 24px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+    flex-shrink: 0;
   }
 
   .onboarding-image {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    object-position: center;
   }
 
   .onboarding-text {
