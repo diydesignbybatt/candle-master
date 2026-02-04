@@ -8,6 +8,8 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
+    "pages:dev": "npx wrangler pages dev dist --compatibility-date=2024-01-01",
+    "pages:deploy": "npm run build && npx wrangler pages deploy dist",
     "cap:sync": "npm run build && npx cap sync",
     "cap:android": "npm run cap:sync && npx cap open android",
     "cap:ios": "npm run cap:sync && npx cap open ios",
@@ -34,6 +36,7 @@
     "react-dom": "^19.2.0"
   },
   "devDependencies": {
+    "@cloudflare/workers-types": "^4.20240620.0",
     "@eslint/js": "^9.39.1",
     "@types/node": "^24.10.1",
     "@types/react": "^19.2.5",

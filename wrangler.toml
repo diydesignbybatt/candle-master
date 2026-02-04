@@ -1,0 +1,18 @@
+# Cloudflare Pages Configuration
+# This file is used when deploying to Cloudflare Pages
+
+name = "candle-master"
+compatibility_date = "2024-01-01"
+
+# Pages will automatically detect:
+# - Build output: dist/
+# - Functions: functions/
+
+# Optional: Environment variables (can also be set in Cloudflare dashboard)
+# [vars]
+# MY_VAR = "value"
+
+# Optional: Bindings for KV, D1, etc.
+# [[kv_namespaces]]
+# binding = "MY_KV"
+# id = "xxxxxxxxxx"
