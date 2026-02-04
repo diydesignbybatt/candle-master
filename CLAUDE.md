@@ -111,9 +111,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Important: Working Directory
 
-**Use this folder (no Thai characters in path):**
+**Primary Working Folder:**
 ```
-D:\CANDLE MASTER\PROJECT\Candle Master
+E:\CANDLE MASTER\PROJECT\Candle Master
 ```
 
 **Do NOT use the old folder:**
@@ -121,6 +121,17 @@ D:\CANDLE MASTER\PROJECT\Candle Master
 D:\000 BATT\เรียนสร้าง Application\Candle Master
 ```
 (Thai characters cause Gradle build issues)
+
+## Git Branches
+
+| Branch | Purpose | Deployment |
+|--------|---------|------------|
+| `main` | Production | Vercel (auto-deploy) |
+| `dev-lab` | Testing/Cloudflare | Cloudflare Pages |
+
+**Workflow**:
+1. Test new features on `dev-lab`
+2. When stable, merge to `main` for Vercel deployment
 
 ## Common Commands
 
@@ -146,10 +157,47 @@ npx cap sync ios         # Sync iOS only
 
 ## Deployment Info
 
-### PWA (Vercel)
+### Domain Structure (candlemaster.app)
+| Subdomain | Purpose | Repo | Platform | Status |
+|-----------|---------|------|----------|--------|
+| `candlemaster.app` | Landing Page (SEO) | candle-master-landing | Cloudflare Pages | ✅ Live |
+| `app.candlemaster.app` | Mobile App (PWA) | candle-master | Cloudflare Pages | ✅ Live |
+| `web.candlemaster.app` | Desktop/iPad App | candle-master-web | Cloudflare Pages | DNS Ready |
+
+### Landing Page (Astro)
+- **Live URL**: https://candlemaster.app
+- **Repo**: https://github.com/diydesignbybatt/candle-master-landing
+- **Framework**: Astro + Cloudflare adapter
+- **Location**: `E:\CANDLE MASTER\PROJECT\candle-master-landing`
+
+### PWA - Primary (Vercel)
 - **Live URL**: https://candle-master.vercel.app/
 - **Auto-deploy**: Push to `main` branch → Vercel deploys automatically
 - **GitHub Repo**: https://github.com/diydesignbybatt/candle-master (public)
+- **Note**: Vercel is faster, use as primary until traffic increases
+
+### PWA - Backup (Cloudflare Pages)
+- **Live URL**: https://candle-master.pages.dev/
+- **Branch**: `dev-lab` (for testing Cloudflare)
+- **Dashboard**: https://dash.cloudflare.com/ → Workers & Pages → candle-master
+- **Functions**: `/functions/api/stock.ts` (Cloudflare Workers format)
+- **Config**: `wrangler.toml`
+
+### Cloudflare Pages Commands
+```bash
+npm run pages:dev      # Local dev with Wrangler
+npm run pages:deploy   # Build and deploy to Cloudflare
+```
+
+### Cloudflare vs Vercel
+| Aspect | Vercel | Cloudflare |
+|--------|--------|------------|
+| Speed | Faster (more edge locations) | Slightly slower |
+| Free Tier | 100GB bandwidth | Unlimited bandwidth |
+| Functions | Serverless Functions | Workers (edge) |
+| Cost at Scale | Can get expensive | More predictable |
+
+**Strategy**: Use Vercel as primary (faster UX), Cloudflare as backup/fallback when traffic grows.
 
 ### Android/iOS
 - Native projects in `android/` and `ios/`.
