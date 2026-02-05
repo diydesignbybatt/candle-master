@@ -62,6 +62,57 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Hook**: `src/hooks/useSubscription.ts`
 - **Status**: Scaffold ready, needs API keys from RevenueCat dashboard
 
+### Subscription Strategy (Multi-Platform)
+
+**สถานะ**: ยังไม่เปิดใช้งาน - รอทดสอบก่อน แต่โค้ดต้องพร้อมเปิดได้ทุกเมื่อ
+
+**แผนการ (Plans):**
+| Plan | Product ID (RevenueCat) | ราคา | หมายเหตุ |
+|------|------------------------|------|----------|
+| PRO Monthly | `candle_master_pro_monthly` | TBD | สมัครรายเดือน |
+| PRO Lifetime | `candle_master_pro_lifetime` | TBD | จ่ายครั้งเดียว ใช้ตลอดชีพ |
+
+**แยกช่องทางตาม Platform:**
+| Platform | Payment Provider | หมายเหตุ |
+|----------|-----------------|----------|
+| **PWA (Web)** | **Stripe** | ยังไม่มีโค้ด Stripe ใน app เลย - ต้องสร้างใหม่ |
+| **Android** | **RevenueCat** → Google Play Billing | Scaffold พร้อม รอ API keys |
+| **iOS** | **RevenueCat** → Apple IAP | Scaffold พร้อม รอ API keys + Mac/Xcode |
+
+**หลักการ:**
+- ปุ่ม "Upgrade to PRO" ในหน้า Profile ต้องพร้อมเปลี่ยนเป็นปุ่มจริงได้ทุกเมื่อ
+- PWA ต้อง redirect ไป Stripe Checkout (ไม่ผ่าน App Store/Play Store)
+- Native apps ต้องใช้ RevenueCat (ข้อบังคับ Apple/Google)
+- ใช้ `Capacitor.isNativePlatform()` แยก flow ระหว่าง Web vs Native
+- Landing page มี pricing cards ทั้ง Monthly + Lifetime แล้ว → App ต้องมีให้ตรงกัน
+- **Lifetime option**: มีใน Landing Page แล้ว แต่ยังไม่ได้ทำใน App → ต้องเพิ่มเมื่อพร้อม
+
+**TODO เมื่อพร้อมเปิด:**
+- [ ] สร้าง Stripe products/prices + Checkout Session (สำหรับ PWA)
+- [ ] ใส่ RevenueCat API keys (สำหรับ Native)
+- [ ] เปลี่ยนปุ่ม Profile จาก toggle mock → เปิด Pricing Modal จริง
+- [ ] สร้าง Pricing Modal แสดง Monthly + Lifetime พร้อมปุ่มซื้อ
+- [ ] ตรวจ platform แล้ว route ไป Stripe หรือ RevenueCat ตาม platform
+- [ ] Sync subscription status ข้าม platform ผ่าน Firebase user ID
+
+### Referral / Affiliate Program (แผนอนาคต)
+
+**สถานะ**: ยังไม่เริ่ม - อยู่ระหว่างเลือก provider
+
+**เป้าหมาย:** ให้ Finfluencer (Financial Influencer) ช่วยโปรโมท Candle Master ผ่าน referral link แล้วได้ commission จาก subscription ที่เกิดขึ้น
+
+**Provider ที่พิจารณา:**
+- **Lemon Squeezy** (มีโอกาสสูงสุด) - มี built-in affiliate system, จัดการ payout ให้
+- อาจพิจารณา provider อื่นในอนาคต
+
+**สิ่งที่ต้องเตรียมฝั่ง App:**
+- [ ] เก็บ referral code / UTM parameter จาก URL เมื่อ user เข้า app ครั้งแรก
+- [ ] ผูก referral code กับ Firebase user ID เมื่อสมัคร
+- [ ] ส่ง referral attribution ไปยัง payment provider (Stripe/Lemon Squeezy) ตอน checkout
+- [ ] Landing page: เพิ่มหน้า affiliate signup + dashboard (ยังไม่ทำ)
+
+**หมายเหตุ:** ถ้าใช้ Lemon Squeezy อาจแทน Stripe สำหรับ PWA payment ได้เลย (Lemon Squeezy = payment + affiliate ในตัว) → ต้องประเมินอีกทีเมื่อถึงเวลา
+
 ## Tech Stack
 
 - **Framework**: React 19 + TypeScript + Vite
