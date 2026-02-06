@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Candle Master v2.0.0** is a **Trading Simulator Game & Education Platform**.
+**Candle Master v2.0.1** is a **Trading Simulator Game & Education Platform**.
 - **Core Concept**: Users practice trading on historical data without knowing the stock beforehand (Blind Trading).
 - **Gameplay**:
     - Users see candlesticks, MA indicators (20/50), and Volume.
@@ -32,9 +32,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - [x] **Random Time Window**: Fixed data sorting for true random historical periods
 - [x] **Onboarding Tutorial**: 9 slides with swipe gestures, 9:16 images
 - [x] **PWA Icons**: PNG icons for iOS/Android home screen support
+- [x] **Event Mode (PRO)**: 1/7 chance to play historical crisis events (5 events)
+- [x] **Character Judge**: Cartoon character result at Game Over based on P&L
+- [x] **BGM Music**: Multi-track BGM (3 normal + 2 boss), fade out for boss, visibility pause/resume
+- [x] **Crisis Banner**: Red "CRISIS EVENT!" banner animation when event mode triggers
 - [ ] **Apple Sign-In**: Required by Apple (if Google Sign-In exists)
 - [ ] **Subscription System**: RevenueCat scaffold ready, needs API keys
 - [ ] **iOS Testing**: Requires Mac + Xcode
+- [ ] **Character Images**: 14 webp images needed in `public/characters/`
 
 ## PRO Features
 
@@ -46,6 +51,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | Position Calculator | Locked | Full Access |
 | Reset Game Data | Locked | Available |
 | Themes | Sandstone only | All themes |
+| Event Mode | ❌ | 1/7 chance historical crisis |
+| Boss Music | ❌ | Special BGM for crisis events |
 
 ## Authentication & Services
 
@@ -136,22 +143,29 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
         - **Native**: Uses `CapacitorHttp` for direct requests.
     - **Data Processing**: Sorts candles by date ascending (Stooq returns descending).
     - **Random Window**: Selects random 250-candle window from full history.
+    - **Event Mode (PRO)**: 1/7 chance → picks historical crisis event → fetches event-era stock data (dynamic window: min 150, preferred 250 candles).
     - **Fallback**: Generates mock geometric brownian motion data if API fails.
 
 ### Application Structure
-- **Core Logic (`App.tsx`)**: ~1,800 lines. Contains gameplay, tab navigation, Pattern Academy, Game Over, Tablet layout.
-- **Styles (`src/styles/appStyles.ts`)**: ~2,100 lines. Centralized CSS constants including TABLET_STYLES.
-- **Constants (`src/constants/patterns.tsx`)**:
-    - `ACADEMY_PATTERNS`: 20 candlestick patterns (SVG-based)
-    - `CHART_PATTERNS`: Image-based patterns (webp in `public/patterns/`)
+- **Core Logic (`App.tsx`)**: ~1,900 lines. Contains gameplay, tab navigation, Pattern Academy, Game Over, crisis banner, Tablet layout.
+- **Styles (`src/styles/appStyles.ts`)**: ~2,200 lines. Centralized CSS constants including TABLET_STYLES.
+- **Constants (`src/constants/`)**:
+    - `patterns.tsx`: `ACADEMY_PATTERNS` (20 candlestick) + `CHART_PATTERNS` (image-based)
+    - `characters.ts`: 14 character tiers for Game Over judge (based on P&L + trades)
+- **Services**:
+    - `soundService.ts`: Sound effects + multi-track BGM system (3 normal + 2 boss tracks, fade out, pause/resume)
+- **Utils**:
+    - `data.ts`: Stock data fetching, event mode logic, CSV parsing
+    - `historicalEvents.ts`: 5 historical crisis events (Dot-Com, 2008, COVID, Oil, China)
 - **Components**:
     - `Chart.tsx`: SVG candlestick chart with MA20/MA50, volume bars.
     - `PositionSizeCalculator.tsx`: Risk management tool (PRO feature).
 - **Hooks**:
     - `useTradingSession.ts`: Core trading state, accepts `isPro` for dynamic maxMoves.
     - `useOrientation.ts`: Device orientation detection.
-    - `useSubscription.ts`: PRO subscription state.
+    - `useSubscription.ts`: PRO subscription state (`candle_master_subscription` key in localStorage).
 - **Theme**: `ThemeContext` - Sandstone (default), Midnight, Solarized.
+- **Audio**: `public/sounds/` — bgm-1/2/3.mp3 (normal), boss-1/2.mp3 (event), volume 0.075 (7.5%)
 
 ### Chart Pattern Images
 - Location: `public/patterns/`
