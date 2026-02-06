@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Candle Master v2.0.1** is a **Trading Simulator Game & Education Platform**.
+**Candle Master v2.1.0** is a **Trading Simulator Game & Education Platform**.
 - **Core Concept**: Users practice trading on historical data without knowing the stock beforehand (Blind Trading).
 - **Gameplay**:
     - Users see candlesticks, MA indicators (20/50), and Volume.
@@ -34,12 +34,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - [x] **PWA Icons**: PNG icons for iOS/Android home screen support
 - [x] **Event Mode (PRO)**: 1/7 chance to play historical crisis events (5 events)
 - [x] **Character Judge**: Cartoon character result at Game Over based on P&L
+- [x] **Multi-Variant Characters**: 39 character images across 13 tiers + 6 boss variants, random selection per tier
 - [x] **BGM Music**: Multi-track BGM (2 normal + 2 boss), fade out for boss, visibility pause/resume
 - [x] **Crisis Banner**: Red "CRISIS EVENT!" banner animation when event mode triggers
+- [x] **Tutorial Screenshots**: Updated 9 high-quality tutorial images (shared with landing page)
+- [x] **Touch Swipe Fix**: `touch-action: pan-x` prevents vertical scroll during horizontal swipe
 - [ ] **Apple Sign-In**: Required by Apple (if Google Sign-In exists)
 - [ ] **Subscription System**: RevenueCat scaffold ready, needs API keys
+- [ ] **Stripe (PWA)**: Payment integration for web users — next priority
 - [ ] **iOS Testing**: Requires Mac + Xcode
-- [ ] **Character Images**: 14 webp images needed in `public/characters/`
 
 ## PRO Features
 
@@ -152,7 +155,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Styles (`src/styles/appStyles.ts`)**: ~2,200 lines. Centralized CSS constants including TABLET_STYLES.
 - **Constants (`src/constants/`)**:
     - `patterns.tsx`: `ACADEMY_PATTERNS` (20 candlestick) + `CHART_PATTERNS` (image-based)
-    - `characters.ts`: 14 character tiers for Game Over judge (based on P&L + trades)
+    - `characters.ts`: 13 character tiers (39 images) + 6 boss variants for Game Over judge (random variant per tier based on P&L + trades)
 - **Services**:
     - `soundService.ts`: Sound effects + multi-track BGM system (2 normal + 2 boss tracks, fade out, autoplay unlock, pause/resume)
 - **Utils**:
