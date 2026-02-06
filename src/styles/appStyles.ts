@@ -623,9 +623,33 @@ export const UI_STYLES = `
     text-align: center;
   }
   
-  .title-section { margin-bottom: 30px; }
-  .summary-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 2px; opacity: 0.6; margin-bottom: 8px; font-weight: 600; }
-  .trading-title { font-size: 2.2rem; line-height: 1.1; font-family: 'Cormorant Garamond', serif; font-weight: 700; color: var(--color-text); margin: 0; }
+  .title-section { margin-bottom: 30px; display: flex; flex-direction: column; align-items: center; }
+
+  .character-circle {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 3px solid var(--color-border);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+    margin-bottom: 16px;
+    background: var(--bg-tertiary);
+  }
+  .character-circle img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .character-quote {
+    font-size: 1.15rem;
+    line-height: 1.4;
+    font-style: italic;
+    font-weight: 600;
+    color: var(--color-text);
+    margin: 0;
+    max-width: 280px;
+  }
   
   .stats-row { display: flex; justify-content: center; align-items: center; gap: 16px; margin-bottom: 30px; padding: 16px; background: var(--bg-tertiary); border-radius: 0.75rem; border: 1px solid var(--color-border); }
   .mini-stat { display: flex; flex-direction: column; align-items: center; }
