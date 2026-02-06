@@ -721,6 +721,7 @@ const AppContent: React.FC = () => {
                     <li><span className="benefit-icon">🎓</span>Full Academy Access</li>
                     <li><span className="benefit-icon">🧮</span>Position Size Calculator</li>
                     <li><span className="benefit-icon">🌍</span>500+ Global Stocks & ETFs</li>
+                    <li><span className="benefit-icon">🔥</span>Crisis Event Challenge</li>
                     <li><span className="benefit-icon">🔄</span>Reset Game Data anytime</li>
                   </ul>
                 )}
@@ -1864,6 +1865,7 @@ const AppContent: React.FC = () => {
                     <li><span className="benefit-icon">🎓</span>Full Academy Access</li>
                     <li><span className="benefit-icon">🧮</span>Position Size Calculator</li>
                     <li><span className="benefit-icon">🌍</span>500+ Global Stocks & ETFs</li>
+                    <li><span className="benefit-icon">🔥</span>Crisis Event Challenge</li>
                     <li><span className="benefit-icon">🔄</span>Reset Game Data anytime</li>
                   </ul>
                 )}
