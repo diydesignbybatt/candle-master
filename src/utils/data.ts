@@ -1,13 +1,16 @@
 import stocksData from './stocks.json';
 import { CapacitorHttp } from '@capacitor/core';
 import { Capacitor } from '@capacitor/core';
+import { rollForEvent } from './historicalEvents';
+import type { HistoricalEvent } from './historicalEvents';
 
-// Combine free + pro stocks (for now, all users get access to free stocks only)
-// TODO: Filter based on subscription status
-const isPro = localStorage.getItem('candle_master_pro') === 'true';
-const stocks = isPro
-  ? [...stocksData.free, ...stocksData.pro]
-  : stocksData.free;
+// Stock pool based on subscription
+const getStockPool = () => {
+  const isPro = localStorage.getItem('candle_master_pro') === 'true';
+  return isPro
+    ? [...stocksData.free, ...stocksData.pro]
+    : stocksData.free;
+};
 
 export interface Candle {
   time: string;
@@ -18,10 +21,17 @@ export interface Candle {
   volume?: number;
 }
 
+export interface EventInfo {
+  id: string;
+  name: string;
+  revealText: string;
+}
+
 export interface StockData {
   symbol: string;
   name: string;
   data: Candle[];
+  event?: EventInfo;
 }
 
 /**
@@ -56,13 +66,12 @@ const generateMockHistory = (info: { symbol: string, name: string }): StockData 
 };
 
 /**
- * Fetch stock data using our own Vercel API route (most reliable)
- * Falls back to direct CORS proxy if API route fails
+ * Fetch CSV data from Stooq via Cloudflare Workers or CORS proxy
  */
 const fetchStockCSV = async (symbol: string): Promise<string> => {
-  // Try our own API route first (Vercel serverless function)
+  // Try Cloudflare Workers function first
   try {
-    console.log(`[Data] Fetching via API route: /api/stock?symbol=${symbol}`);
+    console.log(`[Data] Fetching via Workers: /api/stock?symbol=${symbol}`);
     const response = await fetch(`/api/stock?symbol=${encodeURIComponent(symbol)}`, {
       signal: AbortSignal.timeout(15000)
     });
@@ -70,13 +79,13 @@ const fetchStockCSV = async (symbol: string): Promise<string> => {
     if (response.ok) {
       const text = await response.text();
       if (text.startsWith('Date')) {
-        console.log('[Data] API route succeeded!');
+        console.log('[Data] Workers function succeeded!');
         return text;
       }
     }
-    console.warn('[Data] API route failed, trying fallback...');
+    console.warn('[Data] Workers function failed, trying fallback...');
   } catch (error) {
-    console.warn('[Data] API route error:', error);
+    console.warn('[Data] Workers function error:', error);
   }
 
   // Fallback to CORS proxy
@@ -98,58 +107,134 @@ const fetchStockCSV = async (symbol: string): Promise<string> => {
 };
 
 /**
- * Fetches real historical data from the elite pool using a reliable proxy
- * Supports both web (CORS proxy) and native app (Capacitor HTTP)
+ * Parse CSV data into sorted candle array
  */
-export const fetchRandomStockData = async (): Promise<StockData> => {
-  // 1. Pick a random stock from our new 200-item JSON list
-  const stockInfo = stocks[Math.floor(Math.random() * stocks.length)];
+const parseCSV = (csvData: string): Candle[] => {
+  const lines = csvData.trim().split('\n');
+  const candles: Candle[] = lines.slice(1).map(line => {
+    const columns = line.split(',');
+    if (columns.length < 5) return null;
+    const [date, open, high, low, close, volume] = columns;
+    return {
+      time: date,
+      open: parseFloat(open),
+      high: parseFloat(high),
+      low: parseFloat(low),
+      close: parseFloat(close),
+      volume: volume ? parseInt(volume) : undefined
+    } as Candle;
+  }).filter((c): c is Candle => c !== null && !isNaN(c.close));
 
-  // 2. Prepare API parameters
-  const stooqUrl = `https://stooq.com/q/d/l/?s=${stockInfo.symbol.toLowerCase()}&i=d`;
+  // Sort ascending (oldest first)
+  candles.sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime());
+  return candles;
+};
+
+/**
+ * Fetch raw candle data for a symbol
+ */
+const fetchCandleData = async (symbol: string): Promise<Candle[]> => {
+  const stooqUrl = `https://stooq.com/q/d/l/?s=${symbol.toLowerCase()}&i=d`;
   const isNative = Capacitor.isNativePlatform();
 
-  try {
-    let csvData: string;
+  let csvData: string;
 
-    if (isNative) {
-      // Native app: Use Capacitor HTTP (no CORS issues)
-      const response = await CapacitorHttp.get({ url: stooqUrl });
-      csvData = response.data;
-    } else {
-      // Web: Use our API route (with CORS proxy fallback)
-      csvData = await fetchStockCSV(stockInfo.symbol);
-    }
+  if (isNative) {
+    const response = await CapacitorHttp.get({ url: stooqUrl });
+    csvData = response.data;
+  } else {
+    csvData = await fetchStockCSV(symbol);
+  }
 
-    if (!csvData || csvData.length < 100) throw new Error('Bad data format');
+  if (!csvData || csvData.length < 100) throw new Error('Bad data format');
+  return parseCSV(csvData);
+};
 
-    const lines = csvData.trim().split('\n');
-    const allCandles: Candle[] = lines.slice(1).map(line => {
-      const columns = line.split(',');
-      if (columns.length < 5) return null;
-      const [date, open, high, low, close, volume] = columns;
+/**
+ * Try to fetch event mode data for a historical crisis
+ */
+const tryEventMode = async (event: HistoricalEvent): Promise<StockData | null> => {
+  const eventStart = new Date(event.startDate).getTime();
+  const eventEnd = new Date(event.endDate).getTime();
+  const windowSize = 250;
+
+  // Shuffle event stocks and try each one
+  const shuffledStocks = [...event.stocks].sort(() => Math.random() - 0.5);
+
+  for (const symbol of shuffledStocks) {
+    try {
+      const allCandles = await fetchCandleData(symbol);
+
+      // Filter candles within event date range
+      const eventCandles = allCandles.filter(c => {
+        const t = new Date(c.time).getTime();
+        return t >= eventStart && t <= eventEnd;
+      });
+
+      // Need enough candles for a proper game window
+      if (eventCandles.length < windowSize) {
+        console.log(`[Event] ${symbol} only has ${eventCandles.length} candles in event range, skipping`);
+        continue;
+      }
+
+      // Pick random window within event range
+      const maxStart = eventCandles.length - windowSize;
+      const startIdx = Math.floor(Math.random() * (maxStart + 1));
+
+      console.log(`[Event] ${event.name}: ${symbol}, candles in range: ${eventCandles.length}, window start: ${startIdx}`);
+
       return {
-        time: date,
-        open: parseFloat(open),
-        high: parseFloat(high),
-        low: parseFloat(low),
-        close: parseFloat(close),
-        volume: volume ? parseInt(volume) : undefined
-      } as Candle;
-    }).filter((c): c is Candle => c !== null && !isNaN(c.close));
+        symbol: symbol.split('.')[0],
+        name: stocksData.pro.find(s => s.symbol === symbol)?.name
+          || stocksData.free.find(s => s.symbol === symbol)?.name
+          || symbol.split('.')[0],
+        data: eventCandles.slice(startIdx, startIdx + windowSize),
+        event: {
+          id: event.id,
+          name: event.name,
+          revealText: event.revealText,
+        },
+      };
+    } catch (error) {
+      console.warn(`[Event] Failed to fetch ${symbol}:`, error);
+      continue;
+    }
+  }
 
-    // Sort by date ascending (oldest first) - Stooq returns descending order
-    allCandles.sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime());
+  console.warn(`[Event] All stocks failed for event: ${event.name}`);
+  return null;
+};
 
-    // Ensure we have enough data to pick a window
+/**
+ * Fetches real historical data. PRO users have a 1/7 chance of event mode.
+ */
+export const fetchRandomStockData = async (): Promise<StockData> => {
+  const stocks = getStockPool();
+  const isPro = localStorage.getItem('candle_master_pro') === 'true';
+
+  // PRO-only: Roll for event mode
+  if (isPro) {
+    const event = rollForEvent();
+    if (event) {
+      console.log(`[Data] Event triggered: ${event.name}`);
+      const eventData = await tryEventMode(event);
+      if (eventData) return eventData;
+      console.log('[Data] Event mode failed, falling back to normal mode');
+    }
+  }
+
+  // Normal mode: random stock, random window
+  const stockInfo = stocks[Math.floor(Math.random() * stocks.length)];
+
+  try {
+    const allCandles = await fetchCandleData(stockInfo.symbol);
+
     if (allCandles.length < 300) throw new Error('Data too short');
 
-    // 3. Select a random 250-candle training window
     const windowSize = 250;
     const maxStartIndex = allCandles.length - windowSize;
     const randomStartIndex = Math.floor(Math.random() * maxStartIndex);
 
-    // Debug log to verify randomness
     console.log(`[Data] Stock: ${stockInfo.symbol}, Total candles: ${allCandles.length}, Random start: ${randomStartIndex}, Date range: ${allCandles[randomStartIndex].time} to ${allCandles[randomStartIndex + windowSize - 1].time}`);
 
     return {
