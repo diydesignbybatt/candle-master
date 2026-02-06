@@ -58,15 +58,7 @@ const CHARACTERS: CharacterTier[] = [
       { image: 'lord-2.webp', quote: 'Double thumbs up. You owned those trends!' },
     ],
   },
-  // Tier 5: > 5%
-  {
-    key: 'alchemist',
-    variants: [
-      { image: 'alchemist-1.webp', quote: 'See that chart? That\'s your profit right there.' },
-      { image: 'alchemist-2.webp', quote: 'Turning charts into gold. Class is in session.' },
-    ],
-  },
-  // Tier 6: > 2%
+  // Tier 5: > 2%
   {
     key: 'smart',
     variants: [
@@ -157,14 +149,13 @@ export const getCharacterResult = (pnl: number, trades: number): CharacterResult
   else if (pnl > 30) tier = CHARACTERS[2];
   else if (pnl > 20) tier = CHARACTERS[3];
   else if (pnl > 10) tier = CHARACTERS[4];
-  else if (pnl > 5) tier = CHARACTERS[5];
-  else if (pnl > 2) tier = CHARACTERS[6];
-  else if (pnl >= -2) tier = trades < 5 ? CHARACTERS[7] : CHARACTERS[8];
-  else if (pnl > -10) tier = CHARACTERS[9];
-  else if (pnl > -20) tier = CHARACTERS[10];
-  else if (pnl > -30) tier = CHARACTERS[11];
-  else if (pnl > -50) tier = CHARACTERS[12];
-  else tier = CHARACTERS[13];
+  else if (pnl > 2) tier = CHARACTERS[5];
+  else if (pnl >= -2) tier = trades < 5 ? CHARACTERS[6] : CHARACTERS[7];
+  else if (pnl > -10) tier = CHARACTERS[8];
+  else if (pnl > -20) tier = CHARACTERS[9];
+  else if (pnl > -30) tier = CHARACTERS[10];
+  else if (pnl > -50) tier = CHARACTERS[11];
+  else tier = CHARACTERS[12];
 
   const variant = pickRandom(tier.variants);
   return { key: tier.key, image: variant.image, quote: variant.quote };
