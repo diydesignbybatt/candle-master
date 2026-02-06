@@ -17,7 +17,7 @@ class SoundService {
   private music: HTMLAudioElement | null = null;
   private musicEnabled: boolean = false;
   private currentMusic: MusicType | null = null;
-  private musicVolume: number = 0.075;
+  private musicVolume: number = 0.5;
   private lastNormalIndex: number = -1;
   private fadeTimer: ReturnType<typeof setInterval> | null = null;
 
@@ -28,6 +28,9 @@ class SoundService {
 
     const musicSaved = localStorage.getItem('music_enabled');
     this.musicEnabled = musicSaved !== null ? JSON.parse(musicSaved) : false;
+
+    const volumeSaved = localStorage.getItem('music_volume');
+    this.musicVolume = volumeSaved !== null ? parseFloat(volumeSaved) : 0.5;
 
     // Preload all sounds
     this.loadSound('trade-open', '/sounds/tradeopen.mp3');
@@ -221,6 +224,19 @@ class SoundService {
 
   getCurrentMusic(): MusicType | null {
     return this.currentMusic;
+  }
+
+  getMusicVolume(): number {
+    return this.musicVolume;
+  }
+
+  setMusicVolume(volume: number) {
+    this.musicVolume = Math.max(0, Math.min(1, volume));
+    localStorage.setItem('music_volume', String(this.musicVolume));
+    // Apply immediately to playing music
+    if (this.music) {
+      this.music.volume = this.musicVolume;
+    }
   }
 }
 

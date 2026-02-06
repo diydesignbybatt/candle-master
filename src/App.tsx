@@ -82,6 +82,7 @@ const AppContent: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'trade' | 'calculator' | 'academy' | 'history' | 'profile'>('trade');
   const [soundEnabled, setSoundEnabled] = useState(soundService.isEnabled());
   const [musicEnabled, setMusicEnabled] = useState(soundService.isMusicEnabled());
+  const [musicVolume, setMusicVolume] = useState(soundService.getMusicVolume());
   const [tradeAmount, setTradeAmount] = useState(20000);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [academySection, setAcademySection] = useState<'candle' | 'chart' | 'risk'>('candle');
@@ -1545,13 +1546,31 @@ const AppContent: React.FC = () => {
                     <div className="toggle-knob"></div>
                   </div>
                 </button>
-                <button className="profile-action-btn" onClick={toggleMusic}>
+                <button className={`profile-action-btn ${musicEnabled ? 'no-bottom-radius' : ''}`} onClick={toggleMusic}>
                   {musicEnabled ? <Music size={20} /> : <Music2 size={20} />}
                   <span>Background Music</span>
                   <div className={`toggle-switch ${musicEnabled ? 'active' : ''}`}>
                     <div className="toggle-knob"></div>
                   </div>
                 </button>
+                {musicEnabled && (
+                  <div className="volume-slider-container">
+                    <Volume2 size={16} style={{ opacity: 0.5, flexShrink: 0 }} />
+                    <input
+                      type="range"
+                      min="0"
+                      max="100"
+                      value={Math.round(musicVolume * 100)}
+                      onChange={(e) => {
+                        const vol = parseInt(e.target.value) / 100;
+                        setMusicVolume(vol);
+                        soundService.setMusicVolume(vol);
+                      }}
+                      className="volume-slider"
+                    />
+                    <span className="volume-label">{Math.round(musicVolume * 100)}%</span>
+                  </div>
+                )}
 
                 {/* PRO Subscription Toggle (Testing) */}
                 <button

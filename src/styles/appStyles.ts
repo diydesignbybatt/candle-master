@@ -1159,6 +1159,58 @@ export const MODAL_STYLES = `
   .toggle-knob { width: 20px; height: 20px; background: #FFF; border-radius: 50%; position: absolute; top: 2px; left: 2px; transition: left 0.3s; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
   .toggle-switch.active .toggle-knob { left: 22px; }
 
+  .profile-action-btn.no-bottom-radius { border-radius: 0.75rem 0.75rem 0 0; border-bottom: none; }
+
+  /* Volume Slider */
+  .volume-slider-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 20px 12px;
+    margin-top: -8px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--color-border);
+    border-top: none;
+    border-radius: 0 0 0.75rem 0.75rem;
+    color: var(--color-text-secondary);
+  }
+  .volume-slider {
+    flex: 1;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--color-border);
+    outline: none;
+    cursor: pointer;
+  }
+  .volume-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--color-text);
+    cursor: pointer;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+  }
+  .volume-slider::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--color-text);
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+  }
+  .volume-label {
+    font-size: 0.8rem;
+    font-weight: 700;
+    min-width: 36px;
+    text-align: right;
+    color: var(--color-text-secondary);
+  }
+
   /* PRO Toggle Button */
   .profile-action-btn.pro-toggle.is-pro {
     background: linear-gradient(135deg, rgba(197, 160, 89, 0.15) 0%, rgba(230, 199, 117, 0.1) 100%);
