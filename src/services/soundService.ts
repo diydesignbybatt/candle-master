@@ -6,7 +6,7 @@ type SoundType = 'trade-open' | 'profit' | 'loss' | 'click' | 'game-win' | 'game
 type MusicType = 'bgm-normal' | 'bgm-event';
 
 // BGM tracks
-const NORMAL_TRACK = '/sounds/bgm-1.mp3';
+const NORMAL_TRACKS = ['/sounds/bgm-1.mp3', '/sounds/bgm-3.mp3'];
 const BOSS_TRACKS = ['/sounds/boss-1.mp3', '/sounds/boss-2.mp3'];
 
 class SoundService {
@@ -80,7 +80,7 @@ class SoundService {
     if (type === 'bgm-event') {
       return BOSS_TRACKS[Math.floor(Math.random() * BOSS_TRACKS.length)];
     }
-    return NORMAL_TRACK;
+    return NORMAL_TRACKS[Math.floor(Math.random() * NORMAL_TRACKS.length)];
   }
 
   /**
