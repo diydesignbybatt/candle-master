@@ -267,6 +267,7 @@ const ONBOARDING_STYLES = `
     text-align: center;
     cursor: grab;
     user-select: none;
+    touch-action: pan-x;
   }
 
   .onboarding-slide:active {
