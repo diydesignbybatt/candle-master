@@ -34,7 +34,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - [x] **PWA Icons**: PNG icons for iOS/Android home screen support
 - [x] **Event Mode (PRO)**: 1/7 chance to play historical crisis events (5 events)
 - [x] **Character Judge**: Cartoon character result at Game Over based on P&L
-- [x] **BGM Music**: Multi-track BGM (3 normal + 2 boss), fade out for boss, visibility pause/resume
+- [x] **BGM Music**: Multi-track BGM (2 normal + 2 boss), fade out for boss, visibility pause/resume
 - [x] **Crisis Banner**: Red "CRISIS EVENT!" banner animation when event mode triggers
 - [ ] **Apple Sign-In**: Required by Apple (if Google Sign-In exists)
 - [ ] **Subscription System**: RevenueCat scaffold ready, needs API keys
@@ -53,6 +53,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | Themes | Sandstone only | All themes |
 | Event Mode | ❌ | 1/7 chance historical crisis |
 | Boss Music | ❌ | Special BGM for crisis events |
+| Upgrade Prompt | Every 3 games | ❌ |
 
 ## Authentication & Services
 
@@ -153,7 +154,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
     - `patterns.tsx`: `ACADEMY_PATTERNS` (20 candlestick) + `CHART_PATTERNS` (image-based)
     - `characters.ts`: 14 character tiers for Game Over judge (based on P&L + trades)
 - **Services**:
-    - `soundService.ts`: Sound effects + multi-track BGM system (3 normal + 2 boss tracks, fade out, pause/resume)
+    - `soundService.ts`: Sound effects + multi-track BGM system (2 normal + 2 boss tracks, fade out, autoplay unlock, pause/resume)
 - **Utils**:
     - `data.ts`: Stock data fetching, event mode logic, CSV parsing
     - `historicalEvents.ts`: 5 historical crisis events (Dot-Com, 2008, COVID, Oil, China)
@@ -164,8 +165,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
     - `useTradingSession.ts`: Core trading state, accepts `isPro` for dynamic maxMoves.
     - `useOrientation.ts`: Device orientation detection.
     - `useSubscription.ts`: PRO subscription state (`candle_master_subscription` key in localStorage).
+    - **localStorage keys**: `candle_master_onboarding_complete`, `candle_master_history`, `candle_master_subscription`, `candle_master_games_today`, `candle_master_games_date`, `candle_master_games_played` (upgrade prompt counter)
 - **Theme**: `ThemeContext` - Sandstone (default), Midnight, Solarized.
-- **Audio**: `public/sounds/` — bgm-1/2/3.mp3 (normal), boss-1/2.mp3 (event), volume 0.075 (7.5%)
+- **Audio**: `public/sounds/` — bgm-1.mp3, bgm-3.mp3 (normal), boss-1/2.mp3 (event), volume 0.15 (15%)
 
 ### Chart Pattern Images
 - Location: `public/patterns/`
