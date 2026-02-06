@@ -151,17 +151,23 @@ const fetchCandleData = async (symbol: string): Promise<Candle[]> => {
 };
 
 /**
- * Try to fetch event mode data for a historical crisis
+ * Try to fetch event mode data for a historical crisis.
+ * Uses dynamic window: prefers 250 candles, but accepts down to 150.
  */
 const tryEventMode = async (event: HistoricalEvent): Promise<StockData | null> => {
   const eventStart = new Date(event.startDate).getTime();
   const eventEnd = new Date(event.endDate).getTime();
-  const windowSize = 250;
+  const preferredWindow = 250;
+  const minWindow = 150;
 
   // Shuffle event stocks and try each one
   const shuffledStocks = [...event.stocks].sort(() => Math.random() - 0.5);
+  // Try max 5 stocks to avoid long load times
+  const stocksToTry = shuffledStocks.slice(0, 5);
 
-  for (const symbol of shuffledStocks) {
+  console.log(`[Event] Trying event: ${event.name} (${event.startDate} to ${event.endDate}), stocks to try: ${stocksToTry.length}`);
+
+  for (const symbol of stocksToTry) {
     try {
       const allCandles = await fetchCandleData(symbol);
 
@@ -171,17 +177,20 @@ const tryEventMode = async (event: HistoricalEvent): Promise<StockData | null> =
         return t >= eventStart && t <= eventEnd;
       });
 
-      // Need enough candles for a proper game window
-      if (eventCandles.length < windowSize) {
-        console.log(`[Event] ${symbol} only has ${eventCandles.length} candles in event range, skipping`);
+      // Need at least minimum candles for a playable game
+      if (eventCandles.length < minWindow) {
+        console.log(`[Event] ${symbol} only has ${eventCandles.length} candles in event range (need ${minWindow}+), skipping`);
         continue;
       }
 
+      // Use preferred window or all available candles if less
+      const windowSize = Math.min(preferredWindow, eventCandles.length);
+
       // Pick random window within event range
       const maxStart = eventCandles.length - windowSize;
-      const startIdx = Math.floor(Math.random() * (maxStart + 1));
+      const startIdx = maxStart > 0 ? Math.floor(Math.random() * (maxStart + 1)) : 0;
 
-      console.log(`[Event] ${event.name}: ${symbol}, candles in range: ${eventCandles.length}, window start: ${startIdx}`);
+      console.log(`[Event] ✅ ${event.name}: ${symbol}, candles: ${eventCandles.length}, window: ${windowSize}, start: ${startIdx}`);
 
       return {
         symbol: symbol.split('.')[0],
@@ -212,15 +221,23 @@ export const fetchRandomStockData = async (): Promise<StockData> => {
   const stocks = getStockPool();
   const isPro = localStorage.getItem('candle_master_subscription') === 'pro';
 
-  // PRO-only: Roll for event mode
+  // PRO-only: Roll for event mode (1 in 7 chance)
   if (isPro) {
+    console.log('[Data] PRO detected, rolling for event...');
     const event = rollForEvent();
     if (event) {
-      console.log(`[Data] Event triggered: ${event.name}`);
+      console.log(`[Data] 🎲 Event rolled! → ${event.name}`);
       const eventData = await tryEventMode(event);
-      if (eventData) return eventData;
-      console.log('[Data] Event mode failed, falling back to normal mode');
+      if (eventData) {
+        console.log(`[Data] ✅ Event mode active: ${event.name} with ${eventData.data.length} candles`);
+        return eventData;
+      }
+      console.log('[Data] ❌ Event mode failed, falling back to normal mode');
+    } else {
+      console.log('[Data] 🎲 No event this round (normal roll)');
     }
+  } else {
+    console.log('[Data] Free user, skipping event roll');
   }
 
   // Normal mode: random stock, random window
