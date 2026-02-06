@@ -348,7 +348,7 @@ const AppContent: React.FC = () => {
       } else {
         soundService.stopMusic();
       }
-    } else if (stock) {
+    } else if (musicEnabled && stock) {
       // Event mode → boss music, normal → random BGM track
       if (stock && 'event' in stock && stock.event) {
         soundService.switchMusic('bgm-event');
@@ -356,7 +356,7 @@ const AppContent: React.FC = () => {
         soundService.playMusic('bgm-normal');
       }
     }
-  }, [isGameOver, isLoading, stock]);
+  }, [isGameOver, isLoading, stock, musicEnabled]);
 
   // Pause/resume music when app goes to background/foreground
   useEffect(() => {
@@ -1561,8 +1561,8 @@ const AppContent: React.FC = () => {
                       min="0"
                       max="100"
                       value={Math.round(musicVolume * 100)}
-                      onChange={(e) => {
-                        const vol = parseInt(e.target.value) / 100;
+                      onInput={(e) => {
+                        const vol = parseInt((e.target as HTMLInputElement).value) / 100;
                         setMusicVolume(vol);
                         soundService.setMusicVolume(vol);
                       }}

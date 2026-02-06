@@ -1178,25 +1178,38 @@ export const MODAL_STYLES = `
     flex: 1;
     -webkit-appearance: none;
     appearance: none;
+    height: 28px;
+    margin: 0;
+    background: transparent;
+    outline: none;
+    cursor: pointer;
+    touch-action: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .volume-slider::-webkit-slider-runnable-track {
     height: 4px;
     border-radius: 2px;
     background: var(--color-border);
-    outline: none;
-    cursor: pointer;
+  }
+  .volume-slider::-moz-range-track {
+    height: 4px;
+    border-radius: 2px;
+    background: var(--color-border);
   }
   .volume-slider::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
-    width: 18px;
-    height: 18px;
+    width: 22px;
+    height: 22px;
     border-radius: 50%;
     background: var(--color-text);
     cursor: pointer;
+    margin-top: -9px;
     box-shadow: 0 1px 4px rgba(0,0,0,0.15);
   }
   .volume-slider::-moz-range-thumb {
-    width: 18px;
-    height: 18px;
+    width: 22px;
+    height: 22px;
     border-radius: 50%;
     background: var(--color-text);
     cursor: pointer;
