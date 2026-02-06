@@ -753,13 +753,15 @@ const AppContent: React.FC = () => {
       <AnimatePresence>
         {showCrisisBanner && (
           <motion.div
-            style={appStyles.crisisBanner as React.CSSProperties}
-            initial={{ y: -100, opacity: 0, scale: 0.8 }}
-            animate={{ y: 60, opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, y: -50, transition: { duration: 0.5 } }}
-            transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+            style={appStyles.crisisBannerWrapper as React.CSSProperties}
+            initial={{ y: -120, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ opacity: 0, y: -80, transition: { duration: 0.5 } }}
+            transition={{ type: 'spring', stiffness: 260, damping: 22 }}
           >
-            🔥 คุณกำลังเจอ CRISIS EVENT! 🔥
+            <div style={{ ...appStyles.crisisBannerText as React.CSSProperties, marginTop: '35vh' }}>
+              🔥 CRISIS EVENT! 🔥
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
