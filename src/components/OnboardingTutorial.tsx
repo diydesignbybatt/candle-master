@@ -160,8 +160,8 @@ export const OnboardingTutorial: React.FC<OnboardingTutorialProps> = ({ onComple
                 alt={slide.title}
                 className="onboarding-image"
                 onError={(e) => {
-                  // Fallback placeholder if image not found
-                  (e.target as HTMLImageElement).src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="360" height="400" viewBox="0 0 360 400"><rect fill="%23334155" width="360" height="400"/><text fill="%2394a3b8" font-family="system-ui" font-size="14" x="180" y="200" text-anchor="middle">Image ' + slide.id + '</text></svg>';
+                  // Fallback placeholder if image not found (9:19 ratio matching landing page mockup)
+                  (e.target as HTMLImageElement).src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="280" height="580" viewBox="0 0 280 580"><rect fill="%23334155" width="280" height="580"/><text fill="%2394a3b8" font-family="system-ui" font-size="14" x="140" y="290" text-anchor="middle">Image ' + slide.id + '</text></svg>';
                 }}
               />
             </div>
@@ -276,7 +276,7 @@ const ONBOARDING_STYLES = `
   .onboarding-image-container {
     --img-height: min(55vh, 500px);
     height: var(--img-height);
-    width: calc(var(--img-height) * 9 / 16);
+    width: calc(var(--img-height) * 280 / 580);
     border-radius: 16px;
     overflow: hidden;
     background: var(--bg-tertiary);
