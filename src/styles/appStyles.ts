@@ -322,15 +322,6 @@ export const UI_STYLES = `
   
   .scroll-chart-container { flex: 1; padding: 0 4%; min-height: 0; overflow: visible; position: relative; }
 
-  /* Ambient theme effects (clouds, stars, leaves) */
-  .ambient-effect-container {
-    position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    pointer-events: none;
-    z-index: 1;
-    overflow: hidden;
-  }
-
   .chart-footer {
     position: absolute;
     bottom: 8px;

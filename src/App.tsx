@@ -34,7 +34,6 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 const WelcomeScreen = lazy(() => import('./components/WelcomeScreen').then(m => ({ default: m.WelcomeScreen })));
 const OnboardingTutorial = lazy(() => import('./components/OnboardingTutorial').then(m => ({ default: m.OnboardingTutorial })));
 const PositionSizeCalculator = lazy(() => import('./components/PositionSizeCalculator'));
-import { AmbientEffect } from './components/AmbientEffect';
 import { motion, AnimatePresence } from 'framer-motion';
 import { soundService, playSound } from './services/soundService';
 import { format } from 'date-fns';
@@ -557,7 +556,6 @@ const AppContent: React.FC = () => {
         {/* Main Chart Area */}
         <div className="tablet-main">
           <div className="tablet-chart-area">
-            <AmbientEffect theme={resolvedTheme} />
             {/* Floating Controls - Left */}
             <div className="tablet-floating-left">
               <button
@@ -923,7 +921,6 @@ const AppContent: React.FC = () => {
                   )}
                 </AnimatePresence>
                 <div className="scroll-chart-container">
-                  <AmbientEffect theme={resolvedTheme} />
                   <div className="zoom-controls-floating">
                     <button
                       className="zoom-btn-mini"
