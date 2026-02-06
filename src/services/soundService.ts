@@ -5,12 +5,8 @@
 type SoundType = 'trade-open' | 'profit' | 'loss' | 'click' | 'game-win' | 'game-lose';
 type MusicType = 'bgm-normal' | 'bgm-event';
 
-// Theme-based BGM tracks (1 per theme)
-const THEME_TRACKS: Record<string, string> = {
-  sandstone: '/sounds/bgm-1.mp3',
-  midnight: '/sounds/bgm-midn.mp3',
-  solarized: '/sounds/bgm-sola.mp3',
-};
+// BGM tracks
+const NORMAL_TRACK = '/sounds/bgm-1.mp3';
 const BOSS_TRACKS = ['/sounds/boss-1.mp3', '/sounds/boss-2.mp3'];
 
 class SoundService {
@@ -21,8 +17,7 @@ class SoundService {
   private music: HTMLAudioElement | null = null;
   private musicEnabled: boolean = false;
   private currentMusic: MusicType | null = null;
-  private musicVolume: number = 0.5;
-  private currentTrackPath: string | null = null;
+  private musicVolume: number = 0.15;
   private fadeTimer: ReturnType<typeof setInterval> | null = null;
 
   constructor() {
@@ -32,9 +27,6 @@ class SoundService {
 
     const musicSaved = localStorage.getItem('music_enabled');
     this.musicEnabled = musicSaved !== null ? JSON.parse(musicSaved) : false;
-
-    const volumeSaved = localStorage.getItem('music_volume');
-    this.musicVolume = volumeSaved !== null ? parseFloat(volumeSaved) : 0.5;
 
     // Preload all sounds
     this.loadSound('trade-open', '/sounds/tradeopen.mp3');
@@ -56,12 +48,11 @@ class SoundService {
     }
   }
 
-  private pickTrack(type: MusicType, theme?: string): string {
+  private pickTrack(type: MusicType): string {
     if (type === 'bgm-event') {
       return BOSS_TRACKS[Math.floor(Math.random() * BOSS_TRACKS.length)];
     }
-    // Normal BGM: pick track based on current theme
-    return THEME_TRACKS[theme || 'sandstone'] || THEME_TRACKS.sandstone;
+    return NORMAL_TRACK;
   }
 
   /**
@@ -117,21 +108,16 @@ class SoundService {
 
   // --- Music methods ---
 
-  playMusic(type: MusicType, theme?: string) {
+  playMusic(type: MusicType) {
     if (!this.musicEnabled) return;
 
-    // Already playing this type (for event, always check; for normal, also check theme match)
-    if (this.currentMusic === type && this.music && !this.music.paused) {
-      if (type === 'bgm-event') return;
-      // For normal BGM: check if theme track matches current
-      const expectedTrack = this.pickTrack(type, theme);
-      if (this.currentTrackPath === expectedTrack) return;
-    }
+    // Already playing this type
+    if (this.currentMusic === type && this.music && !this.music.paused) return;
 
     this.stopMusic();
 
     try {
-      const trackPath = this.pickTrack(type, theme);
+      const trackPath = this.pickTrack(type);
       const audio = new Audio(trackPath);
       audio.loop = true;
       audio.volume = this.musicVolume;
@@ -140,7 +126,6 @@ class SoundService {
       });
       this.music = audio;
       this.currentMusic = type;
-      this.currentTrackPath = trackPath;
     } catch (error) {
       console.warn(`Error playing music: ${type}`, error);
     }
@@ -153,7 +138,6 @@ class SoundService {
       this.music.currentTime = 0;
       this.music = null;
       this.currentMusic = null;
-      this.currentTrackPath = null;
     }
   }
 
@@ -196,10 +180,10 @@ class SoundService {
     }
   }
 
-  switchMusic(type: MusicType, theme?: string) {
+  switchMusic(type: MusicType) {
     if (!this.musicEnabled) return;
     this.stopMusic();
-    this.playMusic(type, theme);
+    this.playMusic(type);
   }
 
   pauseMusic() {
@@ -230,18 +214,6 @@ class SoundService {
     return this.currentMusic;
   }
 
-  getMusicVolume(): number {
-    return this.musicVolume;
-  }
-
-  setMusicVolume(volume: number) {
-    this.musicVolume = Math.max(0, Math.min(1, volume));
-    localStorage.setItem('music_volume', String(this.musicVolume));
-    // Apply immediately to playing music
-    if (this.music) {
-      this.music.volume = this.musicVolume;
-    }
-  }
 }
 
 // Export singleton instance

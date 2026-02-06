@@ -82,7 +82,6 @@ const AppContent: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'trade' | 'calculator' | 'academy' | 'history' | 'profile'>('trade');
   const [soundEnabled, setSoundEnabled] = useState(soundService.isEnabled());
   const [musicEnabled, setMusicEnabled] = useState(soundService.isMusicEnabled());
-  const [musicVolume, setMusicVolume] = useState(soundService.getMusicVolume());
   const [tradeAmount, setTradeAmount] = useState(20000);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [academySection, setAcademySection] = useState<'candle' | 'chart' | 'risk'>('candle');
@@ -153,7 +152,7 @@ const AppContent: React.FC = () => {
     setMusicEnabled(newState);
     soundService.setMusicEnabled(newState);
     if (newState && !isGameOver && !isLoading) {
-      soundService.playMusic('bgm-normal', resolvedTheme);
+      soundService.playMusic('bgm-normal');
     }
   };
 
@@ -339,7 +338,7 @@ const AppContent: React.FC = () => {
     }
   }, [isGameOver, totalReturn, tradeCount]);
 
-  // Music lifecycle: play when trading, stop/fade on game over, switch on theme change
+  // Music lifecycle: play when trading, stop/fade on game over
   useEffect(() => {
     if (isGameOver || isLoading) {
       // Boss music fades out, normal music stops immediately
@@ -349,14 +348,14 @@ const AppContent: React.FC = () => {
         soundService.stopMusic();
       }
     } else if (musicEnabled && stock) {
-      // Event mode → boss music, normal → theme-based BGM
+      // Event mode → boss music, normal mode → normal BGM
       if (stock && 'event' in stock && stock.event) {
         soundService.switchMusic('bgm-event');
       } else {
-        soundService.playMusic('bgm-normal', resolvedTheme);
+        soundService.playMusic('bgm-normal');
       }
     }
-  }, [isGameOver, isLoading, stock, musicEnabled, resolvedTheme]);
+  }, [isGameOver, isLoading, stock, musicEnabled]);
 
   // Pause/resume music when app goes to background/foreground
   useEffect(() => {
@@ -1546,26 +1545,13 @@ const AppContent: React.FC = () => {
                     <div className="toggle-knob"></div>
                   </div>
                 </button>
-                <button className={`profile-action-btn ${musicEnabled ? 'no-bottom-radius' : ''}`} onClick={toggleMusic}>
+                <button className="profile-action-btn" onClick={toggleMusic}>
                   {musicEnabled ? <Music size={20} /> : <Music2 size={20} />}
                   <span>Background Music</span>
                   <div className={`toggle-switch ${musicEnabled ? 'active' : ''}`}>
                     <div className="toggle-knob"></div>
                   </div>
                 </button>
-                {musicEnabled && (
-                  <div className="volume-control-container">
-                    <button className="volume-btn" onClick={() => {
-                      const vol = Math.round(Math.max(0, musicVolume - 0.1) * 10) / 10;
-                      setMusicVolume(vol); soundService.setMusicVolume(vol);
-                    }}><Minus size={16} /></button>
-                    <span className="volume-label">🔊 {Math.round(musicVolume * 100)}%</span>
-                    <button className="volume-btn" onClick={() => {
-                      const vol = Math.round(Math.min(1, musicVolume + 0.1) * 10) / 10;
-                      setMusicVolume(vol); soundService.setMusicVolume(vol);
-                    }}><Plus size={16} /></button>
-                  </div>
-                )}
 
                 {/* PRO Subscription Toggle (Testing) */}
                 <button

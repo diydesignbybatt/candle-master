@@ -1159,43 +1159,6 @@ export const MODAL_STYLES = `
   .toggle-knob { width: 20px; height: 20px; background: #FFF; border-radius: 50%; position: absolute; top: 2px; left: 2px; transition: left 0.3s; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
   .toggle-switch.active .toggle-knob { left: 22px; }
 
-  .profile-action-btn.no-bottom-radius { border-radius: 0.75rem 0.75rem 0 0; border-bottom: none; }
-
-  /* Volume Control (+/- buttons) */
-  .volume-control-container {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 16px;
-    padding: 10px 20px;
-    margin-top: -8px;
-    background: var(--bg-tertiary);
-    border: 1px solid var(--color-border);
-    border-top: none;
-    border-radius: 0 0 0.75rem 0.75rem;
-  }
-  .volume-btn {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    border: 1.5px solid var(--color-border);
-    background: var(--bg-primary);
-    color: var(--color-text);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.15s;
-  }
-  .volume-btn:active { background: var(--color-border); }
-  .volume-label {
-    font-size: 0.9rem;
-    font-weight: 700;
-    min-width: 72px;
-    text-align: center;
-    color: var(--color-text);
-  }
-
   /* PRO Toggle Button */
   .profile-action-btn.pro-toggle.is-pro {
     background: linear-gradient(135deg, rgba(197, 160, 89, 0.15) 0%, rgba(230, 199, 117, 0.1) 100%);
