@@ -664,6 +664,20 @@ export const UI_STYLES = `
   .stock-name-reveal { font-size: 0.85rem; color: var(--color-text-secondary); margin: 0 0 8px 0; }
   .date-reveal { font-size: 0.75rem; color: var(--color-text-tertiary); margin: 0; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
 
+  .event-reveal-badge {
+    margin-bottom: 16px;
+    padding: 12px 20px;
+    background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%);
+    border-radius: 0.75rem;
+    text-align: center;
+  }
+  .event-reveal-text {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: 0.3px;
+  }
+
   .btn-primary { background: var(--color-text); color: var(--bg-primary); height: 72px; font-size: 1.1rem; font-weight: 700; border-radius: 0.75rem; margin-top: 10px; width: 100%; border: none; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; transition: all 0.15s; }
   .btn-primary:active { background: var(--color-text-secondary); }
 

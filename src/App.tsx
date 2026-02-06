@@ -1900,6 +1900,17 @@ const AppContent: React.FC = () => {
                   )}
                 </div>
 
+                {stock?.event && (
+                  <motion.div
+                    className="event-reveal-badge"
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ delay: 0.6, type: 'spring', stiffness: 200 }}
+                  >
+                    <span className="event-reveal-text">{stock.event.revealText}</span>
+                  </motion.div>
+                )}
+
                 <button className="btn btn-primary" onClick={() => loadNewStock(true)}>START NEW GAME</button>
               </motion.div>
             </motion.div>
