@@ -1,17 +1,33 @@
 /**
- * Sound Service - Manages all sound effects in the app
+ * Sound Service - Manages sound effects and background music
  */
 
 type SoundType = 'trade-open' | 'profit' | 'loss' | 'click' | 'game-win' | 'game-lose';
+type MusicType = 'bgm-normal' | 'bgm-event';
+
+// Track pools - add more files to expand the playlist
+const NORMAL_TRACKS = ['/sounds/bgm-1.mp3', '/sounds/bgm-2.mp3', '/sounds/bgm-3.mp3'];
+const BOSS_TRACKS = ['/sounds/boss-1.mp3', '/sounds/boss-2.mp3'];
 
 class SoundService {
   private sounds: Map<SoundType, HTMLAudioElement> = new Map();
   private enabled: boolean = true;
 
+  // Music system
+  private music: HTMLAudioElement | null = null;
+  private musicEnabled: boolean = false;
+  private currentMusic: MusicType | null = null;
+  private musicVolume: number = 0.15;
+  private lastNormalIndex: number = -1;
+  private fadeTimer: ReturnType<typeof setInterval> | null = null;
+
   constructor() {
     // Load sound setting from localStorage
     const saved = localStorage.getItem('sound_enabled');
     this.enabled = saved !== null ? JSON.parse(saved) : true;
+
+    const musicSaved = localStorage.getItem('music_enabled');
+    this.musicEnabled = musicSaved !== null ? JSON.parse(musicSaved) : false;
 
     // Preload all sounds
     this.loadSound('trade-open', '/sounds/tradeopen.mp3');
@@ -26,11 +42,26 @@ class SoundService {
     try {
       const audio = new Audio(path);
       audio.preload = 'auto';
-      audio.volume = 0.5; // Default volume at 50%
+      audio.volume = 0.5;
       this.sounds.set(type, audio);
     } catch (error) {
       console.warn(`Failed to load sound: ${type}`, error);
     }
+  }
+
+  private pickRandomTrack(type: MusicType): string {
+    if (type === 'bgm-event') {
+      return BOSS_TRACKS[Math.floor(Math.random() * BOSS_TRACKS.length)];
+    }
+
+    // Normal BGM: avoid repeating the same track back-to-back
+    if (NORMAL_TRACKS.length <= 1) return NORMAL_TRACKS[0];
+    let idx: number;
+    do {
+      idx = Math.floor(Math.random() * NORMAL_TRACKS.length);
+    } while (idx === this.lastNormalIndex);
+    this.lastNormalIndex = idx;
+    return NORMAL_TRACKS[idx];
   }
 
   /**
@@ -46,15 +77,10 @@ class SoundService {
     }
 
     try {
-      // Reset to start if already playing
       sound.currentTime = 0;
-
-      // Set volume if provided
       if (volume !== undefined) {
         sound.volume = Math.max(0, Math.min(1, volume));
       }
-
-      // Play the sound
       sound.play().catch(err => {
         console.warn(`Failed to play sound: ${type}`, err);
       });
@@ -71,16 +97,10 @@ class SoundService {
     localStorage.setItem('sound_enabled', JSON.stringify(enabled));
   }
 
-  /**
-   * Check if sounds are enabled
-   */
   isEnabled(): boolean {
     return this.enabled;
   }
 
-  /**
-   * Set volume for a specific sound (0.0 to 1.0)
-   */
   setVolume(type: SoundType, volume: number) {
     const sound = this.sounds.get(type);
     if (sound) {
@@ -88,14 +108,119 @@ class SoundService {
     }
   }
 
-  /**
-   * Set volume for all sounds
-   */
   setMasterVolume(volume: number) {
     const normalizedVolume = Math.max(0, Math.min(1, volume));
     this.sounds.forEach(sound => {
       sound.volume = normalizedVolume;
     });
+  }
+
+  // --- Music methods ---
+
+  playMusic(type: MusicType) {
+    if (!this.musicEnabled) return;
+
+    // Already playing this type
+    if (this.currentMusic === type && this.music && !this.music.paused) return;
+
+    this.stopMusic();
+
+    try {
+      const trackPath = this.pickRandomTrack(type);
+      const audio = new Audio(trackPath);
+      audio.loop = true;
+      audio.volume = this.musicVolume;
+      audio.play().catch(err => {
+        console.warn(`Failed to play music: ${type}`, err);
+      });
+      this.music = audio;
+      this.currentMusic = type;
+    } catch (error) {
+      console.warn(`Error playing music: ${type}`, error);
+    }
+  }
+
+  stopMusic() {
+    this.clearFade();
+    if (this.music) {
+      this.music.pause();
+      this.music.currentTime = 0;
+      this.music = null;
+      this.currentMusic = null;
+    }
+  }
+
+  /**
+   * Fade out music over duration (ms), then stop.
+   * Used for boss music when game ends.
+   */
+  fadeOutAndStop(duration: number = 1000): Promise<void> {
+    return new Promise(resolve => {
+      if (!this.music || this.music.paused) {
+        this.stopMusic();
+        resolve();
+        return;
+      }
+
+      const startVolume = this.music.volume;
+      const steps = 20; // 20 steps over the duration
+      const interval = duration / steps;
+      const volumeStep = startVolume / steps;
+      let step = 0;
+
+      this.clearFade();
+      this.fadeTimer = setInterval(() => {
+        step++;
+        if (!this.music || step >= steps) {
+          this.clearFade();
+          this.stopMusic();
+          resolve();
+          return;
+        }
+        this.music.volume = Math.max(0, startVolume - volumeStep * step);
+      }, interval);
+    });
+  }
+
+  private clearFade() {
+    if (this.fadeTimer) {
+      clearInterval(this.fadeTimer);
+      this.fadeTimer = null;
+    }
+  }
+
+  switchMusic(type: MusicType) {
+    if (!this.musicEnabled) return;
+    this.stopMusic();
+    this.playMusic(type);
+  }
+
+  pauseMusic() {
+    if (this.music && !this.music.paused) {
+      this.music.pause();
+    }
+  }
+
+  resumeMusic() {
+    if (this.musicEnabled && this.music && this.music.paused && this.currentMusic) {
+      this.music.play().catch(() => {});
+    }
+  }
+
+  setMusicEnabled(enabled: boolean) {
+    this.musicEnabled = enabled;
+    localStorage.setItem('music_enabled', JSON.stringify(enabled));
+    if (!enabled) {
+      this.stopMusic();
+    }
+  }
+
+  isMusicEnabled(): boolean {
+    return this.musicEnabled;
+  }
+
+  getCurrentMusic(): MusicType | null {
+    return this.currentMusic;
   }
 }
 
