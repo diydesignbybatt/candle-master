@@ -1174,47 +1174,43 @@ export const MODAL_STYLES = `
     border-radius: 0 0 0.75rem 0.75rem;
     color: var(--color-text-secondary);
   }
-  .volume-slider {
+  .volume-track {
     flex: 1;
-    -webkit-appearance: none;
-    appearance: none;
-    height: 28px;
-    margin: 0;
-    background: transparent;
-    outline: none;
+    height: 36px;
+    position: relative;
+    display: flex;
+    align-items: center;
     cursor: pointer;
     touch-action: none;
     -webkit-tap-highlight-color: transparent;
+    -webkit-user-select: none;
+    user-select: none;
   }
-  .volume-slider::-webkit-slider-runnable-track {
+  .volume-track::before {
+    content: '';
+    position: absolute;
+    left: 0; right: 0;
     height: 4px;
     border-radius: 2px;
     background: var(--color-border);
   }
-  .volume-slider::-moz-range-track {
+  .volume-track-fill {
+    position: absolute;
+    left: 0;
     height: 4px;
     border-radius: 2px;
-    background: var(--color-border);
+    background: var(--color-text-secondary);
+    pointer-events: none;
   }
-  .volume-slider::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    appearance: none;
+  .volume-thumb {
+    position: absolute;
     width: 22px;
     height: 22px;
     border-radius: 50%;
     background: var(--color-text);
-    cursor: pointer;
-    margin-top: -9px;
     box-shadow: 0 1px 4px rgba(0,0,0,0.15);
-  }
-  .volume-slider::-moz-range-thumb {
-    width: 22px;
-    height: 22px;
-    border-radius: 50%;
-    background: var(--color-text);
-    cursor: pointer;
-    border: none;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+    transform: translateX(-50%);
+    pointer-events: none;
   }
   .volume-label {
     font-size: 0.8rem;

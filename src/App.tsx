@@ -1556,18 +1556,41 @@ const AppContent: React.FC = () => {
                 {musicEnabled && (
                   <div className="volume-slider-container">
                     <Volume2 size={16} style={{ opacity: 0.5, flexShrink: 0 }} />
-                    <input
-                      type="range"
-                      min="0"
-                      max="100"
-                      value={Math.round(musicVolume * 100)}
-                      onInput={(e) => {
-                        const vol = parseInt((e.target as HTMLInputElement).value) / 100;
+                    <div
+                      className="volume-track"
+                      onTouchStart={(e) => {
+                        e.stopPropagation();
+                        const track = e.currentTarget;
+                        const rect = track.getBoundingClientRect();
+                        const touch = e.touches[0];
+                        const vol = Math.max(0, Math.min(1, (touch.clientX - rect.left) / rect.width));
+                        setMusicVolume(vol);
+                        soundService.setMusicVolume(vol);
+
+                        const onMove = (ev: TouchEvent) => {
+                          ev.preventDefault();
+                          const t = ev.touches[0];
+                          const v = Math.max(0, Math.min(1, (t.clientX - rect.left) / rect.width));
+                          setMusicVolume(v);
+                          soundService.setMusicVolume(v);
+                        };
+                        const onEnd = () => {
+                          document.removeEventListener('touchmove', onMove);
+                          document.removeEventListener('touchend', onEnd);
+                        };
+                        document.addEventListener('touchmove', onMove, { passive: false });
+                        document.addEventListener('touchend', onEnd);
+                      }}
+                      onClick={(e) => {
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        const vol = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
                         setMusicVolume(vol);
                         soundService.setMusicVolume(vol);
                       }}
-                      className="volume-slider"
-                    />
+                    >
+                      <div className="volume-track-fill" style={{ width: `${Math.round(musicVolume * 100)}%` }} />
+                      <div className="volume-thumb" style={{ left: `${Math.round(musicVolume * 100)}%` }} />
+                    </div>
                     <span className="volume-label">{Math.round(musicVolume * 100)}%</span>
                   </div>
                 )}
