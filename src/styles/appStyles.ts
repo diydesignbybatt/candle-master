@@ -1161,63 +1161,39 @@ export const MODAL_STYLES = `
 
   .profile-action-btn.no-bottom-radius { border-radius: 0.75rem 0.75rem 0 0; border-bottom: none; }
 
-  /* Volume Slider */
-  .volume-slider-container {
+  /* Volume Control (+/- buttons) */
+  .volume-control-container {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 8px 20px 12px;
+    justify-content: center;
+    gap: 16px;
+    padding: 10px 20px;
     margin-top: -8px;
     background: var(--bg-tertiary);
     border: 1px solid var(--color-border);
     border-top: none;
     border-radius: 0 0 0.75rem 0.75rem;
-    color: var(--color-text-secondary);
   }
-  .volume-track {
-    flex: 1;
+  .volume-btn {
+    width: 36px;
     height: 36px;
-    position: relative;
+    border-radius: 50%;
+    border: 1.5px solid var(--color-border);
+    background: var(--bg-primary);
+    color: var(--color-text);
     display: flex;
     align-items: center;
+    justify-content: center;
     cursor: pointer;
-    touch-action: none;
-    -webkit-tap-highlight-color: transparent;
-    -webkit-user-select: none;
-    user-select: none;
+    transition: all 0.15s;
   }
-  .volume-track::before {
-    content: '';
-    position: absolute;
-    left: 0; right: 0;
-    height: 4px;
-    border-radius: 2px;
-    background: var(--color-border);
-  }
-  .volume-track-fill {
-    position: absolute;
-    left: 0;
-    height: 4px;
-    border-radius: 2px;
-    background: var(--color-text-secondary);
-    pointer-events: none;
-  }
-  .volume-thumb {
-    position: absolute;
-    width: 22px;
-    height: 22px;
-    border-radius: 50%;
-    background: var(--color-text);
-    box-shadow: 0 1px 4px rgba(0,0,0,0.15);
-    transform: translateX(-50%);
-    pointer-events: none;
-  }
+  .volume-btn:active { background: var(--color-border); }
   .volume-label {
-    font-size: 0.8rem;
+    font-size: 0.9rem;
     font-weight: 700;
-    min-width: 36px;
-    text-align: right;
-    color: var(--color-text-secondary);
+    min-width: 72px;
+    text-align: center;
+    color: var(--color-text);
   }
 
   /* PRO Toggle Button */

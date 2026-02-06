@@ -153,7 +153,7 @@ const AppContent: React.FC = () => {
     setMusicEnabled(newState);
     soundService.setMusicEnabled(newState);
     if (newState && !isGameOver && !isLoading) {
-      soundService.playMusic('bgm-normal');
+      soundService.playMusic('bgm-normal', resolvedTheme);
     }
   };
 
@@ -339,7 +339,7 @@ const AppContent: React.FC = () => {
     }
   }, [isGameOver, totalReturn, tradeCount]);
 
-  // Music lifecycle: play when trading, stop/fade on game over
+  // Music lifecycle: play when trading, stop/fade on game over, switch on theme change
   useEffect(() => {
     if (isGameOver || isLoading) {
       // Boss music fades out, normal music stops immediately
@@ -349,14 +349,14 @@ const AppContent: React.FC = () => {
         soundService.stopMusic();
       }
     } else if (musicEnabled && stock) {
-      // Event mode → boss music, normal → random BGM track
+      // Event mode → boss music, normal → theme-based BGM
       if (stock && 'event' in stock && stock.event) {
         soundService.switchMusic('bgm-event');
       } else {
-        soundService.playMusic('bgm-normal');
+        soundService.playMusic('bgm-normal', resolvedTheme);
       }
     }
-  }, [isGameOver, isLoading, stock, musicEnabled]);
+  }, [isGameOver, isLoading, stock, musicEnabled, resolvedTheme]);
 
   // Pause/resume music when app goes to background/foreground
   useEffect(() => {
@@ -1554,44 +1554,16 @@ const AppContent: React.FC = () => {
                   </div>
                 </button>
                 {musicEnabled && (
-                  <div className="volume-slider-container">
-                    <Volume2 size={16} style={{ opacity: 0.5, flexShrink: 0 }} />
-                    <div
-                      className="volume-track"
-                      onTouchStart={(e) => {
-                        e.stopPropagation();
-                        const track = e.currentTarget;
-                        const rect = track.getBoundingClientRect();
-                        const touch = e.touches[0];
-                        const vol = Math.max(0, Math.min(1, (touch.clientX - rect.left) / rect.width));
-                        setMusicVolume(vol);
-                        soundService.setMusicVolume(vol);
-
-                        const onMove = (ev: TouchEvent) => {
-                          ev.preventDefault();
-                          const t = ev.touches[0];
-                          const v = Math.max(0, Math.min(1, (t.clientX - rect.left) / rect.width));
-                          setMusicVolume(v);
-                          soundService.setMusicVolume(v);
-                        };
-                        const onEnd = () => {
-                          document.removeEventListener('touchmove', onMove);
-                          document.removeEventListener('touchend', onEnd);
-                        };
-                        document.addEventListener('touchmove', onMove, { passive: false });
-                        document.addEventListener('touchend', onEnd);
-                      }}
-                      onClick={(e) => {
-                        const rect = e.currentTarget.getBoundingClientRect();
-                        const vol = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-                        setMusicVolume(vol);
-                        soundService.setMusicVolume(vol);
-                      }}
-                    >
-                      <div className="volume-track-fill" style={{ width: `${Math.round(musicVolume * 100)}%` }} />
-                      <div className="volume-thumb" style={{ left: `${Math.round(musicVolume * 100)}%` }} />
-                    </div>
-                    <span className="volume-label">{Math.round(musicVolume * 100)}%</span>
+                  <div className="volume-control-container">
+                    <button className="volume-btn" onClick={() => {
+                      const vol = Math.round(Math.max(0, musicVolume - 0.1) * 10) / 10;
+                      setMusicVolume(vol); soundService.setMusicVolume(vol);
+                    }}><Minus size={16} /></button>
+                    <span className="volume-label">🔊 {Math.round(musicVolume * 100)}%</span>
+                    <button className="volume-btn" onClick={() => {
+                      const vol = Math.round(Math.min(1, musicVolume + 0.1) * 10) / 10;
+                      setMusicVolume(vol); soundService.setMusicVolume(vol);
+                    }}><Plus size={16} /></button>
                   </div>
                 )}
 
