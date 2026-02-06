@@ -20,6 +20,10 @@ class SoundService {
   private musicVolume: number = 0.15;
   private fadeTimer: ReturnType<typeof setInterval> | null = null;
 
+  // Autoplay unlock: queue pending music until user interacts
+  private pendingMusic: MusicType | null = null;
+  private userHasInteracted: boolean = false;
+
   constructor() {
     // Load sound setting from localStorage
     const saved = localStorage.getItem('sound_enabled');
@@ -35,6 +39,30 @@ class SoundService {
     this.loadSound('click', '/sounds/click.mp3');
     this.loadSound('game-win', '/sounds/gamewin.mp3');
     this.loadSound('game-lose', '/sounds/gamelose.mp3');
+
+    // Listen for first user interaction to unlock autoplay
+    this.setupAutoplayUnlock();
+  }
+
+  /**
+   * Browsers block audio.play() until user interacts with the page.
+   * This listens for the first click/touch and plays any pending music.
+   */
+  private setupAutoplayUnlock() {
+    const unlock = () => {
+      this.userHasInteracted = true;
+      // Play pending music if any
+      if (this.pendingMusic && this.musicEnabled) {
+        console.log(`[Music] Autoplay unlocked, playing pending: ${this.pendingMusic}`);
+        this.playMusicInternal(this.pendingMusic);
+        this.pendingMusic = null;
+      }
+      // Remove listeners after first interaction
+      document.removeEventListener('click', unlock);
+      document.removeEventListener('touchstart', unlock);
+    };
+    document.addEventListener('click', unlock, { once: true });
+    document.addEventListener('touchstart', unlock, { once: true });
   }
 
   private loadSound(type: SoundType, path: string) {
@@ -114,6 +142,17 @@ class SoundService {
     // Already playing this type
     if (this.currentMusic === type && this.music && !this.music.paused) return;
 
+    // If user hasn't interacted yet, queue it for later
+    if (!this.userHasInteracted) {
+      console.log(`[Music] Autoplay blocked, queuing: ${type}`);
+      this.pendingMusic = type;
+      return;
+    }
+
+    this.playMusicInternal(type);
+  }
+
+  private playMusicInternal(type: MusicType) {
     this.stopMusic();
 
     try {
