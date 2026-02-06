@@ -18,6 +18,7 @@ import { appStyles, Colors, GLOBAL_STYLES, LOADING_STYLES, UI_STYLES, MODAL_STYL
 import { ACADEMY_PATTERNS, CHART_PATTERNS } from './constants/patterns';
 import type { ChartPattern } from './constants/patterns';
 import { POSITION_SIZING_GUIDES, SCALE_IN_OUT_GUIDES } from './constants/guides';
+import { getCharacterResult } from './constants/characters';
 import { Chart } from './components/Chart';
 import { fetchRandomStockData } from './utils/data';
 import type { StockData } from './utils/data';
@@ -54,21 +55,6 @@ interface TradeRecord {
 
 
 
-const getTradingTitle = (pnl: number, trades: number) => {
-  if (trades === 0) return "The Spectator";
-  if (pnl > 50) return "Market Oracle";
-  if (pnl > 30) return "Alpha Predator";
-  if (pnl > 20) return "Candle Whisperer";
-  if (pnl > 10) return "Trend Lord";
-  if (pnl > 5) return "Wealth Alchemist";
-  if (pnl > 2) return "Smart Money";
-  if (pnl >= -2) return trades < 5 ? "Market Monk" : "The Bull Rider";
-  if (pnl > -10) return "Exit Rookie";
-  if (pnl > -20) return "Hedge Hog";
-  if (pnl > -30) return "Bull Fighter";
-  if (pnl > -50) return "Chaos Rider";
-  return "Bag Holder";
-};
 
 const AppContent: React.FC = () => {
   // All hooks must be called before any conditional returns (React Rules of Hooks)
@@ -308,7 +294,7 @@ const AppContent: React.FC = () => {
   };
 
   const winRate = tradeCount > 0 ? (winCount / tradeCount) * 100 : 0;
-  const title = getTradingTitle(totalReturn, tradeCount);
+  const character = getCharacterResult(totalReturn, tradeCount);
 
   // Track if current session has been saved to prevent dupes
   const hasSavedSession = useRef(false);
@@ -339,7 +325,7 @@ const AppContent: React.FC = () => {
         playSound('game-lose');
       }
     }
-  }, [isGameOver, title, totalReturn, tradeCount]);
+  }, [isGameOver, totalReturn, tradeCount]);
 
   // Suspense fallback for lazy-loaded components
   const LazyFallback = (
@@ -1831,8 +1817,22 @@ const AppContent: React.FC = () => {
               >
                 <div className="modal-pill"></div>
                 <div className="title-section">
-                  <p className="summary-label">TRADING RESULT</p>
-                  <h1 className="trading-title">{title}</h1>
+                  <motion.div
+                    className="character-circle"
+                    initial={{ scale: 0, rotate: -10 }}
+                    animate={{ scale: 1, rotate: 0 }}
+                    transition={{ type: 'spring', stiffness: 260, damping: 20, delay: 0.2 }}
+                  >
+                    <img src={`/characters/${character.image}`} alt={character.key} />
+                  </motion.div>
+                  <motion.p
+                    className="character-quote"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.5 }}
+                  >
+                    "{character.quote}"
+                  </motion.p>
                 </div>
 
                 <div className="stats-row">
