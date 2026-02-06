@@ -356,6 +356,19 @@ const AppContent: React.FC = () => {
     }
   }, [isGameOver, isLoading, stock]);
 
+  // Pause/resume music when app goes to background/foreground
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.hidden) {
+        soundService.pauseMusic();
+      } else {
+        soundService.resumeMusic();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => document.removeEventListener('visibilitychange', handleVisibility);
+  }, []);
+
   // Suspense fallback for lazy-loaded components
   const LazyFallback = (
     <div className="loading-screen">
