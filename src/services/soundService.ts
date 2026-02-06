@@ -17,7 +17,7 @@ class SoundService {
   private music: HTMLAudioElement | null = null;
   private musicEnabled: boolean = false;
   private currentMusic: MusicType | null = null;
-  private musicVolume: number = 0.15;
+  private musicVolume: number = 0.075;
   private lastNormalIndex: number = -1;
   private fadeTimer: ReturnType<typeof setInterval> | null = null;
 

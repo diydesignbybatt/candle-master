@@ -16,6 +16,25 @@ export const appStyles = {
     textAlign: 'center'
   } as CSSProperties,
 
+  crisisBanner: {
+    position: 'fixed',
+    top: 0,
+    left: '50%',
+    transform: 'translateX(-50%)',
+    zIndex: 9999,
+    background: 'linear-gradient(135deg, #dc2626 0%, #991b1b 100%)',
+    color: '#fff',
+    fontSize: '1.1rem',
+    fontWeight: 800,
+    padding: '14px 28px',
+    borderRadius: '0.75rem',
+    boxShadow: '0 8px 32px rgba(220, 38, 38, 0.5)',
+    textShadow: '0 2px 4px rgba(0,0,0,0.3)',
+    whiteSpace: 'nowrap',
+    letterSpacing: '0.5px',
+    pointerEvents: 'none',
+  } as CSSProperties,
+
   loadingScreen: {
     height: '100vh',
     display: 'flex',

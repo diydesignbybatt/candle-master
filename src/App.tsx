@@ -90,6 +90,7 @@ const AppContent: React.FC = () => {
   const [riskGuideIndex, setRiskGuideIndex] = useState(0);
   const riskCarouselRef = useRef<HTMLDivElement>(null);
   const [showUpgradeModal, setShowUpgradeModal] = useState<'calc' | 'learn' | 'general' | null>(null);
+  const [showCrisisBanner, setShowCrisisBanner] = useState(false);
 
   // Check if in landscape mode and on trade screen
   const isLandscapeTrading = orientation.isLandscape && activeTab === 'trade';
@@ -368,6 +369,16 @@ const AppContent: React.FC = () => {
     document.addEventListener('visibilitychange', handleVisibility);
     return () => document.removeEventListener('visibilitychange', handleVisibility);
   }, []);
+
+  // Crisis event banner: show when event mode starts, auto-hide after 3s
+  useEffect(() => {
+    if (stock?.event && !isGameOver && !isLoading) {
+      setShowCrisisBanner(true);
+      const timer = setTimeout(() => setShowCrisisBanner(false), 3000);
+      return () => clearTimeout(timer);
+    }
+    setShowCrisisBanner(false);
+  }, [stock, isGameOver, isLoading]);
 
   // Suspense fallback for lazy-loaded components
   const LazyFallback = (
@@ -738,6 +749,21 @@ const AppContent: React.FC = () => {
 
   return (
     <div className={`mobile-shell ${isLandscapeTrading ? 'landscape-mode' : ''}`}>
+      {/* Crisis Event Banner — drops from top when event mode triggers */}
+      <AnimatePresence>
+        {showCrisisBanner && (
+          <motion.div
+            style={appStyles.crisisBanner as React.CSSProperties}
+            initial={{ y: -100, opacity: 0, scale: 0.8 }}
+            animate={{ y: 60, opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, y: -50, transition: { duration: 0.5 } }}
+            transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+          >
+            🔥 คุณกำลังเจอ CRISIS EVENT! 🔥
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <div className="app-container">
         {activeTab !== 'calculator' && activeTab !== 'academy' && !isLandscapeTrading && (
           <header className="header compact">
