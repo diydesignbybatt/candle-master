@@ -596,7 +596,7 @@ const AppContent: React.FC = () => {
             <div className="tablet-promo-banner" onClick={() => setShowUpgradeModal('general')}>
               <div className="promo-marquee">
                 <span className="promo-text">
-                  <span className="promo-highlight">UPGRADE PRO</span> to unlock Academy and 300+ famous stocks
+                  <span className="promo-highlight">UPGRADE PRO</span> to unlock Academy and 500+ famous stocks
                 </span>
               </div>
             </div>
@@ -673,7 +673,7 @@ const AppContent: React.FC = () => {
                   </button>
                 </div>
                 <div className="info-content">
-                  <p>Trade on real historical data. Open up to 3 positions with 0.15% commission per trade.</p>
+                  <p>Trade on real historical data from 1970-2025. Open up to 3 positions with 0.15% commission per trade.</p>
                 </div>
               </motion.div>
             </motion.div>
@@ -720,7 +720,7 @@ const AppContent: React.FC = () => {
                     <li><span className="benefit-icon">📈</span>200 Trading Days per game</li>
                     <li><span className="benefit-icon">🎓</span>Full Academy Access</li>
                     <li><span className="benefit-icon">🧮</span>Position Size Calculator</li>
-                    <li><span className="benefit-icon">🌍</span>300+ Global Stocks & ETFs</li>
+                    <li><span className="benefit-icon">🌍</span>500+ Global Stocks & ETFs</li>
                     <li><span className="benefit-icon">🔄</span>Reset Game Data anytime</li>
                   </ul>
                 )}
@@ -953,7 +953,7 @@ const AppContent: React.FC = () => {
                   <div className="chart-footer">
                     <span>CANDLE MASTER</span>
                     <span className="separator">•</span>
-                    <span>Historical Data Trading Simulator</span>
+                    <span>Historical Data 1970-2025</span>
                   </div>
                 </div>
               </div>
@@ -969,10 +969,10 @@ const AppContent: React.FC = () => {
                   <div className="promo-banner" onClick={() => setShowUpgradeModal('general')}>
                     <div className="promo-marquee">
                       <span className="promo-text">
-                        <span className="promo-highlight">UPGRADE PRO</span> to unlock Academy and 300+ famous stocks and ETF from all over the globe
+                        <span className="promo-highlight">UPGRADE PRO</span> to unlock Academy and 500+ famous stocks and ETF from all over the globe
                       </span>
                       <span className="promo-text">
-                        <span className="promo-highlight">UPGRADE PRO</span> to unlock Academy and 300+ famous stocks and ETF from all over the globe
+                        <span className="promo-highlight">UPGRADE PRO</span> to unlock Academy and 500+ famous stocks and ETF from all over the globe
                       </span>
                     </div>
                   </div>
@@ -1695,7 +1695,7 @@ const AppContent: React.FC = () => {
                 <div className="info-content">
                   <div className="info-item intro">
                     <h3>🌍 Welcome to Real Market Trading</h3>
-                    <p>Candle Master is a stock trading simulator using <strong>real historical market data</strong> from around the world (1990-2024). You never know which period you'll face - just price, candlesticks, and daily timeframes.</p>
+                    <p>Candle Master is a stock trading simulator using <strong>real historical market data</strong> from around the world (1970-2025). You never know which period you'll face - just price, candlesticks, and daily timeframes.</p>
                   </div>
                   <div className="info-item">
                     <h3>🎯 Your Mission</h3>
@@ -1863,7 +1863,7 @@ const AppContent: React.FC = () => {
                     <li><span className="benefit-icon">📈</span>200 Trading Days per game</li>
                     <li><span className="benefit-icon">🎓</span>Full Academy Access</li>
                     <li><span className="benefit-icon">🧮</span>Position Size Calculator</li>
-                    <li><span className="benefit-icon">🌍</span>300+ Global Stocks & ETFs</li>
+                    <li><span className="benefit-icon">🌍</span>500+ Global Stocks & ETFs</li>
                     <li><span className="benefit-icon">🔄</span>Reset Game Data anytime</li>
                   </ul>
                 )}
