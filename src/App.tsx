@@ -351,12 +351,22 @@ const AppContent: React.FC = () => {
     }
   }, [isGameOver, title, totalReturn, tradeCount]);
 
-  // Music lifecycle: play when trading, stop on game over
+  // Music lifecycle: play when trading, stop/fade on game over
   useEffect(() => {
     if (isGameOver || isLoading) {
-      soundService.stopMusic();
+      // Boss music fades out, normal music stops immediately
+      if (soundService.getCurrentMusic() === 'bgm-event') {
+        soundService.fadeOutAndStop(1000);
+      } else {
+        soundService.stopMusic();
+      }
     } else if (stock) {
-      soundService.playMusic('bgm-normal');
+      // Event mode → boss music, normal → random BGM track
+      if (stock && 'event' in stock && stock.event) {
+        soundService.switchMusic('bgm-event');
+      } else {
+        soundService.playMusic('bgm-normal');
+      }
     }
   }, [isGameOver, isLoading, stock]);
 
