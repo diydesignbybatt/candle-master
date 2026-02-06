@@ -23,7 +23,7 @@ import { fetchRandomStockData } from './utils/data';
 import type { StockData } from './utils/data';
 import { useTradingSession, resetSavedBalance, getSavedSession, clearSession } from './hooks/useTradingSession';
 import { useOrientation } from './hooks/useOrientation';
-import { SkipForward, Square, TrendingUp, TrendingDown, Loader2, Info, X, Trash2, Volume2, VolumeX, ZoomIn, ZoomOut, BarChart3, BookOpen, Clock, User, Plus, Minus, Calculator, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, ArrowLeft, Sun, Moon, Leaf, Star } from 'lucide-react';
+import { SkipForward, Square, TrendingUp, TrendingDown, Loader2, Info, X, Trash2, Volume2, VolumeX, ZoomIn, ZoomOut, BarChart3, BookOpen, Clock, User, Plus, Minus, Calculator, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, ArrowLeft, Sun, Moon, Leaf, Star, Music, Music2 } from 'lucide-react';
 import { useSubscription } from './hooks/useSubscription';
 import { ScreenOrientation } from '@capacitor/screen-orientation';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
@@ -95,6 +95,7 @@ const AppContent: React.FC = () => {
   const [positionsCollapsed, setPositionsCollapsed] = useState(false);
   const [activeTab, setActiveTab] = useState<'trade' | 'calculator' | 'academy' | 'history' | 'profile'>('trade');
   const [soundEnabled, setSoundEnabled] = useState(soundService.isEnabled());
+  const [musicEnabled, setMusicEnabled] = useState(soundService.isMusicEnabled());
   const [tradeAmount, setTradeAmount] = useState(20000);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [academySection, setAcademySection] = useState<'candle' | 'chart' | 'risk'>('candle');
@@ -155,7 +156,16 @@ const AppContent: React.FC = () => {
     setSoundEnabled(newState);
     soundService.setEnabled(newState);
     if (newState) {
-      playSound('click'); // Play test sound
+      playSound('click');
+    }
+  };
+
+  const toggleMusic = () => {
+    const newState = !musicEnabled;
+    setMusicEnabled(newState);
+    soundService.setMusicEnabled(newState);
+    if (newState && !isGameOver && !isLoading) {
+      soundService.playMusic('bgm-normal');
     }
   };
 
@@ -340,6 +350,15 @@ const AppContent: React.FC = () => {
       }
     }
   }, [isGameOver, title, totalReturn, tradeCount]);
+
+  // Music lifecycle: play when trading, stop on game over
+  useEffect(() => {
+    if (isGameOver || isLoading) {
+      soundService.stopMusic();
+    } else if (stock) {
+      soundService.playMusic('bgm-normal');
+    }
+  }, [isGameOver, isLoading, stock]);
 
   // Suspense fallback for lazy-loaded components
   const LazyFallback = (
@@ -1486,6 +1505,13 @@ const AppContent: React.FC = () => {
                   {soundEnabled ? <Volume2 size={20} /> : <VolumeX size={20} />}
                   <span>Sound Effects</span>
                   <div className={`toggle-switch ${soundEnabled ? 'active' : ''}`}>
+                    <div className="toggle-knob"></div>
+                  </div>
+                </button>
+                <button className="profile-action-btn" onClick={toggleMusic}>
+                  {musicEnabled ? <Music size={20} /> : <Music2 size={20} />}
+                  <span>Background Music</span>
+                  <div className={`toggle-switch ${musicEnabled ? 'active' : ''}`}>
                     <div className="toggle-knob"></div>
                   </div>
                 </button>
