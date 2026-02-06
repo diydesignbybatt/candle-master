@@ -285,7 +285,7 @@ export const useTradingSession = (stock: StockData | null, isPro: boolean = fals
     }, [currentCandle, positions, isGameOver]);
 
     const startIndex = START_INDEX;
-    const maxMoves = isPro ? 200 : 100; // PRO: 200 moves, Free: 100 moves
+    const maxMoves = isPro ? 250 : 100; // PRO: 250 moves (~1 year cycle), Free: 100 moves
 
     const skipDay = useCallback(() => {
         if (currentIndex >= startIndex + maxMoves || currentIndex >= allData.length - 1 || isGameOver) {

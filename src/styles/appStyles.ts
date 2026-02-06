@@ -1947,10 +1947,12 @@ export const MODAL_STYLES = `
   }
 
   .benefit-icon {
-    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     width: 28px;
-    text-align: center;
-    margin: 0 0 24px 0;
+    min-width: 28px;
+    color: var(--color-accent, #C5A059);
   }
 
   .upgrade-modal-btn {

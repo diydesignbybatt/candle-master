@@ -37,7 +37,7 @@ const PositionSizeCalculator = lazy(() => import('./components/PositionSizeCalcu
 import { motion, AnimatePresence } from 'framer-motion';
 import { soundService, playSound } from './services/soundService';
 import { format } from 'date-fns';
-import { LogOut, Link } from 'lucide-react';
+import { LogOut, Link, Flame, RefreshCw, Globe } from 'lucide-react';
 
 interface TradeRecord {
   id: string;
@@ -334,6 +334,15 @@ const AppContent: React.FC = () => {
         playSound('game-win');
       } else if (totalReturn < 0) {
         playSound('game-lose');
+      }
+
+      // Free users: show upgrade modal every 3 games
+      if (!isPro) {
+        const gamesPlayed = parseInt(localStorage.getItem('candle_master_games_played') || '0', 10) + 1;
+        localStorage.setItem('candle_master_games_played', String(gamesPlayed));
+        if (gamesPlayed % 3 === 0) {
+          setTimeout(() => setShowUpgradeModal('general'), 2000);
+        }
       }
     }
   }, [isGameOver, totalReturn, tradeCount]);
@@ -717,12 +726,12 @@ const AppContent: React.FC = () => {
                 )}
                 {showUpgradeModal === 'general' && (
                   <ul className="upgrade-benefits-list">
-                    <li><span className="benefit-icon">📈</span>200 Trading Days per game</li>
-                    <li><span className="benefit-icon">🎓</span>Full Academy Access</li>
-                    <li><span className="benefit-icon">🧮</span>Position Size Calculator</li>
-                    <li><span className="benefit-icon">🌍</span>500+ Global Stocks & ETFs</li>
-                    <li><span className="benefit-icon">🔥</span>Crisis Event Challenge</li>
-                    <li><span className="benefit-icon">🔄</span>Reset Game Data anytime</li>
+                    <li><span className="benefit-icon"><TrendingUp size={18} /></span>250 Trading Days per game</li>
+                    <li><span className="benefit-icon"><BookOpen size={18} /></span>Full Academy Access</li>
+                    <li><span className="benefit-icon"><Calculator size={18} /></span>Position Size Calculator</li>
+                    <li><span className="benefit-icon"><Globe size={18} /></span>500+ Global Stocks & ETFs</li>
+                    <li><span className="benefit-icon"><Flame size={18} /></span>Crisis Event Challenge</li>
+                    <li><span className="benefit-icon"><RefreshCw size={18} /></span>Reset Game Data anytime</li>
                   </ul>
                 )}
                 <button
@@ -1861,12 +1870,12 @@ const AppContent: React.FC = () => {
                 )}
                 {showUpgradeModal === 'general' && (
                   <ul className="upgrade-benefits-list">
-                    <li><span className="benefit-icon">📈</span>200 Trading Days per game</li>
-                    <li><span className="benefit-icon">🎓</span>Full Academy Access</li>
-                    <li><span className="benefit-icon">🧮</span>Position Size Calculator</li>
-                    <li><span className="benefit-icon">🌍</span>500+ Global Stocks & ETFs</li>
-                    <li><span className="benefit-icon">🔥</span>Crisis Event Challenge</li>
-                    <li><span className="benefit-icon">🔄</span>Reset Game Data anytime</li>
+                    <li><span className="benefit-icon"><TrendingUp size={18} /></span>250 Trading Days per game</li>
+                    <li><span className="benefit-icon"><BookOpen size={18} /></span>Full Academy Access</li>
+                    <li><span className="benefit-icon"><Calculator size={18} /></span>Position Size Calculator</li>
+                    <li><span className="benefit-icon"><Globe size={18} /></span>500+ Global Stocks & ETFs</li>
+                    <li><span className="benefit-icon"><Flame size={18} /></span>Crisis Event Challenge</li>
+                    <li><span className="benefit-icon"><RefreshCw size={18} /></span>Reset Game Data anytime</li>
                   </ul>
                 )}
                 <button

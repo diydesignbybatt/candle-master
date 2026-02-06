@@ -10,7 +10,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
     - Users see candlesticks, MA indicators (20/50), and Volume.
     - Can open up to **3 positions** simultaneously (`MAX_POSITIONS = 3`).
     - Session starts at candle 200 (`startIndex = 199`) with trading days based on subscription.
-    - **Free**: 100 trading days | **PRO**: 200 trading days
+    - **Free**: 100 trading days | **PRO**: 250 trading days (~1 year cycle)
     - Starting capital: **$100,000** | Default trade amount: **$20,000**
     - Trades execute at the **close price** of the current candle.
     - Commission: 0.15% per trade.
@@ -45,7 +45,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 | Feature | Free | PRO |
 |---------|------|-----|
-| Trading Days/Game | 100 | 200 |
+| Trading Days/Game | 100 | 250 |
 | Stocks | 20 | 491 (500+) |
 | Academy (Learn) | Locked | Full Access |
 | Position Calculator | Locked | Full Access |
