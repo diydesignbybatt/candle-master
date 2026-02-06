@@ -28,7 +28,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - [x] **Onboarding Tutorial**: 9-slide tutorial for new users
 - [x] **Tablet Support**: Landscape mode with optimized UI
 - [x] **Theme System**: Background color follows theme across all screens
-- [x] **PWA Deployment**: Live on Vercel (auto-deploy from GitHub)
+- [x] **PWA Deployment**: Live on Cloudflare Pages (auto-deploy from GitHub)
 - [x] **Random Time Window**: Fixed data sorting for true random historical periods
 - [x] **Onboarding Tutorial**: 9 slides with swipe gestures, 9:16 images
 - [x] **PWA Icons**: PNG icons for iOS/Android home screen support
@@ -41,7 +41,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | Feature | Free | PRO |
 |---------|------|-----|
 | Trading Days/Game | 100 | 200 |
-| Stocks | 20 | 300+ |
+| Stocks | 20 | 491 (500+) |
 | Academy (Learn) | Locked | Full Access |
 | Position Calculator | Locked | Full Access |
 | Reset Game Data | Locked | Available |
@@ -127,8 +127,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Stock Data (`src/utils/`)
 - **Stock List**: `stocks.json`
-    - Separated into `free` (20 stocks) and `pro` (287 stocks) tiers.
-    - Covers global markets: US, HK, JP, TH, UK, EU, etc.
+    - Separated into `free` (20 stocks) and `pro` (491 stocks) tiers. Total: 511 stocks.
+    - Covers global markets: US, HK, JP, TH, UK, EU, KR, AU, IN, SG, TW, CA, BR, etc.
 - **Data Fetching**: `data.ts`
     - Source: **Stooq API** (Free historical data).
     - Method:
@@ -177,12 +177,13 @@ D:\000 BATT\เรียนสร้าง Application\Candle Master
 
 | Branch | Purpose | Deployment |
 |--------|---------|------------|
-| `main` | Production | Vercel (auto-deploy) |
-| `dev-lab` | Testing/Cloudflare | Cloudflare Pages |
+| `main` | Production | Cloudflare Pages (auto-deploy) |
+| `dev-lab` | Testing/Development | Cloudflare Pages |
 
 **Workflow**:
-1. Test new features on `dev-lab`
-2. When stable, merge to `main` for Vercel deployment
+1. Create feature branches from `dev-lab` for new features
+2. Test on `dev-lab`, when stable merge to `main`
+3. Push to `main` → Cloudflare Pages deploys automatically
 
 ## Common Commands
 
@@ -221,15 +222,11 @@ npx cap sync ios         # Sync iOS only
 - **Framework**: Astro + Cloudflare adapter
 - **Location**: `E:\CANDLE MASTER\PROJECT\candle-master-landing`
 
-### PWA - Primary (Vercel)
-- **Live URL**: https://candle-master.vercel.app/
-- **Auto-deploy**: Push to `main` branch → Vercel deploys automatically
+### PWA (Cloudflare Pages) — Primary
+- **Live URL**: https://app.candlemaster.app (production)
+- **Pages URL**: https://candle-master.pages.dev/
+- **Auto-deploy**: Push to `main` branch → Cloudflare Pages deploys automatically
 - **GitHub Repo**: https://github.com/diydesignbybatt/candle-master (public)
-- **Note**: Vercel is faster, use as primary until traffic increases
-
-### PWA - Backup (Cloudflare Pages)
-- **Live URL**: https://candle-master.pages.dev/
-- **Branch**: `dev-lab` (for testing Cloudflare)
 - **Dashboard**: https://dash.cloudflare.com/ → Workers & Pages → candle-master
 - **Functions**: `/functions/api/stock.ts` (Cloudflare Workers format)
 - **Config**: `wrangler.toml`
@@ -240,15 +237,7 @@ npm run pages:dev      # Local dev with Wrangler
 npm run pages:deploy   # Build and deploy to Cloudflare
 ```
 
-### Cloudflare vs Vercel
-| Aspect | Vercel | Cloudflare |
-|--------|--------|------------|
-| Speed | Faster (more edge locations) | Slightly slower |
-| Free Tier | 100GB bandwidth | Unlimited bandwidth |
-| Functions | Serverless Functions | Workers (edge) |
-| Cost at Scale | Can get expensive | More predictable |
-
-**Strategy**: Use Vercel as primary (faster UX), Cloudflare as backup/fallback when traffic grows.
+**Note**: ไม่ใช้ Vercel แล้ว — ใช้ Cloudflare Pages เท่านั้น (unlimited bandwidth, Workers edge functions)
 
 ### Android/iOS
 - Native projects in `android/` and `ios/`.
