@@ -46,7 +46,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     const origin = new URL(context.request.url).origin;
     const appUrl = origin.includes('localhost')
       ? origin
-      : 'https://app.candlemaster.app';
+      : 'https://candlemaster.app';
 
     // Create Stripe Checkout Session via REST API (no SDK needed in Workers)
     const params = new URLSearchParams();
