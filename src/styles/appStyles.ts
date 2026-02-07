@@ -2121,9 +2121,11 @@ export const MODAL_STYLES = `
 
   /* PRO Plan Badge (Monthly / Lifetime) */
   .profile-action-btn.pro-toggle.is-pro span {
-    flex: 0 0 auto;
+    flex: 1;
   }
   .pro-plan-badge {
+    flex: 0 0 auto !important;
+    margin-left: auto;
     font-size: 0.7rem;
     font-weight: 700;
     color: #fff;
@@ -2132,6 +2134,11 @@ export const MODAL_STYLES = `
     border-radius: 20px;
     letter-spacing: 0.03em;
     box-shadow: 0 2px 8px rgba(197,160,89,0.3);
+  }
+  .pro-badge-icon {
+    color: #FFFDE7;
+    font-size: 1.1em;
+    font-weight: 900;
   }
 
   /* PRO Upgrade CTA Button (Free users) */

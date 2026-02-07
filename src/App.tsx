@@ -1684,7 +1684,7 @@ const AppContent: React.FC = () => {
                     <Star size={20} fill="currentColor" />
                     <span>PRO Member</span>
                     <span className="pro-plan-badge">
-                      {proPlan === 'lifetime' ? '♾ Lifetime' : proPlan === 'monthly' ? 'Monthly' : 'Active'}
+                      {proPlan === 'lifetime' ? <><span className="pro-badge-icon">∞</span> Lifetime</> : proPlan === 'monthly' ? 'Monthly' : 'Active'}
                     </span>
                   </div>
                 ) : (
