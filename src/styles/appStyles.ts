@@ -1321,59 +1321,65 @@ export const MODAL_STYLES = `
     padding-bottom: 20px;
   }
 
-  .risk-category-selection {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
+  .risk-category-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    padding: 0 2px;
   }
 
-  .risk-category-card {
+  .risk-category-grid-card {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 12px;
+    justify-content: center;
+    gap: 6px;
     background: var(--bg-tertiary);
     border: 1px solid var(--color-border);
     border-radius: 12px;
-    padding: 16px;
+    padding: 14px 6px 12px;
     cursor: pointer;
     transition: all 0.2s;
-    text-align: left;
+    text-align: center;
+    min-height: 100px;
   }
 
-  .risk-category-card:active {
-    transform: scale(0.98);
+  .risk-category-grid-card:active {
+    transform: scale(0.96);
     background: var(--bg-secondary);
   }
 
-  .risk-category-icon {
-    font-size: 2rem;
-    flex-shrink: 0;
+  .risk-grid-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #D4A017;
+    margin-bottom: 4px;
   }
 
-  .risk-category-info {
-    flex: 1;
-  }
-
-  .risk-category-info h4 {
-    font-size: 0.95rem;
+  .risk-grid-title {
+    font-size: 0.72rem;
     font-weight: 800;
     color: var(--color-text);
-    margin: 0 0 4px 0;
+    margin: 0;
+    line-height: 1.2;
   }
 
-  .risk-category-info p {
-    font-size: 0.75rem;
+  .risk-grid-subtitle {
+    font-size: 0.6rem;
     color: var(--color-text-secondary);
     margin: 0;
+    line-height: 1.2;
   }
 
-  .risk-category-count {
+  .risk-grid-count {
     background: var(--bg-primary);
-    padding: 4px 10px;
-    border-radius: 12px;
-    font-size: 0.7rem;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 0.6rem;
     font-weight: 700;
     color: var(--color-text-secondary);
+    margin-top: 2px;
   }
 
   .risk-carousel-header {
@@ -1465,9 +1471,10 @@ export const MODAL_STYLES = `
   }
 
   .risk-guide-icon {
-    display: block;
-    font-size: 2rem;
-    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #D4A017;
     margin-bottom: 12px;
   }
 
@@ -1844,6 +1851,29 @@ export const MODAL_STYLES = `
     margin: 0 0 4px 0;
     padding-left: 8px;
     line-height: 1.4;
+  }
+
+  .risk-pro-tips {
+    background: var(--bg-tertiary);
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-top: 14px;
+  }
+
+  .pro-tips-label {
+    font-size: 0.7rem;
+    font-weight: 800;
+    color: var(--color-accent);
+    margin: 0 0 8px 0;
+    letter-spacing: 0.03em;
+  }
+
+  .pro-tip-item {
+    font-size: 0.72rem;
+    color: var(--color-text-secondary);
+    margin: 0 0 6px 0;
+    line-height: 1.4;
+    padding-left: 4px;
   }
 
   /* PRO Upgrade Modal */

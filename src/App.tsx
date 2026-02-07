@@ -17,14 +17,14 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boole
 import { appStyles, Colors, GLOBAL_STYLES, LOADING_STYLES, UI_STYLES, MODAL_STYLES, TABLET_STYLES } from './styles/appStyles';
 import { ACADEMY_PATTERNS, CHART_PATTERNS } from './constants/patterns';
 import type { ChartPattern } from './constants/patterns';
-import { POSITION_SIZING_GUIDES, SCALE_IN_OUT_GUIDES } from './constants/guides';
+import { RISK_CATEGORIES, RISK_GUIDE_MAP } from './constants/guides';
 import { getCharacterResult } from './constants/characters';
 import { Chart } from './components/Chart';
 import { fetchRandomStockData } from './utils/data';
 import type { StockData } from './utils/data';
 import { useTradingSession, resetSavedBalance, getSavedSession, clearSession } from './hooks/useTradingSession';
 import { useOrientation } from './hooks/useOrientation';
-import { SkipForward, Square, TrendingUp, TrendingDown, Loader2, Info, X, Trash2, Volume2, VolumeX, ZoomIn, ZoomOut, BarChart3, BookOpen, Clock, User, Plus, Minus, Calculator, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, ArrowLeft, Sun, Moon, Leaf, Star, Music, Music2 } from 'lucide-react';
+import { SkipForward, Square, TrendingUp, TrendingDown, Loader2, Info, X, Trash2, Volume2, VolumeX, ZoomIn, ZoomOut, BarChart3, BookOpen, Clock, User, Plus, Minus, Calculator, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, ArrowLeft, Sun, Moon, Leaf, Star, Music, Music2, PieChart, ShieldAlert, Scale, GitFork, Lightbulb, Target, Zap, Waves, Ruler, MapPin, XCircle, Search, Pause, CircleStop, Shuffle, Gauge, AlertTriangle, HeartCrack, Sparkles, Landmark, ShieldCheck, Puzzle, Brain, Vault, ClipboardList, Layers } from 'lucide-react';
 import { useSubscription } from './hooks/useSubscription';
 import { ScreenOrientation } from '@capacitor/screen-orientation';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
@@ -38,6 +38,15 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { soundService, playSound } from './services/soundService';
 import { format } from 'date-fns';
 import { LogOut, Link, Flame, RefreshCw, Globe } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
+
+// Map icon name strings (from guides.ts) to Lucide components
+const GUIDE_ICONS: Record<string, LucideIcon> = {
+  PieChart, ShieldAlert, Scale, GitFork, Lightbulb, Target, Zap, Waves,
+  Ruler, MapPin, XCircle, Search, Pause, CircleStop, Shuffle, Gauge,
+  AlertTriangle, HeartCrack, Sparkles, Landmark, ShieldCheck, Puzzle,
+  Brain, Vault, ClipboardList, Layers, TrendingUp, TrendingDown, BarChart3, RefreshCw,
+};
 
 interface TradeRecord {
   id: string;
@@ -86,7 +95,7 @@ const AppContent: React.FC = () => {
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [academySection, setAcademySection] = useState<'candle' | 'chart' | 'risk'>('candle');
   const [selectedChartPattern, setSelectedChartPattern] = useState<ChartPattern | null>(null);
-  const [riskCategory, setRiskCategory] = useState<'sizing' | 'scaling' | null>(null);
+  const [riskCategory, setRiskCategory] = useState<string | null>(null);
   const [riskGuideIndex, setRiskGuideIndex] = useState(0);
   const riskCarouselRef = useRef<HTMLDivElement>(null);
   const [showUpgradeModal, setShowUpgradeModal] = useState<'calc' | 'learn' | 'general' | null>(null);
@@ -1060,7 +1069,7 @@ const AppContent: React.FC = () => {
                   className={`academy-tab ${academySection === 'risk' ? 'active' : ''}`}
                   onClick={() => { setAcademySection('risk'); setRiskCategory(null); }}
                 >
-                  Risk Mgmt
+                  Money & Mind
                 </button>
               </div>
 
@@ -1121,29 +1130,22 @@ const AppContent: React.FC = () => {
               {academySection === 'risk' && (
                 <div className="risk-section">
                   {riskCategory === null ? (
-                    <div className="risk-category-selection">
-                      <button
-                        className="risk-category-card"
-                        onClick={() => { setRiskCategory('sizing'); setRiskGuideIndex(0); }}
-                      >
-                        <span className="risk-category-icon">📊</span>
-                        <div className="risk-category-info">
-                          <h4>Position Sizing</h4>
-                          <p>Learn proper position sizing</p>
-                        </div>
-                        <span className="risk-category-count">{POSITION_SIZING_GUIDES.length} tips</span>
-                      </button>
-                      <button
-                        className="risk-category-card"
-                        onClick={() => { setRiskCategory('scaling'); setRiskGuideIndex(0); }}
-                      >
-                        <span className="risk-category-icon">📈</span>
-                        <div className="risk-category-info">
-                          <h4>Scale In/Out</h4>
-                          <p>Build & exit positions smartly</p>
-                        </div>
-                        <span className="risk-category-count">{SCALE_IN_OUT_GUIDES.length} tips</span>
-                      </button>
+                    <div className="risk-category-grid">
+                      {RISK_CATEGORIES.map((cat) => {
+                        const guides = RISK_GUIDE_MAP[cat.key];
+                        return (
+                          <button
+                            key={cat.key}
+                            className="risk-category-grid-card"
+                            onClick={() => { setRiskCategory(cat.key); setRiskGuideIndex(0); }}
+                          >
+                            <span className="risk-grid-icon">{(() => { const Icon = GUIDE_ICONS[cat.icon]; return Icon ? <Icon size={26} /> : cat.icon; })()}</span>
+                            <h4 className="risk-grid-title">{cat.title}</h4>
+                            <p className="risk-grid-subtitle">{cat.subtitle}</p>
+                            <span className="risk-grid-count">{guides?.length || 0} tips</span>
+                          </button>
+                        );
+                      })}
                     </div>
                   ) : (
                     <>
@@ -1153,7 +1155,7 @@ const AppContent: React.FC = () => {
                           <span>Back</span>
                         </button>
                         <span className="risk-carousel-title">
-                          {riskCategory === 'sizing' ? 'Position Sizing' : 'Scale In/Out'}
+                          {RISK_CATEGORIES.find(c => c.key === riskCategory)?.title}
                         </span>
                       </div>
 
@@ -1179,16 +1181,16 @@ const AppContent: React.FC = () => {
                             if (riskCarouselRef.current) {
                               const cardWidth = riskCarouselRef.current.offsetWidth;
                               const newIndex = Math.round(riskCarouselRef.current.scrollLeft / cardWidth);
-                              const guides = riskCategory === 'sizing' ? POSITION_SIZING_GUIDES : SCALE_IN_OUT_GUIDES;
+                              const guides = RISK_GUIDE_MAP[riskCategory!] || [];
                               if (newIndex !== riskGuideIndex && newIndex >= 0 && newIndex < guides.length) {
                                 setRiskGuideIndex(newIndex);
                               }
                             }
                           }}
                         >
-                          {(riskCategory === 'sizing' ? POSITION_SIZING_GUIDES : SCALE_IN_OUT_GUIDES).map((guide: any) => (
+                          {(RISK_GUIDE_MAP[riskCategory!] || []).map((guide: any) => (
                             <div key={guide.id} className="risk-guide-card">
-                              <span className="risk-guide-icon">{guide.icon}</span>
+                              <span className="risk-guide-icon">{(() => { const Icon = GUIDE_ICONS[guide.icon]; return Icon ? <Icon size={32} /> : guide.icon; })()}</span>
                               <h4 className="risk-guide-title">{guide.title}</h4>
                               {guide.subtitle && <p className="risk-guide-subtitle">{guide.subtitle}</p>}
                               {guide.content && <p className="risk-guide-content">{guide.content}</p>}
@@ -1329,6 +1331,15 @@ const AppContent: React.FC = () => {
                                   <strong>Key Rule:</strong> {guide.keyPoint}
                                 </div>
                               )}
+
+                              {guide.proTips && (
+                                <div className="risk-pro-tips">
+                                  <p className="pro-tips-label">PRO TIPS</p>
+                                  {guide.proTips.map((tip: string, i: number) => (
+                                    <p key={i} className="pro-tip-item">→ {tip}</p>
+                                  ))}
+                                </div>
+                              )}
                             </div>
                           ))}
                         </div>
@@ -1336,21 +1347,21 @@ const AppContent: React.FC = () => {
                         <button
                           className="risk-carousel-arrow right"
                           onClick={() => {
-                            const guides = riskCategory === 'sizing' ? POSITION_SIZING_GUIDES : SCALE_IN_OUT_GUIDES;
+                            const guides = RISK_GUIDE_MAP[riskCategory!] || [];
                             const newIndex = Math.min(guides.length - 1, riskGuideIndex + 1);
                             setRiskGuideIndex(newIndex);
                             if (riskCarouselRef.current) {
                               riskCarouselRef.current.scrollTo({ left: riskCarouselRef.current.offsetWidth * newIndex, behavior: 'smooth' });
                             }
                           }}
-                          disabled={riskGuideIndex === (riskCategory === 'sizing' ? POSITION_SIZING_GUIDES : SCALE_IN_OUT_GUIDES).length - 1}
+                          disabled={riskGuideIndex === (RISK_GUIDE_MAP[riskCategory!] || []).length - 1}
                         >
                           <ChevronRight size={20} />
                         </button>
                       </div>
 
                       <div className="risk-carousel-dots">
-                        {(riskCategory === 'sizing' ? POSITION_SIZING_GUIDES : SCALE_IN_OUT_GUIDES).map((_: any, index: number) => (
+                        {(RISK_GUIDE_MAP[riskCategory!] || []).map((_: any, index: number) => (
                           <button
                             key={index}
                             className={`dot ${index === riskGuideIndex ? 'active' : ''}`}
