@@ -3,7 +3,7 @@ import { getAuth, GoogleAuthProvider } from 'firebase/auth';
 
 const firebaseConfig = {
   apiKey: 'AIzaSyBWyNhRk9GJ57cW-dNqe_o4ZeN-D62YJQA',
-  authDomain: 'candlemaster.app',
+  authDomain: 'candle-master-d4bbd.firebaseapp.com',
   projectId: 'candle-master-d4bbd',
   storageBucket: 'candle-master-d4bbd.firebasestorage.app',
   messagingSenderId: '951460493496',
