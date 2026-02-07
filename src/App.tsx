@@ -73,78 +73,49 @@ const AppContent: React.FC = () => {
   const { isPro, proPlan, upgradeToPro, purchaseProWeb } = useSubscription();
   const [stripeLoading, setStripeLoading] = useState(false);
   const [showThankYouModal, setShowThankYouModal] = useState(false);
-  const [stripeMessage, setStripeMessage] = useState<'cancel' | null>(null);
 
-  // Detect Stripe return from URL on first mount (before URL is cleaned)
-  // Also check sessionStorage in case URL was already cleaned but modal wasn't shown
-  const [pendingStripeSuccess, setPendingStripeSuccess] = useState(() => {
+  // Detect Stripe return from URL on first mount (read before cleaning)
+  const [pendingStripeSuccess] = useState(() => {
     const params = new URLSearchParams(window.location.search);
     const result = params.get('stripe');
-    if (result === 'success') {
-      window.history.replaceState({}, '', window.location.pathname);
-      sessionStorage.setItem('stripe_pending', 'true');
-      return true;
-    }
-    if (result === 'cancel') {
-      window.history.replaceState({}, '', window.location.pathname);
-      return false;
-    }
-    // Check if there's a pending success from a previous page load
-    if (sessionStorage.getItem('stripe_pending') === 'true') {
-      return true;
-    }
+    if (result) window.history.replaceState({}, '', window.location.pathname);
+    if (result === 'success') return true;
+    // Also check sessionStorage backup
+    if (sessionStorage.getItem('stripe_pending') === 'true') return true;
     return false;
   });
 
-  // Show cancel message on mount if needed
-  useEffect(() => {
+  // Cancel message: detect from URL in initializer (URL already cleaned above)
+  const [stripeMessage, setStripeMessage] = useState<'cancel' | null>(() => {
     const params = new URLSearchParams(window.location.search);
-    if (params.get('stripe') === 'cancel') {
-      setStripeMessage('cancel');
-      setTimeout(() => setStripeMessage(null), 4000);
-    }
-  }, []);
+    return params.get('stripe') === 'cancel' ? 'cancel' : null;
+  });
 
-  // Handle Stripe success: wait for user to be ready, then verify & upgrade
+  // Auto-dismiss cancel message
+  useEffect(() => {
+    if (stripeMessage === 'cancel') {
+      const timer = setTimeout(() => setStripeMessage(null), 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [stripeMessage]);
+
+  // Handle Stripe success: upgrade immediately (Stripe redirect = payment confirmed)
   useEffect(() => {
     if (!pendingStripeSuccess) return;
 
-    // If user is not logged in yet, still upgrade (they paid, trust Stripe redirect)
+    // Trust Stripe redirect — upgrade + show modal immediately
+    upgradeToPro();
+    setShowThankYouModal(true);
+    sessionStorage.removeItem('stripe_pending');
+
+    // Also verify with server in background (non-blocking)
     const userId = user?.id && !user.id.startsWith('guest_') ? user.id : null;
-
-    const verifyWithRetry = async (attempt: number = 0): Promise<void> => {
-      const maxRetries = 5;
-      const retryDelay = 2000;
-
-      if (userId) {
-        try {
-          const { checkSubscriptionStatus } = await import('./services/stripeService');
-          const status = await checkSubscriptionStatus(userId);
-          if (status.isPro) {
-            upgradeToPro();
-            setShowThankYouModal(true);
-            setPendingStripeSuccess(false);
-            sessionStorage.removeItem('stripe_pending');
-            return;
-          }
-        } catch (err) {
-          console.warn('Subscription check attempt failed:', err);
-        }
-      }
-
-      if (attempt < maxRetries) {
-        setTimeout(() => verifyWithRetry(attempt + 1), retryDelay);
-      } else {
-        // After all retries, upgrade anyway (payment confirmed by Stripe redirect)
-        upgradeToPro();
-        setShowThankYouModal(true);
-        setPendingStripeSuccess(false);
-        sessionStorage.removeItem('stripe_pending');
-      }
-    };
-
-    verifyWithRetry();
-  }, [pendingStripeSuccess, user]); // eslint-disable-line react-hooks/exhaustive-deps
+    if (userId) {
+      import('./services/stripeService').then(({ checkSubscriptionStatus }) => {
+        checkSubscriptionStatus(userId).catch(() => {});
+      });
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Onboarding state - check if user has completed the tutorial
   const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(() => {
