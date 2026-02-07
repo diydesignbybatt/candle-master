@@ -2181,6 +2181,30 @@ export const MODAL_STYLES = `
     opacity: 0.7;
   }
 
+  /* Test PRO Toggle */
+  .test-pro-toggle {
+    cursor: pointer;
+    border: 1px dashed var(--color-border) !important;
+    background: var(--bg-tertiary) !important;
+    opacity: 0.7;
+  }
+  .test-pro-toggle svg { color: var(--color-text-secondary); }
+  .test-pro-toggle.test-pro-active {
+    border-color: #C5A059 !important;
+    border-style: dashed !important;
+  }
+  .test-pro-toggle.test-pro-active svg { color: #C5A059; }
+  .test-pro-label {
+    margin-left: auto;
+    font-size: 0.55rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    color: var(--color-text-tertiary);
+    background: var(--color-border);
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+
   [data-theme="dark"] .pro-upgrade-cta {
     border-color: #FFD700;
     color: #FFD700;

@@ -70,7 +70,7 @@ const AppContent: React.FC = () => {
   const { mode, setMode, resolvedTheme } = useTheme();
   const { user, isAuthenticated, isGuest, signOut, linkAccount } = useAuth();
   const orientation = useOrientation();
-  const { isPro, proPlan, upgradeToPro, purchaseProWeb } = useSubscription(user?.id ?? null);
+  const { isPro, proPlan, upgradeToPro, resetToFree, purchaseProWeb } = useSubscription(user?.id ?? null);
   const [stripeLoading, setStripeLoading] = useState(false);
   const [showThankYouModal, setShowThankYouModal] = useState(false);
 
@@ -1715,6 +1715,16 @@ const AppContent: React.FC = () => {
                     <span className="pro-cta-arrow">→</span>
                   </button>
                 )}
+
+                {/* Test PRO Toggle — สำหรับทดสอบ ลบทิ้งตอน production */}
+                <button
+                  className={`profile-action-btn test-pro-toggle ${isPro ? 'test-pro-active' : ''}`}
+                  onClick={() => isPro ? resetToFree() : upgradeToPro()}
+                >
+                  <Zap size={20} />
+                  <span>{isPro ? 'Deactivate Test PRO' : 'Activate Test PRO'}</span>
+                  <span className="test-pro-label">FOR TEST</span>
+                </button>
 
                 <div className="theme-selector">
                   <div className="theme-selector-header">
