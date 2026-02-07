@@ -2120,6 +2120,9 @@ export const MODAL_STYLES = `
   }
 
   /* PRO Plan Badge (Monthly / Lifetime) */
+  .profile-action-btn.pro-toggle.is-pro span {
+    flex: 0 0 auto;
+  }
   .pro-plan-badge {
     font-size: 0.7rem;
     font-weight: 700;
@@ -2128,7 +2131,6 @@ export const MODAL_STYLES = `
     padding: 4px 14px;
     border-radius: 20px;
     letter-spacing: 0.03em;
-    margin-left: auto;
     box-shadow: 0 2px 8px rgba(197,160,89,0.3);
   }
 

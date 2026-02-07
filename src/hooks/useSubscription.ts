@@ -26,19 +26,47 @@ export const TIER_LIMITS = {
   },
 } as const;
 
-const STORAGE_KEY = 'candle_master_subscription';
-const PLAN_STORAGE_KEY = 'candle_master_plan';
 const GAMES_TODAY_KEY = 'candle_master_games_today';
 const GAMES_DATE_KEY = 'candle_master_games_date';
 
 /**
+ * Per-user storage keys — scoped by userId to prevent PRO leaking across accounts
+ */
+function getStorageKey(userId: string | null): string {
+  return userId ? `candle_master_subscription_${userId}` : 'candle_master_subscription';
+}
+function getPlanStorageKey(userId: string | null): string {
+  return userId ? `candle_master_plan_${userId}` : 'candle_master_plan';
+}
+
+/**
  * Subscription hook - manages free/pro access
  * Integrates with RevenueCat when configured, falls back to localStorage for testing
+ *
+ * @param userId - Current user ID (from AuthContext). Subscription status is scoped per-user.
  */
-export const useSubscription = () => {
+export const useSubscription = (userId: string | null = null) => {
+  // Derive storage keys from userId
+  const storageKey = getStorageKey(userId);
+  const planStorageKey = getPlanStorageKey(userId);
+
+  // One-time migration: move old un-scoped keys to per-user keys
+  if (userId) {
+    const oldSub = localStorage.getItem('candle_master_subscription');
+    const oldPlan = localStorage.getItem('candle_master_plan');
+    if (oldSub === 'pro' && !localStorage.getItem(storageKey)) {
+      localStorage.setItem(storageKey, oldSub);
+      if (oldPlan) localStorage.setItem(planStorageKey, oldPlan);
+    }
+    // Clean up old un-scoped keys
+    localStorage.removeItem('candle_master_subscription');
+    localStorage.removeItem('candle_master_plan');
+  }
+
   const [tier, setTier] = useState<SubscriptionTier>('free');
   const [proPlan, setProPlan] = useState<'monthly' | 'lifetime' | null>(() => {
-    const saved = localStorage.getItem(PLAN_STORAGE_KEY);
+    const key = getPlanStorageKey(userId);
+    const saved = localStorage.getItem(key);
     return saved === 'monthly' || saved === 'lifetime' ? saved : null;
   });
   const [gamesToday, setGamesToday] = useState(0);
@@ -46,8 +74,13 @@ export const useSubscription = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [subscriptionStatus, setSubscriptionStatus] = useState<SubscriptionStatus | null>(null);
 
-  // Initialize and check subscription status
+  // Initialize and check subscription status — re-runs when userId changes
   useEffect(() => {
+    // Reset state when user changes (prevents PRO leaking across accounts)
+    setTier('free');
+    setProPlan(null);
+    setSubscriptionStatus(null);
+
     const initSubscription = async () => {
       // Check RevenueCat if configured
       if (revenueCatService.isConfigured()) {
@@ -62,26 +95,27 @@ export const useSubscription = () => {
         const availableProducts = await revenueCatService.getProducts();
         setProducts(availableProducts);
       } else if (!Capacitor.isNativePlatform()) {
-        // Web/PWA: check Stripe subscription status via Cloudflare KV
-        const saved = localStorage.getItem(STORAGE_KEY);
+        // Web/PWA: check per-user subscription status from localStorage
+        const saved = localStorage.getItem(storageKey);
         if (saved === 'pro') {
           setTier('pro');
         }
+        // Restore plan type
+        const savedPlan = localStorage.getItem(planStorageKey);
+        if (savedPlan === 'monthly' || savedPlan === 'lifetime') {
+          setProPlan(savedPlan);
+        }
 
-        // Also verify with server if user is logged in
-        const authData = localStorage.getItem('candle_master_auth');
-        if (authData) {
+        // Also verify with server if user is logged in (not guest)
+        if (userId && !userId.startsWith('guest_')) {
           try {
-            const user = JSON.parse(authData);
-            if (user?.id && !user.id.startsWith('guest_')) {
-              const stripeStatus = await checkStripeStatus(user.id);
-              if (stripeStatus.isPro) {
-                setTier('pro');
-                localStorage.setItem(STORAGE_KEY, 'pro');
-                if (stripeStatus.plan) {
-                  setProPlan(stripeStatus.plan);
-                  localStorage.setItem(PLAN_STORAGE_KEY, stripeStatus.plan);
-                }
+            const stripeStatus = await checkStripeStatus(userId);
+            if (stripeStatus.isPro) {
+              setTier('pro');
+              localStorage.setItem(storageKey, 'pro');
+              if (stripeStatus.plan) {
+                setProPlan(stripeStatus.plan);
+                localStorage.setItem(planStorageKey, stripeStatus.plan);
               }
             }
           } catch (e) {
@@ -89,8 +123,8 @@ export const useSubscription = () => {
           }
         }
       } else {
-        // Native without RevenueCat configured — fallback to localStorage
-        const saved = localStorage.getItem(STORAGE_KEY);
+        // Native without RevenueCat configured — fallback to per-user localStorage
+        const saved = localStorage.getItem(storageKey);
         if (saved === 'pro') {
           setTier('pro');
         }
@@ -112,7 +146,7 @@ export const useSubscription = () => {
     };
 
     initSubscription();
-  }, []);
+  }, [userId, storageKey, planStorageKey]);
 
   // Get current limits
   const limits = TIER_LIMITS[tier];
@@ -176,13 +210,13 @@ export const useSubscription = () => {
         // Mock purchase for testing
         console.log('[useSubscription] Mock purchase - RevenueCat not configured');
         setTier('pro');
-        localStorage.setItem(STORAGE_KEY, 'pro');
+        localStorage.setItem(storageKey, 'pro');
         return { success: true };
       }
     } finally {
       setIsLoading(false);
     }
-  }, [products]);
+  }, [products, storageKey]);
 
   /**
    * Restore previous purchases
@@ -199,8 +233,8 @@ export const useSubscription = () => {
         }
         return status.isPro;
       } else {
-        // Check localStorage for testing
-        const saved = localStorage.getItem(STORAGE_KEY);
+        // Check per-user localStorage
+        const saved = localStorage.getItem(storageKey);
         if (saved === 'pro') {
           setTier('pro');
           return true;
@@ -210,7 +244,7 @@ export const useSubscription = () => {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [storageKey]);
 
   /**
    * Purchase PRO via Stripe (Web/PWA)
@@ -231,21 +265,23 @@ export const useSubscription = () => {
     if (Capacitor.isNativePlatform() && revenueCatService.isConfigured()) {
       purchasePro();
     } else {
-      // Web: mock upgrade for testing (real flow uses purchaseProWeb via Pricing Modal)
-      console.log('[useSubscription] Mock upgrade to PRO');
+      // Web: upgrade to PRO (real flow uses purchaseProWeb via Pricing Modal)
+      console.log('[useSubscription] Upgrade to PRO');
       setTier('pro');
-      localStorage.setItem(STORAGE_KEY, 'pro');
+      localStorage.setItem(storageKey, 'pro');
     }
-  }, [purchasePro]);
+  }, [purchasePro, storageKey]);
 
   /**
    * Reset to free (for testing only)
    */
   const resetToFree = useCallback(() => {
     setTier('free');
+    setProPlan(null);
     setSubscriptionStatus(null);
-    localStorage.removeItem(STORAGE_KEY);
-  }, []);
+    localStorage.removeItem(storageKey);
+    localStorage.removeItem(planStorageKey);
+  }, [storageKey, planStorageKey]);
 
   /**
    * Link user account for subscription sync

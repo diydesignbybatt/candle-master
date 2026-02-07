@@ -70,7 +70,7 @@ const AppContent: React.FC = () => {
   const { mode, setMode, resolvedTheme } = useTheme();
   const { user, isAuthenticated, isGuest, signOut, linkAccount } = useAuth();
   const orientation = useOrientation();
-  const { isPro, proPlan, upgradeToPro, purchaseProWeb } = useSubscription();
+  const { isPro, proPlan, upgradeToPro, purchaseProWeb } = useSubscription(user?.id ?? null);
   const [stripeLoading, setStripeLoading] = useState(false);
   const [showThankYouModal, setShowThankYouModal] = useState(false);
 
