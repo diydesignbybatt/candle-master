@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
+import { Capacitor } from '@capacitor/core';
 import { revenueCatService, type SubscriptionStatus, type Product } from '../services/revenueCatService';
+import { createCheckoutSession, checkSubscriptionStatus as checkStripeStatus, STRIPE_PRICES } from '../services/stripeService';
 
 // Subscription tiers
 export type SubscriptionTier = 'free' | 'pro';
@@ -54,8 +56,31 @@ export const useSubscription = () => {
         // Load available products
         const availableProducts = await revenueCatService.getProducts();
         setProducts(availableProducts);
+      } else if (!Capacitor.isNativePlatform()) {
+        // Web/PWA: check Stripe subscription status via Cloudflare KV
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved === 'pro') {
+          setTier('pro');
+        }
+
+        // Also verify with server if user is logged in
+        const authData = localStorage.getItem('candle_master_auth');
+        if (authData) {
+          try {
+            const user = JSON.parse(authData);
+            if (user?.id && !user.id.startsWith('guest_')) {
+              const stripeStatus = await checkStripeStatus(user.id);
+              if (stripeStatus.isPro) {
+                setTier('pro');
+                localStorage.setItem(STORAGE_KEY, 'pro');
+              }
+            }
+          } catch (e) {
+            console.warn('Failed to check Stripe status:', e);
+          }
+        }
       } else {
-        // Fallback to localStorage for testing
+        // Native without RevenueCat configured — fallback to localStorage
         const saved = localStorage.getItem(STORAGE_KEY);
         if (saved === 'pro') {
           setTier('pro');
@@ -179,14 +204,25 @@ export const useSubscription = () => {
   }, []);
 
   /**
-   * Mock upgrade for testing (when RevenueCat not configured)
+   * Purchase PRO via Stripe (Web/PWA)
+   * Redirects to Stripe Checkout — user returns to app after payment
+   */
+  const purchaseProWeb = useCallback(async (plan: 'monthly' | 'lifetime', userId: string, email?: string | null) => {
+    const priceId = plan === 'monthly' ? STRIPE_PRICES.MONTHLY : STRIPE_PRICES.LIFETIME;
+    await createCheckoutSession(priceId, userId, email);
+    // User is redirected to Stripe — no code runs after this
+  }, []);
+
+  /**
+   * Upgrade to PRO — platform-aware
+   * Web → opens Pricing Modal (handled in App.tsx)
+   * Native → RevenueCat
    */
   const upgradeToPro = useCallback(() => {
-    if (revenueCatService.isConfigured()) {
-      // If RevenueCat is configured, use purchasePro instead
+    if (Capacitor.isNativePlatform() && revenueCatService.isConfigured()) {
       purchasePro();
     } else {
-      // Mock upgrade for testing
+      // Web: mock upgrade for testing (real flow uses purchaseProWeb via Pricing Modal)
       console.log('[useSubscription] Mock upgrade to PRO');
       setTier('pro');
       localStorage.setItem(STORAGE_KEY, 'pro');
@@ -245,6 +281,7 @@ export const useSubscription = () => {
     products,
     isLoading,
     purchasePro,
+    purchaseProWeb,
     restorePurchases,
 
     // Testing helpers (remove in production)

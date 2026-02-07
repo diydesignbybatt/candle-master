@@ -70,7 +70,40 @@ const AppContent: React.FC = () => {
   const { mode, setMode, resolvedTheme } = useTheme();
   const { user, isAuthenticated, isGuest, signOut, linkAccount } = useAuth();
   const orientation = useOrientation();
-  const { isPro, upgradeToPro, resetToFree } = useSubscription();
+  const { isPro, upgradeToPro, purchaseProWeb, resetToFree } = useSubscription();
+  const [stripeLoading, setStripeLoading] = useState(false);
+  const [stripeMessage, setStripeMessage] = useState<'success' | 'cancel' | null>(null);
+
+  // Handle Stripe return (after checkout redirect)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const stripeResult = params.get('stripe');
+
+    if (stripeResult === 'success') {
+      setStripeMessage('success');
+      // Clean URL params
+      window.history.replaceState({}, '', window.location.pathname);
+      // Verify subscription status
+      if (user?.id && !user.id.startsWith('guest_')) {
+        import('./services/stripeService').then(({ checkSubscriptionStatus }) => {
+          checkSubscriptionStatus(user.id).then((status) => {
+            if (status.isPro) {
+              upgradeToPro();
+            }
+          });
+        });
+      } else {
+        // Fallback: set PRO directly (webhook will have updated KV)
+        upgradeToPro();
+      }
+      // Auto-dismiss message after 5 seconds
+      setTimeout(() => setStripeMessage(null), 5000);
+    } else if (stripeResult === 'cancel') {
+      setStripeMessage('cancel');
+      window.history.replaceState({}, '', window.location.pathname);
+      setTimeout(() => setStripeMessage(null), 4000);
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Onboarding state - check if user has completed the tutorial
   const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(() => {
@@ -743,17 +776,51 @@ const AppContent: React.FC = () => {
                     <li><span className="benefit-icon"><RefreshCw size={18} /></span>Reset Game Data anytime</li>
                   </ul>
                 )}
-                <button
-                  className="upgrade-modal-btn"
-                  onClick={() => {
-                    setShowUpgradeModal(null);
-                    setActiveTab('profile');
-                  }}
-                >
-                  <Star size={18} fill="currentColor" />
-                  <span>Upgrade to PRO</span>
-                </button>
+                <div className="pricing-cards">
+                  <button
+                    className="pricing-card"
+                    disabled={stripeLoading}
+                    onClick={async () => {
+                      if (!user?.id || user.id.startsWith('guest_')) { setShowUpgradeModal(null); setActiveTab('profile'); return; }
+                      setStripeLoading(true);
+                      try { await purchaseProWeb('monthly', user.id, user.email); } catch (e) { console.error('Checkout error:', e); setStripeLoading(false); }
+                    }}
+                  >
+                    <span className="pricing-label">Monthly</span>
+                    <span className="pricing-price">$3.99<span className="pricing-period">/mo</span></span>
+                    <span className="pricing-original">$4.99</span>
+                    <span className="pricing-btn-text">{stripeLoading ? 'Loading...' : 'Subscribe'}</span>
+                  </button>
+                  <button
+                    className="pricing-card pricing-card-best"
+                    disabled={stripeLoading}
+                    onClick={async () => {
+                      if (!user?.id || user.id.startsWith('guest_')) { setShowUpgradeModal(null); setActiveTab('profile'); return; }
+                      setStripeLoading(true);
+                      try { await purchaseProWeb('lifetime', user.id, user.email); } catch (e) { console.error('Checkout error:', e); setStripeLoading(false); }
+                    }}
+                  >
+                    <span className="pricing-best-badge">BEST VALUE</span>
+                    <span className="pricing-label">Lifetime</span>
+                    <span className="pricing-price">$29.99</span>
+                    <span className="pricing-original">$39.99</span>
+                    <span className="pricing-btn-text">{stripeLoading ? 'Loading...' : 'Get Lifetime'}</span>
+                  </button>
+                </div>
               </motion.div>
+            </motion.div>
+          )}
+
+          {/* Stripe Return Message */}
+          {stripeMessage && (
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className={`stripe-message ${stripeMessage}`}
+              onClick={() => setStripeMessage(null)}
+            >
+              {stripeMessage === 'success' ? 'Welcome to PRO! All features unlocked.' : 'Payment cancelled. You can try again anytime.'}
             </motion.div>
           )}
         </AnimatePresence>
@@ -1574,16 +1641,20 @@ const AppContent: React.FC = () => {
                   </div>
                 </button>
 
-                {/* PRO Subscription Toggle (Testing) */}
+                {/* PRO Subscription */}
                 <button
                   className={`profile-action-btn pro-toggle ${isPro ? 'is-pro' : ''}`}
-                  onClick={() => isPro ? resetToFree() : upgradeToPro()}
+                  onClick={() => isPro ? null : setShowUpgradeModal('general')}
                 >
                   <Star size={20} fill={isPro ? 'currentColor' : 'none'} />
                   <span>{isPro ? 'PRO Member' : 'Upgrade to PRO'}</span>
-                  <div className={`toggle-switch ${isPro ? 'active pro' : ''}`}>
-                    <div className="toggle-knob"></div>
-                  </div>
+                  {isPro ? (
+                    <span className="pro-badge-label">ACTIVE</span>
+                  ) : (
+                    <div className={`toggle-switch`}>
+                      <div className="toggle-knob"></div>
+                    </div>
+                  )}
                 </button>
 
                 <div className="theme-selector">
@@ -1889,16 +1960,37 @@ const AppContent: React.FC = () => {
                     <li><span className="benefit-icon"><RefreshCw size={18} /></span>Reset Game Data anytime</li>
                   </ul>
                 )}
-                <button
-                  className="upgrade-modal-btn"
-                  onClick={() => {
-                    setShowUpgradeModal(null);
-                    setActiveTab('profile');
-                  }}
-                >
-                  <Star size={18} fill="currentColor" />
-                  <span>Upgrade to PRO</span>
-                </button>
+                <div className="pricing-cards">
+                  <button
+                    className="pricing-card"
+                    disabled={stripeLoading}
+                    onClick={async () => {
+                      if (!user?.id || user.id.startsWith('guest_')) { setShowUpgradeModal(null); setActiveTab('profile'); return; }
+                      setStripeLoading(true);
+                      try { await purchaseProWeb('monthly', user.id, user.email); } catch (e) { console.error('Checkout error:', e); setStripeLoading(false); }
+                    }}
+                  >
+                    <span className="pricing-label">Monthly</span>
+                    <span className="pricing-price">$3.99<span className="pricing-period">/mo</span></span>
+                    <span className="pricing-original">$4.99</span>
+                    <span className="pricing-btn-text">{stripeLoading ? 'Loading...' : 'Subscribe'}</span>
+                  </button>
+                  <button
+                    className="pricing-card pricing-card-best"
+                    disabled={stripeLoading}
+                    onClick={async () => {
+                      if (!user?.id || user.id.startsWith('guest_')) { setShowUpgradeModal(null); setActiveTab('profile'); return; }
+                      setStripeLoading(true);
+                      try { await purchaseProWeb('lifetime', user.id, user.email); } catch (e) { console.error('Checkout error:', e); setStripeLoading(false); }
+                    }}
+                  >
+                    <span className="pricing-best-badge">BEST VALUE</span>
+                    <span className="pricing-label">Lifetime</span>
+                    <span className="pricing-price">$29.99</span>
+                    <span className="pricing-original">$39.99</span>
+                    <span className="pricing-btn-text">{stripeLoading ? 'Loading...' : 'Get Lifetime'}</span>
+                  </button>
+                </div>
               </motion.div>
             </motion.div>
           )}

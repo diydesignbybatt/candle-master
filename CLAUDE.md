@@ -40,8 +40,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - [x] **Tutorial Screenshots**: Updated 9 high-quality tutorial images (shared with landing page)
 - [x] **Touch Swipe Fix**: `touch-action: pan-x` prevents vertical scroll during horizontal swipe
 - [ ] **Apple Sign-In**: Required by Apple (if Google Sign-In exists)
-- [ ] **Subscription System**: RevenueCat scaffold ready, needs API keys
-- [ ] **Stripe (PWA)**: Payment integration for web users — next priority
+- [x] **Stripe (PWA)**: Checkout Sessions for Monthly ($3.99) + Lifetime ($29.99) via Cloudflare Workers
+- [ ] **Subscription System**: RevenueCat scaffold ready, needs API keys (native)
+- [ ] **Stripe Webhook**: Set up webhook endpoint in Stripe Dashboard → `https://app.candlemaster.app/api/stripe/webhook`
+- [ ] **Cloudflare KV**: Create SUBSCRIPTIONS namespace + set env vars in Cloudflare Dashboard
 - [ ] **iOS Testing**: Requires Mac + Xcode
 
 ## PRO Features
@@ -86,7 +88,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **แยกช่องทางตาม Platform:**
 | Platform | Payment Provider | หมายเหตุ |
 |----------|-----------------|----------|
-| **PWA (Web)** | **Stripe** | ยังไม่มีโค้ด Stripe ใน app เลย - ต้องสร้างใหม่ |
+| **PWA (Web)** | **Stripe** | ✅ Checkout Session พร้อม (Monthly $3.99 + Lifetime $29.99) |
 | **Android** | **RevenueCat** → Google Play Billing | Scaffold พร้อม รอ API keys |
 | **iOS** | **RevenueCat** → Apple IAP | Scaffold พร้อม รอ API keys + Mac/Xcode |
 
@@ -96,15 +98,44 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Native apps ต้องใช้ RevenueCat (ข้อบังคับ Apple/Google)
 - ใช้ `Capacitor.isNativePlatform()` แยก flow ระหว่าง Web vs Native
 - Landing page มี pricing cards ทั้ง Monthly + Lifetime แล้ว → App ต้องมีให้ตรงกัน
-- **Lifetime option**: มีใน Landing Page แล้ว แต่ยังไม่ได้ทำใน App → ต้องเพิ่มเมื่อพร้อม
+- **Lifetime option**: ✅ Pricing Modal มีทั้ง Monthly + Lifetime แล้ว
+
+**Stripe Implementation (PWA):**
+- `functions/api/stripe/checkout.ts` — สร้าง Checkout Session (REST API, no SDK)
+- `functions/api/stripe/webhook.ts` — รับ Stripe events, อัปเดต KV
+- `functions/api/stripe/status.ts` — ตรวจสถานะ subscription จาก KV
+- `src/services/stripeService.ts` — Frontend API calls
+- Pricing Modal: 2 cards (Monthly $3.99 + Lifetime $29.99) ใน App.tsx
+- Return handler: `?stripe=success` → verify + activate PRO
+
+**Stripe Environment Variables (ตั้งใน Cloudflare Dashboard):**
+```
+STRIPE_SECRET_KEY = sk_test_... (or sk_live_... for production)
+STRIPE_WEBHOOK_SECRET = whsec_...
+STRIPE_PRO_MONTHLY_PRICE_ID = price_1Sy1nW16LYJ3RyorkLS7LxMG
+STRIPE_PRO_LIFETIME_PRICE_ID = price_1Sy1oM16LYJ3Ryorh9we4HXg
+```
 
 **TODO เมื่อพร้อมเปิด:**
-- [ ] สร้าง Stripe products/prices + Checkout Session (สำหรับ PWA)
+- [x] สร้าง Stripe products/prices + Checkout Session (สำหรับ PWA)
+- [x] สร้าง Pricing Modal แสดง Monthly + Lifetime พร้อมปุ่มซื้อ
+- [x] เปลี่ยนปุ่ม Profile จาก toggle mock → เปิด Pricing Modal จริง
+- [x] ตรวจ platform แล้ว route ไป Stripe หรือ RevenueCat ตาม platform
+- [ ] ตั้ง env vars ใน Cloudflare Dashboard (STRIPE_SECRET_KEY, etc.)
+- [ ] สร้าง KV namespace "SUBSCRIPTIONS" ใน Cloudflare Dashboard
+- [ ] ตั้ง Stripe Webhook → `https://app.candlemaster.app/api/stripe/webhook`
 - [ ] ใส่ RevenueCat API keys (สำหรับ Native)
-- [ ] เปลี่ยนปุ่ม Profile จาก toggle mock → เปิด Pricing Modal จริง
-- [ ] สร้าง Pricing Modal แสดง Monthly + Lifetime พร้อมปุ่มซื้อ
-- [ ] ตรวจ platform แล้ว route ไป Stripe หรือ RevenueCat ตาม platform
 - [ ] Sync subscription status ข้าม platform ผ่าน Firebase user ID
+
+### Subscription Roadmap (Phased)
+
+| Phase | Feature | Status |
+|-------|---------|--------|
+| **1** | Stripe Checkout (PWA) — ซื้อ PRO ได้ | ✅ Done (code) / ⬜ Deploy |
+| 2 | Cancellation (App) — anchor text ยกเลิกในหน้า Profile + retention modal ลดราคา | ⬜ |
+| 3 | Landing Page Profile — Login/Profile บน landing page ดูสถานะ + ยกเลิก | ⬜ |
+| 4 | Lemon Squeezy Affiliate — referral/affiliate system | ⬜ |
+| 5 | RevenueCat Native — iOS/Android payment | ⬜ |
 
 ### Referral / Affiliate Program (แผนอนาคต)
 

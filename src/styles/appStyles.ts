@@ -2017,6 +2017,135 @@ export const MODAL_STYLES = `
     color: #1a1a1a;
     box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3);
   }
+
+  /* Pricing Cards */
+  .pricing-cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 16px;
+    width: 100%;
+  }
+
+  .pricing-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 16px 10px;
+    border-radius: 14px;
+    border: 2px solid var(--color-border, rgba(128,128,128,0.2));
+    background: var(--bg-secondary, #f5f5f5);
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+  }
+
+  .pricing-card:hover {
+    border-color: #C5A059;
+    transform: translateY(-2px);
+  }
+
+  .pricing-card:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .pricing-card-best {
+    border-color: #C5A059;
+    background: linear-gradient(180deg, rgba(197,160,89,0.08) 0%, transparent 100%);
+  }
+
+  .pricing-best-badge {
+    position: absolute;
+    top: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, #C5A059, #E6C775);
+    color: #fff;
+    font-size: 0.55rem;
+    font-weight: 800;
+    padding: 2px 10px;
+    border-radius: 20px;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+  }
+
+  .pricing-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--color-text-secondary, #888);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .pricing-price {
+    font-size: 1.4rem;
+    font-weight: 900;
+    color: var(--color-text, #333);
+  }
+
+  .pricing-period {
+    font-size: 0.7rem;
+    font-weight: 500;
+    color: var(--color-text-secondary, #888);
+  }
+
+  .pricing-original {
+    font-size: 0.7rem;
+    color: var(--color-text-secondary, #888);
+    text-decoration: line-through;
+  }
+
+  .pricing-btn-text {
+    margin-top: 6px;
+    font-size: 0.72rem;
+    font-weight: 800;
+    color: #C5A059;
+    padding: 6px 0;
+    width: 100%;
+    text-align: center;
+    border-top: 1px solid var(--color-border, rgba(128,128,128,0.15));
+  }
+
+  .pro-badge-label {
+    font-size: 0.6rem;
+    font-weight: 800;
+    color: #C5A059;
+    background: rgba(197,160,89,0.15);
+    padding: 3px 10px;
+    border-radius: 20px;
+    letter-spacing: 0.05em;
+  }
+
+  /* Stripe Return Message */
+  .stripe-message {
+    position: fixed;
+    top: 60px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10001;
+    padding: 12px 24px;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    max-width: 90%;
+    text-align: center;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+  }
+
+  .stripe-message.success {
+    background: linear-gradient(135deg, #C5A059, #E6C775);
+    color: #fff;
+  }
+
+  .stripe-message.cancel {
+    background: var(--bg-secondary, #f5f5f5);
+    color: var(--color-text, #333);
+    border: 1px solid var(--color-border, rgba(128,128,128,0.2));
+  }
 `;
 
 // Tablet Landscape Layout Styles
