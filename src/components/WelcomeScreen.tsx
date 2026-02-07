@@ -177,10 +177,11 @@ const WELCOME_STYLES = `
   .welcome-title {
     font-size: 2rem;
     font-weight: 800;
-    color: var(--color-text);
+    color: #C5A059;
     margin: 0 0 8px 0;
     font-family: 'Geist', 'Inter', -apple-system, sans-serif;
     letter-spacing: -0.03em;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
   }
 
   .welcome-subtitle {
