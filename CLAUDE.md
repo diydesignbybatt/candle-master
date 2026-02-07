@@ -95,6 +95,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Hook**: `src/hooks/useSubscription.ts`
 - **Status**: Scaffold ready, needs API keys from RevenueCat dashboard
 
+### Per-User Subscription Scoping
+- **localStorage keys scoped by userId**: `candle_master_subscription_${userId}`, `candle_master_plan_${userId}`
+- **เหตุผล**: ป้องกัน PRO status leak ข้าม Google accounts บนเครื่องเดียวกัน
+- **Migration**: เมื่อ user login → ย้าย key เก่า (un-scoped) ไปเป็น per-user key อัตโนมัติ แล้วลบ key เก่าทิ้ง
+- **useEffect re-run**: เมื่อ userId เปลี่ยน (sign-in/sign-out) → reset state เป็น free → ตรวจ subscription ใหม่
+- **Hook call**: `useSubscription(user?.id ?? null)` ใน App.tsx
+
 ### Subscription Strategy (Multi-Platform)
 
 **สถานะ**: ยังไม่เปิดใช้งาน - รอทดสอบก่อน แต่โค้ดต้องพร้อมเปิดได้ทุกเมื่อ
@@ -326,10 +333,17 @@ npx cap sync ios         # Sync iOS only
 ### Cloudflare Pages Commands
 ```bash
 npm run pages:dev      # Local dev with Wrangler
-npm run pages:deploy   # Build and deploy to Cloudflare
+npm run build && npx wrangler pages deploy dist --project-name=candle-master   # Build + Deploy to Cloudflare
 ```
 
+**Wrangler Project Names** (ตรวจด้วย `npx wrangler pages project list`):
+| Project Name | Domain | ใช้สำหรับ |
+|-------------|--------|----------|
+| `candle-master` | app.candlemaster.app | React PWA App |
+| `candle-master-landing` | candlemaster.app | Astro Landing Page |
+
 **Note**: ไม่ใช้ Vercel แล้ว — ใช้ Cloudflare Pages เท่านั้น (unlimited bandwidth, Workers edge functions)
+**Note**: ต้อง `npx wrangler login` ครั้งแรก (เปิด browser กด Allow) — login ครั้งเดียวพอ
 
 ### Important URLs & Deployment Notes
 - **App URL**: `https://app.candlemaster.app` (React PWA) — Stripe redirect ต้องชี้ที่นี่
