@@ -49,8 +49,8 @@ export const WelcomeScreen: React.FC = () => {
       >
         {/* Logo/Title */}
         <div className="welcome-header">
-          <div className="welcome-logo">🕯️</div>
-          <h1 className="welcome-title">Candle Master</h1>
+          <img src="/uncle-mascot.webp" alt="Candle Master" className="welcome-logo" />
+          <h1 className="welcome-title">CANDLE MASTER</h1>
           <p className="welcome-subtitle">Master the Art of Trading</p>
         </div>
 
@@ -165,9 +165,13 @@ const WELCOME_STYLES = `
   }
 
   .welcome-logo {
-    font-size: 4rem;
-    margin-bottom: 16px;
-    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1));
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin: 0 auto 16px auto;
+    display: block;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
   }
 
   .welcome-title {
@@ -175,8 +179,8 @@ const WELCOME_STYLES = `
     font-weight: 800;
     color: var(--color-text);
     margin: 0 0 8px 0;
-    font-family: 'Cormorant Garamond', serif;
-    letter-spacing: -0.02em;
+    font-family: 'Geist', 'Inter', -apple-system, sans-serif;
+    letter-spacing: -0.03em;
   }
 
   .welcome-subtitle {
