@@ -382,6 +382,11 @@ export const UI_STYLES = `
   [data-theme="dark"] .zoom-btn-mini:active { background: rgba(80, 80, 80, 0.95); }
   .zoom-btn-mini:disabled { opacity: 0.4; cursor: not-allowed; }
 
+  /* Music toggle on chart */
+  .music-toggle-mini { margin-top: 4px; color: var(--color-text-secondary); opacity: 0.6; }
+  .music-toggle-mini.music-on { color: #C5A059; opacity: 1; }
+  [data-theme="dark"] .music-toggle-mini.music-on { color: #FFD700; }
+
   /* Info Button - Floating */
   .info-btn-floating {
     position: absolute;

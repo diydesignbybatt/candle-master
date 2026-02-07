@@ -1061,6 +1061,24 @@ const AppContent: React.FC = () => {
                     >
                       <ZoomOut size={14} />
                     </button>
+                    <button
+                      className={`zoom-btn-mini music-toggle-mini ${musicEnabled ? 'music-on' : ''}`}
+                      onClick={() => {
+                        const newState = !musicEnabled;
+                        setMusicEnabled(newState);
+                        soundService.setMusicEnabled(newState);
+                        if (newState && stock) {
+                          if ('event' in stock && stock.event) {
+                            soundService.playMusic('bgm-event');
+                          } else {
+                            soundService.playMusic('bgm-normal');
+                          }
+                        }
+                      }}
+                      title={musicEnabled ? 'Music On' : 'Music Off'}
+                    >
+                      {musicEnabled ? <Music size={14} /> : <Music2 size={14} />}
+                    </button>
                   </div>
                   <div className="info-btn-floating">
                     <button
