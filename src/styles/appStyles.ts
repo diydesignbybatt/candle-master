@@ -834,12 +834,14 @@ export const UI_STYLES = `
   }
 
   .pro-status-badge svg {
-    color: #C5A059;
+    color: #C5A059 !important;
+    fill: #C5A059 !important;
   }
 
   /* Theme-specific PRO badge styling */
   [data-theme="dark"] .pro-status-badge svg {
-    color: #FFD700;
+    color: #FFD700 !important;
+    fill: #FFD700 !important;
   }
 `;
 
