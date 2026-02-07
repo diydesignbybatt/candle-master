@@ -75,51 +75,64 @@ const AppContent: React.FC = () => {
   const [showThankYouModal, setShowThankYouModal] = useState(false);
   const [stripeMessage, setStripeMessage] = useState<'cancel' | null>(null);
 
-  // Handle Stripe return (after checkout redirect)
+  // Detect Stripe return from URL on first mount (before URL is cleaned)
+  const [pendingStripeSuccess, setPendingStripeSuccess] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    const result = params.get('stripe');
+    if (result === 'success') {
+      window.history.replaceState({}, '', window.location.pathname);
+      return true;
+    }
+    if (result === 'cancel') {
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+    return false;
+  });
+
+  // Show cancel message on mount if needed
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const stripeResult = params.get('stripe');
-
-    if (stripeResult === 'success') {
-      // Clean URL params immediately
-      window.history.replaceState({}, '', window.location.pathname);
-
-      // Retry logic: webhook may not have fired yet when user returns
-      const verifyWithRetry = async (attempt: number = 0): Promise<void> => {
-        const maxRetries = 5;
-        const retryDelay = 2000; // 2 seconds
-
-        try {
-          if (user?.id && !user.id.startsWith('guest_')) {
-            const { checkSubscriptionStatus } = await import('./services/stripeService');
-            const status = await checkSubscriptionStatus(user.id);
-            if (status.isPro) {
-              upgradeToPro();
-              setShowThankYouModal(true);
-              return;
-            }
-          }
-        } catch (err) {
-          console.warn('Subscription check attempt failed:', err);
-        }
-
-        // Retry if not yet PRO and attempts remaining
-        if (attempt < maxRetries) {
-          setTimeout(() => verifyWithRetry(attempt + 1), retryDelay);
-        } else {
-          // After all retries, upgrade anyway (payment was confirmed by Stripe redirect)
-          upgradeToPro();
-          setShowThankYouModal(true);
-        }
-      };
-
-      verifyWithRetry();
-    } else if (stripeResult === 'cancel') {
+    if (params.get('stripe') === 'cancel') {
       setStripeMessage('cancel');
-      window.history.replaceState({}, '', window.location.pathname);
       setTimeout(() => setStripeMessage(null), 4000);
     }
-  }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Handle Stripe success: wait for user to be ready, then verify & upgrade
+  useEffect(() => {
+    if (!pendingStripeSuccess) return;
+    if (!user?.id || user.id.startsWith('guest_')) return;
+
+    // User is ready — verify subscription with retry
+    const verifyWithRetry = async (attempt: number = 0): Promise<void> => {
+      const maxRetries = 5;
+      const retryDelay = 2000;
+
+      try {
+        const { checkSubscriptionStatus } = await import('./services/stripeService');
+        const status = await checkSubscriptionStatus(user.id);
+        if (status.isPro) {
+          upgradeToPro();
+          setShowThankYouModal(true);
+          setPendingStripeSuccess(false);
+          return;
+        }
+      } catch (err) {
+        console.warn('Subscription check attempt failed:', err);
+      }
+
+      if (attempt < maxRetries) {
+        setTimeout(() => verifyWithRetry(attempt + 1), retryDelay);
+      } else {
+        // After all retries, upgrade anyway (payment confirmed by Stripe redirect)
+        upgradeToPro();
+        setShowThankYouModal(true);
+        setPendingStripeSuccess(false);
+      }
+    };
+
+    verifyWithRetry();
+  }, [pendingStripeSuccess, user]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Onboarding state - check if user has completed the tutorial
   const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(() => {
