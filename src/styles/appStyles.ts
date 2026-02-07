@@ -2136,15 +2136,99 @@ export const MODAL_STYLES = `
     box-shadow: 0 4px 20px rgba(0,0,0,0.2);
   }
 
-  .stripe-message.success {
-    background: linear-gradient(135deg, #C5A059, #E6C775);
-    color: #fff;
-  }
-
   .stripe-message.cancel {
     background: var(--bg-secondary, #f5f5f5);
     color: var(--color-text, #333);
     border: 1px solid var(--color-border, rgba(128,128,128,0.2));
+  }
+
+  /* Thank You Modal */
+  .thankyou-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 10002;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+
+  .thankyou-modal {
+    background: var(--bg-primary, #fff);
+    border-radius: 24px;
+    padding: 40px 32px;
+    max-width: 360px;
+    width: 100%;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .thankyou-sparkles {
+    font-size: 2.5rem;
+    margin-bottom: 8px;
+    animation: sparkle-pulse 1.5s ease-in-out infinite;
+  }
+
+  @keyframes sparkle-pulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.2); opacity: 0.8; }
+  }
+
+  .thankyou-mascot {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin: 0 auto 16px auto;
+    display: block;
+    box-shadow: 0 4px 16px rgba(197,160,89,0.3);
+    border: 3px solid #C5A059;
+  }
+
+  .thankyou-title {
+    font-family: 'Geist', 'Inter', -apple-system, sans-serif;
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: var(--color-text, #333);
+    margin: 0 0 4px 0;
+    letter-spacing: -0.03em;
+  }
+
+  .thankyou-subtitle {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #C5A059;
+    margin: 0 0 12px 0;
+  }
+
+  .thankyou-desc {
+    font-size: 0.9rem;
+    color: var(--color-text-secondary, #666);
+    margin: 0 0 24px 0;
+    line-height: 1.5;
+  }
+
+  .thankyou-btn {
+    width: 100%;
+    padding: 14px 24px;
+    border: none;
+    border-radius: 14px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    background: linear-gradient(135deg, #C5A059, #E6C775);
+    color: #fff;
+    box-shadow: 0 4px 16px rgba(197,160,89,0.4);
+    transition: all 0.2s;
+  }
+
+  .thankyou-btn:active {
+    transform: scale(0.97);
   }
 `;
 

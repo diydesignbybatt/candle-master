@@ -72,7 +72,8 @@ const AppContent: React.FC = () => {
   const orientation = useOrientation();
   const { isPro, upgradeToPro, purchaseProWeb } = useSubscription();
   const [stripeLoading, setStripeLoading] = useState(false);
-  const [stripeMessage, setStripeMessage] = useState<'success' | 'cancel' | null>(null);
+  const [showThankYouModal, setShowThankYouModal] = useState(false);
+  const [stripeMessage, setStripeMessage] = useState<'cancel' | null>(null);
 
   // Handle Stripe return (after checkout redirect)
   useEffect(() => {
@@ -80,30 +81,45 @@ const AppContent: React.FC = () => {
     const stripeResult = params.get('stripe');
 
     if (stripeResult === 'success') {
-      setStripeMessage('success');
-      // Clean URL params
+      // Clean URL params immediately
       window.history.replaceState({}, '', window.location.pathname);
-      // Verify subscription status
-      if (user?.id && !user.id.startsWith('guest_')) {
-        import('./services/stripeService').then(({ checkSubscriptionStatus }) => {
-          checkSubscriptionStatus(user.id).then((status) => {
+
+      // Retry logic: webhook may not have fired yet when user returns
+      const verifyWithRetry = async (attempt: number = 0): Promise<void> => {
+        const maxRetries = 5;
+        const retryDelay = 2000; // 2 seconds
+
+        try {
+          if (user?.id && !user.id.startsWith('guest_')) {
+            const { checkSubscriptionStatus } = await import('./services/stripeService');
+            const status = await checkSubscriptionStatus(user.id);
             if (status.isPro) {
               upgradeToPro();
+              setShowThankYouModal(true);
+              return;
             }
-          });
-        });
-      } else {
-        // Fallback: set PRO directly (webhook will have updated KV)
-        upgradeToPro();
-      }
-      // Auto-dismiss message after 5 seconds
-      setTimeout(() => setStripeMessage(null), 5000);
+          }
+        } catch (err) {
+          console.warn('Subscription check attempt failed:', err);
+        }
+
+        // Retry if not yet PRO and attempts remaining
+        if (attempt < maxRetries) {
+          setTimeout(() => verifyWithRetry(attempt + 1), retryDelay);
+        } else {
+          // After all retries, upgrade anyway (payment was confirmed by Stripe redirect)
+          upgradeToPro();
+          setShowThankYouModal(true);
+        }
+      };
+
+      verifyWithRetry();
     } else if (stripeResult === 'cancel') {
       setStripeMessage('cancel');
       window.history.replaceState({}, '', window.location.pathname);
       setTimeout(() => setStripeMessage(null), 4000);
     }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Onboarding state - check if user has completed the tutorial
   const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(() => {
@@ -811,16 +827,41 @@ const AppContent: React.FC = () => {
             </motion.div>
           )}
 
-          {/* Stripe Return Message */}
-          {stripeMessage && (
+          {/* Stripe Cancel Message */}
+          {stripeMessage === 'cancel' && (
             <motion.div
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              className={`stripe-message ${stripeMessage}`}
+              className="stripe-message cancel"
               onClick={() => setStripeMessage(null)}
             >
-              {stripeMessage === 'success' ? 'Welcome to PRO! All features unlocked.' : 'Payment cancelled. You can try again anytime.'}
+              Payment cancelled. You can try again anytime.
+            </motion.div>
+          )}
+
+          {/* Thank You Modal */}
+          {showThankYouModal && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="thankyou-overlay"
+            >
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8, y: 30 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                transition={{ type: 'spring', damping: 20, stiffness: 300, delay: 0.1 }}
+                className="thankyou-modal"
+              >
+                <div className="thankyou-sparkles">&#10024;</div>
+                <img src="/uncle-mascot.webp" alt="Thank you" className="thankyou-mascot" />
+                <h2 className="thankyou-title">Thank You!</h2>
+                <p className="thankyou-subtitle">Welcome to PRO</p>
+                <p className="thankyou-desc">All premium features are now unlocked. Enjoy your trading journey!</p>
+                <button className="thankyou-btn" onClick={() => setShowThankYouModal(false)}>
+                  Start Exploring PRO
+                </button>
+              </motion.div>
             </motion.div>
           )}
         </AnimatePresence>
