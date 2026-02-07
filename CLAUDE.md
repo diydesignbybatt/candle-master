@@ -21,7 +21,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - [x] Core Trading Engine (Blind historical trading)
 - [x] Basic Mobile/Desktop UI
-- [x] Pattern Academy with tabs (Candlestick + Chart Patterns + Risk Management)
+- [x] Pattern Academy with tabs (Candlestick + Chart Patterns + Money & Mind)
 - [x] Chart Patterns with theme-aware images (`public/patterns/`)
 - [x] **Authentication**: Google Sign-In (Firebase) - working on Android
 - [x] **Safe Area**: Android/iOS notch/camera cutout support
@@ -151,10 +151,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
     - **Fallback**: Generates mock geometric brownian motion data if API fails.
 
 ### Application Structure
-- **Core Logic (`App.tsx`)**: ~1,900 lines. Contains gameplay, tab navigation, Pattern Academy, Game Over, crisis banner, Tablet layout.
+- **Core Logic (`App.tsx`)**: ~1,900 lines. Contains gameplay, tab navigation, Pattern Academy (incl. Money & Mind with Lucide icons), Game Over, crisis banner, Tablet layout.
 - **Styles (`src/styles/appStyles.ts`)**: ~2,200 lines. Centralized CSS constants including TABLET_STYLES.
 - **Constants (`src/constants/`)**:
     - `patterns.tsx`: `ACADEMY_PATTERNS` (20 candlestick) + `CHART_PATTERNS` (image-based)
+    - `guides.ts`: Money & Mind academy — 9 categories, 30 guide cards with Lucide icons (gold `#D4A017`)
     - `characters.ts`: 13 character tiers (39 images) + 6 boss variants for Game Over judge (random variant per tier based on P&L + trades)
 - **Services**:
     - `soundService.ts`: Sound effects + multi-track BGM system (2 normal + 2 boss tracks, fade out, autoplay unlock, pause/resume)
@@ -178,6 +179,25 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Size: 600 x 360 px
 - Tap-to-expand: Each pattern has detailed usage info (When to use, Confirmation, Target)
 - **14 patterns**: double-top, double-bottom, head-shoulders, invert-head-shoulders, diamond-top, diamond-bottom, round-top, round-bottom, ascending-triangle, descending-triangle, bull-flag, bear-flag, rising-wedge, cup-handle
+
+### Money & Mind Academy (`src/constants/guides.ts`)
+- **Tab label**: "Money & Mind" (Academy tab → 3rd sub-tab)
+- **9 categories** displayed in 3-column grid, each drills into a carousel of guide cards
+- **30 total cards** with content fields: `bullets`, `keyPoint`, `proTips`, `dosDonts`, `warnings`, `examples`
+- **Icons**: Lucide React components (gold color `#D4A017`), mapped via `GUIDE_ICONS` in App.tsx
+- **Data-driven**: `RISK_CATEGORIES` registry + `RISK_GUIDE_MAP` lookup — add new categories by adding array + registry entry
+
+| # | Category Key | Cards | Description |
+|---|-------------|-------|-------------|
+| 1 | `sizing` | 5 | Position Sizing — risk per trade, stop loss, R:R, diversification, leverage |
+| 2 | `stoploss` | 4 | Stop Loss Strategy — why, types, placement, common mistakes |
+| 3 | `riskReward` | 3 | Risk-Reward Ratio — understanding R:R, finding setups, expectancy |
+| 4 | `drawdown` | 3 | Drawdown Management — recovery math, losing streaks, circuit breakers |
+| 5 | `diversification` | 2 | Diversification — spreading risk, portfolio heat |
+| 6 | `psychology` | 4 | Trading Psychology — fear/greed, discipline, losses, mindfulness |
+| 7 | `preservation` | 2 | Capital Preservation — survival first, practical rules |
+| 8 | `tradingPlan` | 3 | Trading Plan — why, components, daily routine/system |
+| 9 | `scaling` | 4 | Scale In/Out — what/why, when, pullbacks, critical rules |
 
 ## Important: Working Directory
 
