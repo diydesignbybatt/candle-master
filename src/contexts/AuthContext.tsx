@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { Capacitor } from '@capacitor/core';
+import { signInWithPopup, signOut as firebaseSignOut } from 'firebase/auth';
+import { auth, googleProvider } from '../config/firebase';
 
 // User type
 export interface User {
@@ -85,13 +87,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           provider: 'google',
         });
       } else {
-        // Web fallback - mock for development
-        console.log('Google Sign-In not available on web. Using mock.');
+        // Web — Firebase Google Sign-In with account selector
+        const result = await signInWithPopup(auth, googleProvider);
         setUser({
-          id: 'google_mock_' + Date.now(),
-          email: 'demo@gmail.com',
-          displayName: 'Demo User',
-          photoUrl: null,
+          id: result.user.uid,
+          email: result.user.email || null,
+          displayName: result.user.displayName || null,
+          photoUrl: result.user.photoURL || null,
           provider: 'google',
         });
       }
@@ -163,9 +165,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signOut = useCallback(async () => {
     try {
-      if (user?.provider === 'google' && Capacitor.isNativePlatform()) {
-        const { GoogleAuth } = await import('@southdevs/capacitor-google-auth');
-        await GoogleAuth.signOut();
+      if (user?.provider === 'google') {
+        if (Capacitor.isNativePlatform()) {
+          const { GoogleAuth } = await import('@southdevs/capacitor-google-auth');
+          await GoogleAuth.signOut();
+        } else {
+          await firebaseSignOut(auth);
+        }
       }
     } catch (error) {
       console.error('Sign out error:', error);
