@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Candle Master v2.2.0** is a **Trading Simulator Game & Education Platform**.
+**Candle Master v2.3.0** is a **Trading Simulator Game & Education Platform**.
 - **Core Concept**: Users practice trading on historical data without knowing the stock beforehand (Blind Trading).
 - **Gameplay**:
     - Users see candlesticks, MA indicators (20/50), and Volume.
@@ -50,8 +50,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - [x] **Welcome Screen**: Uncle teaching mascot (circular) + Geist font + gold "CANDLE MASTER" title
 - [x] **Landing Page Payment Links**: Stripe Payment Links on landing page (Monthly + Lifetime)
 - [x] **Favicon**: Uncle mascot favicon for both App and Landing Page
+- [x] **Web Audio API**: BGM volume control via GainNode (dB-based), SFX 0dB / BGM -6dB
+- [x] **Music Default On**: BGM enabled by default for new users, autoplay unlock on first interaction
+- [x] **Music Toggle on Chart**: Small 28x28 button below zoom controls on trade screen
+- [x] **PRO Badge Fix**: Lifetime badge aligned right, ∞ icon golden, Star icon forced gold on Sandstone
+- [x] **Test PRO Toggle**: Dashed "Activate Test PRO / FOR TEST" button on Profile for testers
+- [x] **OG Image Updated**: Uncle mascot teaching trade image for social sharing (landing page)
 - [ ] **Subscription System**: RevenueCat scaffold ready, needs API keys (native)
 - [ ] **iOS Testing**: Requires Mac + Xcode
+- [ ] **Stripe Live Mode**: Switch test → live keys when ready to launch
 
 ## PRO Features
 
@@ -218,7 +225,7 @@ STRIPE_PRO_LIFETIME_PRICE_ID = price_1Sy1oM16LYJ3Ryorh9we4HXg
     - `guides.ts`: Money & Mind academy — 9 categories, 30 guide cards with Lucide icons (gold `#D4A017`)
     - `characters.ts`: 13 character tiers (39 images) + 6 boss variants for Game Over judge (random variant per tier based on P&L + trades)
 - **Services**:
-    - `soundService.ts`: Sound effects + multi-track BGM system (2 normal + 2 boss tracks, fade out, autoplay unlock, pause/resume)
+    - `soundService.ts`: Sound effects + multi-track BGM system (Web Audio API GainNode, dB-based volume, 2 normal + 2 boss tracks, fade out via linearRamp, autoplay unlock, pause/resume)
 - **Utils**:
     - `data.ts`: Stock data fetching, event mode logic, CSV parsing
     - `historicalEvents.ts`: 5 historical crisis events (Dot-Com, 2008, COVID, Oil, China)
@@ -231,7 +238,7 @@ STRIPE_PRO_LIFETIME_PRICE_ID = price_1Sy1oM16LYJ3Ryorh9we4HXg
     - `useSubscription.ts`: PRO subscription state (`candle_master_subscription` key in localStorage).
     - **localStorage keys**: `candle_master_onboarding_complete`, `candle_master_history`, `candle_master_subscription`, `candle_master_games_today`, `candle_master_games_date`, `candle_master_games_played` (upgrade prompt counter)
 - **Theme**: `ThemeContext` - Sandstone (default), Midnight, Solarized.
-- **Audio**: `public/sounds/` — bgm-1.mp3, bgm-3.mp3 (normal), boss-1/2.mp3 (event), volume 0.15 (15%)
+- **Audio**: `public/sounds/` — bgm-1.mp3, bgm-3.mp3 (normal), boss-1/2.mp3 (event), BGM -6dB / SFX 0dB (Web Audio API)
 
 ### Chart Pattern Images
 - Location: `public/patterns/`
