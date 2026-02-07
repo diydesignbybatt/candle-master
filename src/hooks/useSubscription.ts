@@ -27,6 +27,7 @@ export const TIER_LIMITS = {
 } as const;
 
 const STORAGE_KEY = 'candle_master_subscription';
+const PLAN_STORAGE_KEY = 'candle_master_plan';
 const GAMES_TODAY_KEY = 'candle_master_games_today';
 const GAMES_DATE_KEY = 'candle_master_games_date';
 
@@ -36,6 +37,10 @@ const GAMES_DATE_KEY = 'candle_master_games_date';
  */
 export const useSubscription = () => {
   const [tier, setTier] = useState<SubscriptionTier>('free');
+  const [proPlan, setProPlan] = useState<'monthly' | 'lifetime' | null>(() => {
+    const saved = localStorage.getItem(PLAN_STORAGE_KEY);
+    return saved === 'monthly' || saved === 'lifetime' ? saved : null;
+  });
   const [gamesToday, setGamesToday] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
@@ -73,6 +78,10 @@ export const useSubscription = () => {
               if (stripeStatus.isPro) {
                 setTier('pro');
                 localStorage.setItem(STORAGE_KEY, 'pro');
+                if (stripeStatus.plan) {
+                  setProPlan(stripeStatus.plan);
+                  localStorage.setItem(PLAN_STORAGE_KEY, stripeStatus.plan);
+                }
               }
             }
           } catch (e) {
@@ -266,6 +275,7 @@ export const useSubscription = () => {
     // Tier info
     tier,
     isPro: tier === 'pro',
+    proPlan,
     limits,
 
     // Game limits

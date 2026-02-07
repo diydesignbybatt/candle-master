@@ -41,9 +41,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - [x] **Touch Swipe Fix**: `touch-action: pan-x` prevents vertical scroll during horizontal swipe
 - [ ] **Apple Sign-In**: Required by Apple (if Google Sign-In exists)
 - [x] **Stripe (PWA)**: Checkout Sessions for Monthly ($3.99) + Lifetime ($29.99) via Cloudflare Workers
+- [x] **Stripe Webhook**: Webhook endpoint configured → `https://app.candlemaster.app/api/stripe/webhook`
+- [x] **Cloudflare KV**: SUBSCRIPTIONS namespace created + env vars set (STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, STRIPE_PRO_MONTHLY_PRICE_ID, STRIPE_PRO_LIFETIME_PRICE_ID)
+- [x] **Firebase Auth (Web)**: Real Google Sign-In via `signInWithPopup` + `prompt: 'select_account'`
+- [x] **Thank You Modal**: Full-screen modal after Stripe payment (mascot + celebration animation)
+- [x] **Auto PRO Upgrade**: Retry logic (5x, 2s interval) for webhook timing after payment
+- [x] **Stripe Return Fix**: Save `?stripe=success` to React state before URL cleanup (fixes race with Firebase Auth)
+- [x] **Welcome Screen**: Uncle teaching mascot (circular) + Geist font + gold "CANDLE MASTER" title
+- [x] **Landing Page Payment Links**: Stripe Payment Links on landing page (Monthly + Lifetime)
+- [x] **Favicon**: Uncle mascot favicon for both App and Landing Page
 - [ ] **Subscription System**: RevenueCat scaffold ready, needs API keys (native)
-- [ ] **Stripe Webhook**: Set up webhook endpoint in Stripe Dashboard → `https://app.candlemaster.app/api/stripe/webhook`
-- [ ] **Cloudflare KV**: Create SUBSCRIPTIONS namespace + set env vars in Cloudflare Dashboard
 - [ ] **iOS Testing**: Requires Mac + Xcode
 
 ## PRO Features
@@ -64,11 +71,24 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Firebase (Google Sign-In)
 - **Project**: candle-master-d4bbd
+- **Google Cloud Project**: candle-master (ID: candle-master-d4bbd)
+- **authDomain**: `candle-master-d4bbd.firebaseapp.com` (ใช้ default — custom domain ต้อง setup reverse proxy)
 - **Android SHA-1**: `43:12:BE:1E:37:14:05:37:4A:98:71:80:80:E5:38:66:AD:3D:79:8E`
 - **Web Client ID**: `951460493496-cs5h9e7e517m4lea6q9lcd49jplfvhv5.apps.googleusercontent.com`
+- **OAuth Redirect URIs** (ตั้งใน Google Cloud Console → Credentials → Web client):
+  - `https://candle-master-d4bbd.firebaseapp.com/__/auth/handler`
+  - `https://candlemaster.app/__/auth/handler`
+- **Authorized JavaScript Origins**:
+  - `http://localhost`, `http://localhost:5000`
+  - `https://candle-master-d4bbd.firebaseapp.com`
+  - `https://candlemaster.app`
+- **Firebase Authorized Domains**: `candlemaster.app` (เพิ่มใน Firebase Console → Authentication → Settings)
 - **Config Files**:
+  - Web: `src/config/firebase.ts`
   - Android: `android/app/google-services.json`
   - iOS: `ios/App/App/GoogleService-Info.plist`
+- **API Key Security**: Firebase API key (`AIzaSy...`) เป็น public key ปลอดภัย — ควรเพิ่ม HTTP referrer restrictions ใน Google Cloud Console
+- **Web Auth Flow**: `signInWithPopup(auth, googleProvider)` ใน `src/contexts/AuthContext.tsx`
 
 ### RevenueCat (Subscription - Scaffold Ready)
 - **Service File**: `src/services/revenueCatService.ts`
@@ -121,17 +141,19 @@ STRIPE_PRO_LIFETIME_PRICE_ID = price_1Sy1oM16LYJ3Ryorh9we4HXg
 - [x] สร้าง Pricing Modal แสดง Monthly + Lifetime พร้อมปุ่มซื้อ
 - [x] เปลี่ยนปุ่ม Profile จาก toggle mock → เปิด Pricing Modal จริง
 - [x] ตรวจ platform แล้ว route ไป Stripe หรือ RevenueCat ตาม platform
-- [ ] ตั้ง env vars ใน Cloudflare Dashboard (STRIPE_SECRET_KEY, etc.)
-- [ ] สร้าง KV namespace "SUBSCRIPTIONS" ใน Cloudflare Dashboard
-- [ ] ตั้ง Stripe Webhook → `https://app.candlemaster.app/api/stripe/webhook`
+- [x] ตั้ง env vars ใน Cloudflare Dashboard (STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, Price IDs)
+- [x] สร้าง KV namespace "SUBSCRIPTIONS" ใน Cloudflare Dashboard
+- [x] ตั้ง Stripe Webhook → `https://app.candlemaster.app/api/stripe/webhook`
+- [x] Stripe redirect URL แก้เป็น `https://app.candlemaster.app` (ไม่ใช่ candlemaster.app ซึ่งเป็น Landing Page)
 - [ ] ใส่ RevenueCat API keys (สำหรับ Native)
 - [ ] Sync subscription status ข้าม platform ผ่าน Firebase user ID
+- [ ] เปลี่ยนจาก Stripe test mode → live mode (เมื่อพร้อม launch)
 
 ### Subscription Roadmap (Phased)
 
 | Phase | Feature | Status |
 |-------|---------|--------|
-| **1** | Stripe Checkout (PWA) — ซื้อ PRO ได้ | ✅ Done (code) / ⬜ Deploy |
+| **1** | Stripe Checkout (PWA) — ซื้อ PRO ได้ | ✅ Done + Deployed (Sandbox) |
 | 2 | Cancellation (App) — anchor text ยกเลิกในหน้า Profile + retention modal ลดราคา | ⬜ |
 | 3 | Landing Page Profile — Login/Profile บน landing page ดูสถานะ + ยกเลิก | ⬜ |
 | 4 | Lemon Squeezy Affiliate — referral/affiliate system | ⬜ |
@@ -308,6 +330,14 @@ npm run pages:deploy   # Build and deploy to Cloudflare
 ```
 
 **Note**: ไม่ใช้ Vercel แล้ว — ใช้ Cloudflare Pages เท่านั้น (unlimited bandwidth, Workers edge functions)
+
+### Important URLs & Deployment Notes
+- **App URL**: `https://app.candlemaster.app` (React PWA) — Stripe redirect ต้องชี้ที่นี่
+- **Landing URL**: `https://candlemaster.app` (Astro) — Payment Links ของ Stripe ไม่ redirect กลับ
+- **Stripe Checkout success_url**: `https://app.candlemaster.app/?stripe=success&session_id={CHECKOUT_SESSION_ID}`
+- **Stripe Checkout cancel_url**: `https://app.candlemaster.app/?stripe=cancel`
+- **Build command ที่ Cloudflare ใช้**: `tsc -b` (strict กว่า `tsc --noEmit` — ตรวจ unused variables)
+- **Geist font**: โหลดจาก CDN ใน `index.html` — ใช้ทั้ง Welcome Screen และ Thank You Modal
 
 ### Android/iOS
 - Native projects in `android/` and `ios/`.

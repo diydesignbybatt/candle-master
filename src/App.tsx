@@ -70,21 +70,28 @@ const AppContent: React.FC = () => {
   const { mode, setMode, resolvedTheme } = useTheme();
   const { user, isAuthenticated, isGuest, signOut, linkAccount } = useAuth();
   const orientation = useOrientation();
-  const { isPro, upgradeToPro, purchaseProWeb } = useSubscription();
+  const { isPro, proPlan, upgradeToPro, purchaseProWeb } = useSubscription();
   const [stripeLoading, setStripeLoading] = useState(false);
   const [showThankYouModal, setShowThankYouModal] = useState(false);
   const [stripeMessage, setStripeMessage] = useState<'cancel' | null>(null);
 
   // Detect Stripe return from URL on first mount (before URL is cleaned)
+  // Also check sessionStorage in case URL was already cleaned but modal wasn't shown
   const [pendingStripeSuccess, setPendingStripeSuccess] = useState(() => {
     const params = new URLSearchParams(window.location.search);
     const result = params.get('stripe');
     if (result === 'success') {
       window.history.replaceState({}, '', window.location.pathname);
+      sessionStorage.setItem('stripe_pending', 'true');
       return true;
     }
     if (result === 'cancel') {
       window.history.replaceState({}, '', window.location.pathname);
+      return false;
+    }
+    // Check if there's a pending success from a previous page load
+    if (sessionStorage.getItem('stripe_pending') === 'true') {
+      return true;
     }
     return false;
   });
@@ -101,24 +108,28 @@ const AppContent: React.FC = () => {
   // Handle Stripe success: wait for user to be ready, then verify & upgrade
   useEffect(() => {
     if (!pendingStripeSuccess) return;
-    if (!user?.id || user.id.startsWith('guest_')) return;
 
-    // User is ready — verify subscription with retry
+    // If user is not logged in yet, still upgrade (they paid, trust Stripe redirect)
+    const userId = user?.id && !user.id.startsWith('guest_') ? user.id : null;
+
     const verifyWithRetry = async (attempt: number = 0): Promise<void> => {
       const maxRetries = 5;
       const retryDelay = 2000;
 
-      try {
-        const { checkSubscriptionStatus } = await import('./services/stripeService');
-        const status = await checkSubscriptionStatus(user.id);
-        if (status.isPro) {
-          upgradeToPro();
-          setShowThankYouModal(true);
-          setPendingStripeSuccess(false);
-          return;
+      if (userId) {
+        try {
+          const { checkSubscriptionStatus } = await import('./services/stripeService');
+          const status = await checkSubscriptionStatus(userId);
+          if (status.isPro) {
+            upgradeToPro();
+            setShowThankYouModal(true);
+            setPendingStripeSuccess(false);
+            sessionStorage.removeItem('stripe_pending');
+            return;
+          }
+        } catch (err) {
+          console.warn('Subscription check attempt failed:', err);
         }
-      } catch (err) {
-        console.warn('Subscription check attempt failed:', err);
       }
 
       if (attempt < maxRetries) {
@@ -128,6 +139,7 @@ const AppContent: React.FC = () => {
         upgradeToPro();
         setShowThankYouModal(true);
         setPendingStripeSuccess(false);
+        sessionStorage.removeItem('stripe_pending');
       }
     };
 
@@ -1696,20 +1708,24 @@ const AppContent: React.FC = () => {
                 </button>
 
                 {/* PRO Subscription */}
-                <button
-                  className={`profile-action-btn pro-toggle ${isPro ? 'is-pro' : ''}`}
-                  onClick={() => isPro ? null : setShowUpgradeModal('general')}
-                >
-                  <Star size={20} fill={isPro ? 'currentColor' : 'none'} />
-                  <span>{isPro ? 'PRO Member' : 'Upgrade to PRO'}</span>
-                  {isPro ? (
-                    <span className="pro-badge-label">ACTIVE</span>
-                  ) : (
-                    <div className={`toggle-switch`}>
-                      <div className="toggle-knob"></div>
-                    </div>
-                  )}
-                </button>
+                {isPro ? (
+                  <div className="profile-action-btn pro-toggle is-pro">
+                    <Star size={20} fill="currentColor" />
+                    <span>PRO Member</span>
+                    <span className="pro-plan-badge">
+                      {proPlan === 'lifetime' ? '♾ Lifetime' : proPlan === 'monthly' ? 'Monthly' : 'Active'}
+                    </span>
+                  </div>
+                ) : (
+                  <button
+                    className="pro-upgrade-cta"
+                    onClick={() => setShowUpgradeModal('general')}
+                  >
+                    <Star size={20} fill="none" />
+                    <span>Upgrade to PRO</span>
+                    <span className="pro-cta-arrow">→</span>
+                  </button>
+                )}
 
                 <div className="theme-selector">
                   <div className="theme-selector-header">

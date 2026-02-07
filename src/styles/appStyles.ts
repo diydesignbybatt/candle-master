@@ -2119,6 +2119,65 @@ export const MODAL_STYLES = `
     letter-spacing: 0.05em;
   }
 
+  /* PRO Plan Badge (Monthly / Lifetime) */
+  .pro-plan-badge {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #fff;
+    background: linear-gradient(135deg, #C5A059, #E6C775);
+    padding: 4px 14px;
+    border-radius: 20px;
+    letter-spacing: 0.03em;
+    margin-left: auto;
+    box-shadow: 0 2px 8px rgba(197,160,89,0.3);
+  }
+
+  /* PRO Upgrade CTA Button (Free users) */
+  .pro-upgrade-cta {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    border: 2px solid #C5A059;
+    border-radius: 14px;
+    background: linear-gradient(135deg, rgba(197,160,89,0.12) 0%, rgba(230,199,117,0.08) 100%);
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #C5A059;
+  }
+  .pro-upgrade-cta:hover {
+    background: linear-gradient(135deg, rgba(197,160,89,0.2) 0%, rgba(230,199,117,0.15) 100%);
+    box-shadow: 0 4px 16px rgba(197,160,89,0.25);
+    transform: translateY(-1px);
+  }
+  .pro-upgrade-cta:active {
+    transform: scale(0.98);
+  }
+  .pro-upgrade-cta svg {
+    color: #C5A059;
+  }
+  .pro-cta-arrow {
+    margin-left: auto;
+    font-size: 1.2rem;
+    opacity: 0.7;
+  }
+
+  [data-theme="dark"] .pro-upgrade-cta {
+    border-color: #FFD700;
+    color: #FFD700;
+    background: linear-gradient(135deg, rgba(255,215,0,0.12) 0%, rgba(255,215,0,0.05) 100%);
+  }
+  [data-theme="dark"] .pro-upgrade-cta svg {
+    color: #FFD700;
+  }
+  [data-theme="dark"] .pro-plan-badge {
+    background: linear-gradient(135deg, #FFD700, #FFA500);
+    color: #1a1a1a;
+  }
+
   /* Stripe Return Message */
   .stripe-message {
     position: fixed;
