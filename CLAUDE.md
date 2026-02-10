@@ -74,6 +74,21 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | Boss Music | ❌ | Special BGM for crisis events |
 | Upgrade Prompt | Every 3 games | ❌ |
 
+## Account Management
+
+| Platform | Email | หมายเหตุ |
+|----------|-------|----------|
+| **Apple Developer** | battia14@gmail.com | ✅ สมัครแล้ว ($99/ปี) |
+| **Google Play Console** | pathofmeow.dev@gmail.com | สมัครแล้ว ($25) |
+| **Firebase** | diydesignbybatt@gmail.com | เจ้าของ project (candle-master-d4bbd) |
+| **Stripe** | battia14@gmail.com | Checkout Sessions (PWA) |
+| **Cloudflare** | diydesignbybatt@gmail.com | Pages + Workers + KV |
+| **GitHub** | diydesignbybatt@gmail.com | candle-master repo |
+
+**หมายเหตุ**: ใช้หลาย email แต่ไม่มีปัญหาทางเทคนิค — RevenueCat เชื่อม Google Play ด้วย Service Account Key (ไม่ผูกกับ email)
+
+---
+
 ## Authentication & Services
 
 ### Firebase (Google Sign-In)
@@ -428,3 +443,119 @@ npm run build && npx wrangler pages deploy dist --project-name=candle-master   #
 - **Comment priority**: Why > What - explain reasoning, not obvious code
 - **JSDoc format**: `@param`, `@returns`, `@example` in Thai
 - **Bad**: `// เพิ่มตัวเลข 1` | **Good**: `// เพิ่มจำนวนครั้งเพื่อติดตามพฤติกรรม`
+
+---
+
+## iOS Development Plan (ไม่มี Mac)
+
+### แผนที่เลือก: Codemagic (Free Tier) + TestFlight
+
+**ค่าใช้จ่าย**: ~$99/ปี (Apple Developer Program เท่านั้น)
+
+| รายการ | ค่าใช้จ่าย |
+|--------|-----------|
+| Apple Developer Program | $99/ปี |
+| Codemagic CI/CD (500 min ฟรี/เดือน, ~33 builds) | $0 |
+| TestFlight (ทดสอบบน iPhone) | $0 |
+
+### ขั้นตอน Setup
+1. สมัคร Apple Developer Program ($99) ที่ developer.apple.com
+2. สร้าง App Record ใน App Store Connect (ผ่านเว็บ)
+3. สร้าง App Store Connect API Key (.p8 file) ผ่านเว็บ
+4. สมัคร Codemagic → เชื่อม GitHub repo (candle-master)
+5. Codemagic จัดการ certificates + provisioning profiles อัตโนมัติ
+6. Push code → Codemagic build .ipa → อัปโหลดขึ้น TestFlight
+7. ทดสอบบน iPhone ผ่าน TestFlight
+8. Submit ขึ้น App Store ผ่าน App Store Connect เว็บ
+
+### ก่อน Submit ต้องทำ
+- [ ] **Apple Sign-In**: Apple บังคับ — ถ้ามี Google Sign-In ต้องมี Apple Sign-In ด้วย
+- [ ] **RevenueCat (iOS IAP)**: Apple บังคับใช้ In-App Purchase สำหรับ digital goods — ใช้ Stripe ไม่ได้บน iOS native → ใช้ RevenueCat ที่ scaffold พร้อมแล้ว
+- [ ] **Privacy Policy**: จำเป็นสำหรับ App Store submission
+
+### ทางเลือกสำรอง (ถ้าต้องการ Mac จริงๆ)
+| Service | ราคา | หมายเหตุ |
+|---------|------|----------|
+| Scaleway (เช่ารายชั่วโมง) | ~$0.21/ชม. | ถูกสุด จ่ายตามใช้ |
+| Macly.io (เช่ารายวัน) | $14.99/วัน | เหมาะ setup ครั้งเดียว |
+| MacinCloud (เช่ารายเดือน) | ~$25-65/เดือน | มี Xcode พร้อม |
+| GitHub Actions (public repo) | ฟรี | ต้อง config workflow เอง |
+| Xcode Cloud (แถม dev account) | ฟรี 25 ชม./เดือน | setup ครั้งแรกต้องใช้ Mac |
+| Capawesome Cloud | $9/เดือน | สร้างมาเพื่อ Capacitor โดยเฉพาะ |
+
+---
+
+## Google Play Store Submission Checklist
+
+### สถานะ: รอ Google Approve Bank Account ⏳
+
+### 🔴 Blockers (ต้องแก้ก่อน submit)
+
+**1. Signing Configuration — ยังไม่มี keystore**
+- [ ] Generate release keystore
+- [ ] เพิ่ม signingConfigs ใน `android/app/build.gradle`
+- [ ] เก็บ keystore ไว้ที่ปลอดภัย (ห้ามหาย!)
+
+**2. Code Obfuscation — minifyEnabled = false**
+- [ ] เปลี่ยน `minifyEnabled` เป็น `true` ใน release build
+- [ ] ทดสอบว่า ProGuard ไม่ทำ app พัง
+
+**3. RevenueCat (Native IAP) — ยังไม่ implement**
+- [ ] สมัคร RevenueCat → ใส่ API keys
+- [ ] สร้าง Google Play Service Account + JSON key
+- [ ] Implement `revenueCatService.ts` (ตอนนี้มีแต่ TODO)
+- [ ] สร้าง Subscription Products ใน Play Console
+- [ ] ทดสอบ purchase flow บน device จริง
+
+**4. Play App Signing**
+- [ ] Enroll ใน Play App Signing (บังคับสำหรับ app ใหม่)
+- [ ] เพิ่ม Play App Signing SHA-1 เข้า Firebase Console (ไม่งั้น Google Sign-In จะพังบน production)
+
+### ⚠️ Closed Testing Requirement (สำคัญมาก!)
+- Google Play **บังคับ** personal account ต้อง **Closed Test กับ tester 12 คน ขึ้นไป เป็นเวลา 14 วัน** ก่อนจะ apply production release ได้
+- [ ] สร้าง Closed Testing track ใน Play Console
+- [ ] เชิญ tester อย่างน้อย 12 คน
+- [ ] รอ 14 วันก่อน submit production
+
+### 📸 Store Listing Assets (เตรียมก่อน submit)
+
+| Asset | Spec | สถานะ |
+|-------|------|--------|
+| App Icon | 512x512 px, PNG | ⬜ ต้องเตรียม |
+| Feature Graphic | 1024x500 px | ⬜ ต้องเตรียม |
+| Phone Screenshots | 2-8 รูป, ภาพจาก app จริง (ห้ามใส่ device frame) | ⬜ ต้องเตรียม |
+| Tablet Screenshots | 2-8 รูป (แนะนำ) | ⬜ ต้องเตรียม |
+| Short Description | max 80 ตัวอักษร | ⬜ ต้องเขียน |
+| Full Description | max 4,000 ตัวอักษร + disclaimer | ⬜ ต้องเขียน |
+
+### 📋 App Content Declarations (กรอกใน Play Console)
+
+- [ ] **Privacy Policy URL**: candlemaster.app/privacy ✅ มีแล้ว
+- [ ] **Data Safety Form**: ต้องแจ้ง Firebase Auth, RevenueCat, device IDs
+- [ ] **Financial Features Declaration**: บังคับ — แจ้งว่าเป็น simulator/education ไม่ใช่ real trading
+- [ ] **Content Rating (IARC)**: ทำ questionnaire → คาดว่าได้ PEGI 12 / Teen
+- [ ] **Target Audience**: ตั้งเป็น 13+ (หลีกเลี่ยง COPPA)
+- [ ] **Ads Declaration**: ไม่มี ads
+- [ ] **App Access**: ต้องให้ test credentials / วิธี login สำหรับ reviewer
+
+### 📦 Technical (ที่มีแล้ว ✅)
+
+| Item | สถานะ |
+|------|--------|
+| App ID: `com.candlemaster.app` | ✅ ตรงกันทุกที่ |
+| targetSdkVersion: 36 | ✅ เกินเกณฑ์ (ต้องการ 35+) |
+| compileSdkVersion: 36 | ✅ |
+| App Icons (mipmap ทุก density) | ✅ |
+| Firebase google-services.json | ✅ |
+| AndroidManifest.xml | ✅ |
+| Build format: .aab (App Bundle) | ✅ ใช้ `./gradlew bundleRelease` |
+
+### ⚠️ สิ่งที่ต้องระวัง (เหตุผลที่อาจโดน reject)
+- **WebView-only app**: Google อาจ reject ถ้าแอปแค่แสดงเว็บ PWA → ต้องมี native feature เพิ่ม (push notification, offline mode)
+- **Financial disclaimer**: ต้องมีข้อความชัดเจนใน app + store listing ว่า "Educational only, no real money, not financial advice"
+- **Subscription terms**: ต้องแสดงราคา, auto-renew, วิธียกเลิก ให้ชัดเจนก่อนซื้อ
+
+### Version Sync Issue
+- `package.json`: v2.3.0
+- `build.gradle`: versionName "1.5.0" / versionCode 5
+- ⚠️ ควร sync ให้ตรงกันก่อน submit

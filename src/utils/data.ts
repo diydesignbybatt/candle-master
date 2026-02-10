@@ -5,8 +5,7 @@ import { rollForEvent } from './historicalEvents';
 import type { HistoricalEvent } from './historicalEvents';
 
 // Stock pool based on subscription
-const getStockPool = () => {
-  const isPro = localStorage.getItem('candle_master_subscription') === 'pro';
+const getStockPool = (isPro: boolean) => {
   return isPro
     ? [...stocksData.free, ...stocksData.pro]
     : stocksData.free;
@@ -217,9 +216,8 @@ const tryEventMode = async (event: HistoricalEvent): Promise<StockData | null> =
 /**
  * Fetches real historical data. PRO users have a 1/7 chance of event mode.
  */
-export const fetchRandomStockData = async (): Promise<StockData> => {
-  const stocks = getStockPool();
-  const isPro = localStorage.getItem('candle_master_subscription') === 'pro';
+export const fetchRandomStockData = async (isPro: boolean = false): Promise<StockData> => {
+  const stocks = getStockPool(isPro);
 
   // PRO-only: Roll for event mode (1 in 7 chance)
   if (isPro) {

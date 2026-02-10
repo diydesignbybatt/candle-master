@@ -442,7 +442,10 @@ export const UI_STYLES = `
     height: var(--controls-height);
   }
 
-  .action-buttons-single-row { display: flex; gap: 8px; width: 100%; align-items: center; }
+  .action-buttons-single-row { display: flex; gap: 6px; width: 100%; align-items: center; overflow: hidden; }
+  .action-buttons-single-row.has-close-all { gap: 4px; }
+  .action-buttons-single-row.has-close-all .btn { font-size: 0.55rem; gap: 2px; min-width: 0; }
+  .action-buttons-single-row.has-close-all .btn svg { flex-shrink: 0; }
 
   .btn {
     flex: 1;

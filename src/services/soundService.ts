@@ -32,8 +32,8 @@ class SoundService {
   private sfxSources: Map<SoundType, MediaElementAudioSourceNode> = new Map();
 
   // Volume ในหน่วย dB (0 dB = เสียงเต็ม, ค่าติดลบ = เบาลง)
-  private sfxVolumeDb: number = 0;      // SFX: 0 dB (เสียงเต็ม ไม่ลด)
-  private musicVolumeDb: number = -6;   // BGM: -6 dB (ลดครึ่งหนึ่ง ≈ 50%)
+  private sfxVolumeDb: number = 0;      // SFX: 0 dB (เสียงเต็ม)
+  private musicVolumeDb: number = 0;    // BGM: 0 dB (เสียงเต็ม)
 
   // Music system
   private music: HTMLAudioElement | null = null;
@@ -129,7 +129,7 @@ class SoundService {
     try {
       const audio = new Audio(path);
       audio.preload = 'auto';
-      audio.volume = 0.5;
+      audio.volume = 1.0;
       this.sounds.set(type, audio);
     } catch (error) {
       console.warn(`Failed to load sound: ${type}`, error);
@@ -157,6 +157,11 @@ class SoundService {
     }
 
     try {
+      // Resume AudioContext ถ้า suspended (จำเป็นสำหรับ Android WebView)
+      if (this.audioCtx && this.audioCtx.state === 'suspended') {
+        this.audioCtx.resume();
+      }
+
       sound.currentTime = 0;
 
       // ถ้ามี Web Audio API → ใช้ GainNode (volume param ไม่มีผลต่อ per-sound เพราะใช้ shared gain)
@@ -166,7 +171,17 @@ class SoundService {
       }
 
       sound.play().catch(err => {
-        console.warn(`Failed to play sound: ${type}`, err);
+        // ถ้า play ผ่าน Web Audio API ไม่ได้ ลอง fallback
+        if (this.sfxSources.has(type) && this.audioCtx) {
+          console.warn(`[Audio] Retrying ${type} without Web Audio API`);
+          try {
+            const fallback = new Audio(sound.src);
+            fallback.volume = 1.0;
+            fallback.play().catch(() => {});
+          } catch {}
+        } else {
+          console.warn(`Failed to play sound: ${type}`, err);
+        }
       });
     } catch (error) {
       console.warn(`Error playing sound: ${type}`, error);

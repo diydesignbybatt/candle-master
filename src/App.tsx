@@ -226,10 +226,10 @@ const AppContent: React.FC = () => {
 
     // ถ้า force หรือไม่มี saved session → fetch ใหม่
     clearSession(); // Clear old session เมื่อ fetch ใหม่
-    const data = await fetchRandomStockData();
+    const data = await fetchRandomStockData(isPro);
     setStock(data);
     setIsLoading(false);
-  }, []);
+  }, [isPro]);
 
   useEffect(() => {
     loadNewStock(false); // ครั้งแรกลอง restore session ก่อน
@@ -1122,7 +1122,7 @@ const AppContent: React.FC = () => {
 
               {!isLandscapeTrading && (
                 <section className="controls">
-                  <div className="action-buttons-single-row">
+                  <div className={`action-buttons-single-row${positions.length > 0 ? ' has-close-all' : ''}`}>
                     <button
                       className="btn btn-buy"
                       onClick={long}
