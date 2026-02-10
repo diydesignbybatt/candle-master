@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Candle Master v2.3.4** is a **Trading Simulator Game & Education Platform**.
+**Candle Master v2.4.0** is a **Trading Simulator Game & Education Platform**.
 - **Core Concept**: Users practice trading on historical data without knowing the stock beforehand (Blind Trading).
 - **Gameplay**:
     - Users see candlesticks, MA indicators (20/50), and Volume.
@@ -522,7 +522,7 @@ npm run build && npx wrangler pages deploy dist --project-name=candle-master   #
 **4. Internal Testing ✅**
 - [x] อัปโหลด .aab ขึ้น Play Console (Internal Testing track)
 - [x] ทดสอบการติดตั้ง + Google Sign-In บน device จริง
-- [x] Version ล่าสุด: 2.3.4 (versionCode 10)
+- [x] Version ล่าสุด: 2.4.0 (versionCode 11)
 
 ### 🔴 Blockers ที่เหลือ (ต้องแก้ก่อน Production)
 
@@ -579,9 +579,13 @@ npm run build && npx wrangler pages deploy dist --project-name=candle-master   #
 - **Subscription terms**: ต้องแสดงราคา, auto-renew, วิธียกเลิก ให้ชัดเจนก่อนซื้อ
 
 ### Version Info
-- `package.json`: v2.3.0
-- `build.gradle`: versionName "2.3.4" / versionCode 10
+- `package.json`: v2.4.0
+- `build.gradle`: versionName "2.4.0" / versionCode 11
 - **หมายเหตุ**: `android/` อยู่ใน `.gitignore` — versionCode ต้องเพิ่มเอง manual ทุกครั้งก่อนอัปโหลด Play Console
+
+### Changes ใน v2.4.0
+- ✅ อัปเดตภาพ character judge ทั้ง 39 รูป (crop ใหม่ + ลบ background + แปลง webp ใหม่)
+- ✅ ภาพ boss 6 รูปอัปเดตด้วย (wizard, Santa, zombie, wild hair, cowboy, stress eating)
 
 ### Bugs ที่แก้แล้วใน v2.3.4
 - ✅ PRO stock pool ไม่ปลดล็อค (อ่าน localStorage key ผิด → เปลี่ยนเป็นส่ง isPro parameter)
