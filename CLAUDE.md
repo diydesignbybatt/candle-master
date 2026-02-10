@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Candle Master v2.3.0** is a **Trading Simulator Game & Education Platform**.
+**Candle Master v2.3.4** is a **Trading Simulator Game & Education Platform**.
 - **Core Concept**: Users practice trading on historical data without knowing the stock beforehand (Blind Trading).
 - **Gameplay**:
     - Users see candlesticks, MA indicators (20/50), and Volume.
@@ -50,7 +50,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - [x] **Welcome Screen**: Uncle teaching mascot (circular) + Geist font + gold "CANDLE MASTER" title
 - [x] **Landing Page Payment Links**: Stripe Payment Links on landing page (Monthly + Lifetime)
 - [x] **Favicon**: Uncle mascot favicon for both App and Landing Page
-- [x] **Web Audio API**: BGM volume control via GainNode (dB-based), SFX 0dB / BGM -6dB
+- [x] **Web Audio API**: BGM volume control via GainNode (dB-based), SFX 0dB / BGM 0dB
 - [x] **Music Default On**: BGM enabled by default for new users, autoplay unlock on first interaction
 - [x] **Music Toggle on Chart**: Small 28x28 button below zoom controls on trade screen
 - [x] **PRO Badge Fix**: Lifetime badge aligned right, ∞ icon golden, Star icon forced gold on Sandstone
@@ -253,7 +253,7 @@ STRIPE_PRO_LIFETIME_PRICE_ID = price_1Sy1oM16LYJ3Ryorh9we4HXg
     - `useSubscription.ts`: PRO subscription state (`candle_master_subscription` key in localStorage).
     - **localStorage keys**: `candle_master_onboarding_complete`, `candle_master_history`, `candle_master_subscription`, `candle_master_games_today`, `candle_master_games_date`, `candle_master_games_played` (upgrade prompt counter)
 - **Theme**: `ThemeContext` - Sandstone (default), Midnight, Solarized.
-- **Audio**: `public/sounds/` — bgm-1.mp3, bgm-3.mp3 (normal), boss-1/2.mp3 (event), BGM -6dB / SFX 0dB (Web Audio API)
+- **Audio**: `public/sounds/` — bgm-1.mp3, bgm-3.mp3 (normal), boss-1/2.mp3 (event), BGM 0dB / SFX 0dB (Web Audio API), AudioContext resume for Android WebView
 
 ### Chart Pattern Images
 - Location: `public/patterns/`
@@ -320,13 +320,23 @@ npx cap sync ios         # Sync iOS only
 
 ## Android Build Steps
 
-1. `npm run build` - Build web assets
-2. `npx cap sync android` - Sync to Android
-3. Open Android Studio: `D:\CANDLE MASTER\PROJECT\Candle Master\android`
-4. Wait for Gradle Sync
-5. Build → Clean Project
-6. Build → Build APK(s)
-7. APK location: `android/app/build/outputs/apk/debug/app-debug.apk`
+### Release Build (.aab for Play Store)
+```bash
+npm run build                    # Build web assets
+npx cap sync android             # Sync to Android
+cd android && ./gradlew clean bundleRelease   # Build signed .aab
+```
+- **Output**: `android/app/build/outputs/bundle/release/app-release.aab`
+- **⚠️ ต้องเพิ่ม versionCode ใน `android/app/build.gradle` ทุกครั้งก่อนอัปโหลด Play Console**
+- **Signing**: ใช้ `release.keystore` (alias: candle-master, password: CandleMaster2026)
+
+### Debug Build (.apk for local testing)
+```bash
+npm run build
+npx cap sync android
+cd android && ./gradlew assembleDebug
+```
+- **Output**: `android/app/build/outputs/apk/debug/app-debug.apk`
 
 ## Deployment Info
 
@@ -487,35 +497,48 @@ npm run build && npx wrangler pages deploy dist --project-name=candle-master   #
 
 ## Google Play Store Submission Checklist
 
-### สถานะ: รอ Google Approve Bank Account ⏳
+### สถานะ: Internal Testing บน Google Play ✅ | รอ Google Approve Bank Account ⏳
 
-### 🔴 Blockers (ต้องแก้ก่อน submit)
+### ✅ Blockers ที่แก้แล้ว
 
-**1. Signing Configuration — ยังไม่มี keystore**
-- [ ] Generate release keystore
-- [ ] เพิ่ม signingConfigs ใน `android/app/build.gradle`
-- [ ] เก็บ keystore ไว้ที่ปลอดภัย (ห้ามหาย!)
+**1. Signing Configuration ✅**
+- [x] Generate release keystore (`android/app/release.keystore`)
+  - Alias: `candle-master` | Password: `CandleMaster2026`
+  - SHA-1 (Upload): `21:3F:43:DD:B5:85:53:01:CB:40:67:47:26:76:64:21:47:9D:08:F8`
+  - ⚠️ **ห้ามหาย! Backup ไว้ที่ปลอดภัย**
+- [x] เพิ่ม signingConfigs ใน `android/app/build.gradle`
+- [x] เก็บ keystore ใน `android/app/` (อยู่ใน .gitignore)
 
-**2. Code Obfuscation — minifyEnabled = false**
-- [ ] เปลี่ยน `minifyEnabled` เป็น `true` ใน release build
-- [ ] ทดสอบว่า ProGuard ไม่ทำ app พัง
+**2. Code Obfuscation ✅**
+- [x] เปลี่ยน `minifyEnabled` เป็น `true` ใน release build
+- [x] ทดสอบว่า ProGuard ไม่ทำ app พัง
 
-**3. RevenueCat (Native IAP) — ยังไม่ implement**
+**3. Play App Signing ✅**
+- [x] Enroll ใน Play App Signing (Google จัดการ signing key)
+- [x] Play App Signing SHA-1: `2E:C8:54:E3:F0:EA:23:D5:8A:E9:80:85:BC:8C:12:7C:EE:B5:66:C1`
+- [x] เพิ่ม SHA-1 เข้า Firebase Console → google-services.json อัปเดตแล้ว
+- [x] Google Sign-In ทำงานได้บน production build
+
+**4. Internal Testing ✅**
+- [x] อัปโหลด .aab ขึ้น Play Console (Internal Testing track)
+- [x] ทดสอบการติดตั้ง + Google Sign-In บน device จริง
+- [x] Version ล่าสุด: 2.3.4 (versionCode 10)
+
+### 🔴 Blockers ที่เหลือ (ต้องแก้ก่อน Production)
+
+**1. RevenueCat (Native IAP) — ยังไม่ implement**
 - [ ] สมัคร RevenueCat → ใส่ API keys
 - [ ] สร้าง Google Play Service Account + JSON key
 - [ ] Implement `revenueCatService.ts` (ตอนนี้มีแต่ TODO)
 - [ ] สร้าง Subscription Products ใน Play Console
 - [ ] ทดสอบ purchase flow บน device จริง
 
-**4. Play App Signing**
-- [ ] Enroll ใน Play App Signing (บังคับสำหรับ app ใหม่)
-- [ ] เพิ่ม Play App Signing SHA-1 เข้า Firebase Console (ไม่งั้น Google Sign-In จะพังบน production)
-
 ### ⚠️ Closed Testing Requirement (สำคัญมาก!)
 - Google Play **บังคับ** personal account ต้อง **Closed Test กับ tester 12 คน ขึ้นไป เป็นเวลา 14 วัน** ก่อนจะ apply production release ได้
-- [ ] สร้าง Closed Testing track ใน Play Console
-- [ ] เชิญ tester อย่างน้อย 12 คน
+- [x] สร้าง Internal Testing track ✅ (ใช้ทดสอบก่อน → ค่อย promote เป็น Closed Testing)
+- [ ] สร้าง Closed Testing track + เชิญ tester อย่างน้อย 12 คน
 - [ ] รอ 14 วันก่อน submit production
+- 💡 **กลยุทธ์**: เก็บปุ่ม "Test PRO" ไว้ระหว่าง testing เพื่อให้ tester เข้าถึง PRO features ได้
 
 ### 📸 Store Listing Assets (เตรียมก่อน submit)
 
@@ -555,7 +578,15 @@ npm run build && npx wrangler pages deploy dist --project-name=candle-master   #
 - **Financial disclaimer**: ต้องมีข้อความชัดเจนใน app + store listing ว่า "Educational only, no real money, not financial advice"
 - **Subscription terms**: ต้องแสดงราคา, auto-renew, วิธียกเลิก ให้ชัดเจนก่อนซื้อ
 
-### Version Sync Issue
+### Version Info
 - `package.json`: v2.3.0
-- `build.gradle`: versionName "1.5.0" / versionCode 5
-- ⚠️ ควร sync ให้ตรงกันก่อน submit
+- `build.gradle`: versionName "2.3.4" / versionCode 10
+- **หมายเหตุ**: `android/` อยู่ใน `.gitignore` — versionCode ต้องเพิ่มเอง manual ทุกครั้งก่อนอัปโหลด Play Console
+
+### Bugs ที่แก้แล้วใน v2.3.4
+- ✅ PRO stock pool ไม่ปลดล็อค (อ่าน localStorage key ผิด → เปลี่ยนเป็นส่ง isPro parameter)
+- ✅ Crisis event ไม่โผล่สำหรับ PRO (สาเหตุเดียวกัน)
+- ✅ ปุ่ม CLOSE ALL ล้นจอเมื่อมี 5 ปุ่ม (เพิ่ม has-close-all CSS)
+- ✅ BGM เบาเกินไปบน Android (-6dB → 0dB)
+- ✅ Sound effect Long/Short ไม่ดังบน Android (เปลี่ยนเป็น click sound + AudioContext resume)
+- ✅ Google Sign-In ไม่ทำงานบน production (เพิ่ม Play App Signing SHA-1 ใน Firebase)
