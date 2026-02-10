@@ -292,12 +292,12 @@ const AppContent: React.FC = () => {
 
   // Wrap trading actions with sound effects
   const long = () => {
-    playSound('trade-open');
+    playSound('click');
     originalLong(tradeAmount);
   };
 
   const short = () => {
-    playSound('trade-open');
+    playSound('click');
     originalShort(tradeAmount);
   };
 
