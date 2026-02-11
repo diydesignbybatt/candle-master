@@ -5,10 +5,10 @@
  * Secret key อยู่ใน Cloudflare Worker — ไม่มีใน frontend code
  */
 
-// Price IDs (test mode) — public keys safe to expose
+// Price IDs (live mode) — public keys safe to expose
 export const STRIPE_PRICES = {
-  MONTHLY: 'price_1Sy1nW16LYJ3RyorkLS7LxMG',
-  YEARLY: 'price_1Sy1oM16LYJ3Ryorh9we4HXg', // TODO: Update to yearly Stripe price ID when created
+  MONTHLY: 'price_1SzX9500THgK6a8eMmajk8sQ',
+  YEARLY: 'price_1SzX9X00THgK6a8eQ6GfnYnn',
 } as const;
 
 export interface SubscriptionStatus {
