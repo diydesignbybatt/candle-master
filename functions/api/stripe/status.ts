@@ -3,7 +3,7 @@
  *
  * Returns the subscription status for a given user.
  * Route: GET /api/stripe/status?userId=xxx
- * Returns: { isPro: boolean, plan: 'monthly' | 'lifetime' | null, expiresAt: string | null }
+ * Returns: { isPro: boolean, plan: 'monthly' | 'yearly' | null, expiresAt: string | null }
  */
 
 interface Env {

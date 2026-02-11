@@ -35,7 +35,7 @@ interface StripeEvent {
 
 interface SubscriptionRecord {
   isPro: boolean;
-  plan: 'monthly' | 'lifetime' | null;
+  plan: 'monthly' | 'yearly' | null;
   stripeCustomerId: string | null;
   stripeSubscriptionId: string | null;
   activatedAt: string;
@@ -110,7 +110,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       case 'checkout.session.completed': {
         const session = event.data.object;
         const userId = session.metadata?.userId || session.client_reference_id;
-        const plan = session.metadata?.plan as 'monthly' | 'lifetime' || 'monthly';
+        const plan = session.metadata?.plan as 'monthly' | 'yearly' || 'monthly';
 
         if (!userId) {
           console.error('No userId in checkout session');
@@ -123,7 +123,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
           stripeCustomerId: session.customer || null,
           stripeSubscriptionId: session.subscription || null,
           activatedAt: new Date().toISOString(),
-          expiresAt: plan === 'lifetime' ? null : null, // Monthly expiry managed by Stripe
+          expiresAt: null, // Expiry managed by Stripe for both monthly and yearly
         };
 
         await context.env.SUBSCRIPTIONS.put(userId, JSON.stringify(record));

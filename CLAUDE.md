@@ -40,9 +40,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - [x] **Tutorial Screenshots**: Updated 9 high-quality tutorial images (shared with landing page)
 - [x] **Touch Swipe Fix**: `touch-action: pan-x` prevents vertical scroll during horizontal swipe
 - [ ] **Apple Sign-In**: Required by Apple (if Google Sign-In exists)
-- [x] **Stripe (PWA)**: Checkout Sessions for Monthly ($3.99) + Lifetime ($29.99) via Cloudflare Workers
+- [x] **Stripe (PWA)**: Checkout Sessions for Monthly ($3.99) + Yearly ($29.99) via Cloudflare Workers
 - [x] **Stripe Webhook**: Webhook endpoint configured → `https://app.candlemaster.app/api/stripe/webhook`
-- [x] **Cloudflare KV**: SUBSCRIPTIONS namespace created + env vars set (STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, STRIPE_PRO_MONTHLY_PRICE_ID, STRIPE_PRO_LIFETIME_PRICE_ID)
+- [x] **Cloudflare KV**: SUBSCRIPTIONS namespace created + env vars set (STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, STRIPE_PRO_MONTHLY_PRICE_ID)
+- [x] **Lifetime → Yearly Migration**: เปลี่ยนทุกไฟล์จาก lifetime เป็น yearly (useSubscription, stripeService, App.tsx, webhook, checkout, status)
 - [x] **Firebase Auth (Web)**: Real Google Sign-In via `signInWithPopup` + `prompt: 'select_account'`
 - [x] **Thank You Modal**: Full-screen modal after Stripe payment (mascot + celebration animation)
 - [x] **Auto PRO Upgrade**: Retry logic (5x, 2s interval) for webhook timing after payment
@@ -56,7 +57,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - [x] **PRO Badge Fix**: Lifetime badge aligned right, ∞ icon golden, Star icon forced gold on Sandstone
 - [x] **Test PRO Toggle**: Dashed "Activate Test PRO / FOR TEST" button on Profile for testers
 - [x] **OG Image Updated**: Uncle mascot teaching trade image for social sharing (landing page)
-- [ ] **Subscription System**: RevenueCat scaffold ready, needs API keys (native)
+- [x] **RevenueCat**: Code complete + Android API key inserted, Dashboard partially configured
 - [ ] **iOS Testing**: Requires Mac + Xcode
 - [ ] **Stripe Live Mode**: Switch test → live keys when ready to launch
 
@@ -112,10 +113,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **API Key Security**: Firebase API key (`AIzaSy...`) เป็น public key ปลอดภัย — ควรเพิ่ม HTTP referrer restrictions ใน Google Cloud Console
 - **Web Auth Flow**: `signInWithPopup(auth, googleProvider)` ใน `src/contexts/AuthContext.tsx`
 
-### RevenueCat (Subscription - Scaffold Ready)
+### RevenueCat (Subscription - In Progress)
 - **Service File**: `src/services/revenueCatService.ts`
 - **Hook**: `src/hooks/useSubscription.ts`
-- **Status**: Scaffold ready, needs API keys from RevenueCat dashboard
+- **Status**: Code complete, API key inserted, Dashboard partially configured
+- **Android API Key**: `test_CopsGEpeTMAmmkTYvNOOmcnELao`
+- **Package**: `com.candlemaster.app`
+- **Service Account**: `revenuecat@candle-master-d4bbd.iam.gserviceaccount.com`
+- **Entitlement**: `pro` (ยังไม่ได้สร้างใน Dashboard)
+- **Products**: `candle_master_pro_monthly`, `candle_master_pro_yearly` (ยังไม่ได้สร้างใน Play Console)
 
 ### Per-User Subscription Scoping
 - **localStorage keys scoped by userId**: `candle_master_subscription_${userId}`, `candle_master_plan_${userId}`
@@ -131,14 +137,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **แผนการ (Plans):**
 | Plan | Product ID (RevenueCat) | ราคา | หมายเหตุ |
 |------|------------------------|------|----------|
-| PRO Monthly | `candle_master_pro_monthly` | TBD | สมัครรายเดือน |
-| PRO Lifetime | `candle_master_pro_lifetime` | TBD | จ่ายครั้งเดียว ใช้ตลอดชีพ |
+| PRO Monthly | `candle_master_pro_monthly` | $3.99/mo | สมัครรายเดือน |
+| PRO Yearly | `candle_master_pro_yearly` | $29.99/yr | สมัครรายปี (เดิมเป็น Lifetime) |
 
 **แยกช่องทางตาม Platform:**
 | Platform | Payment Provider | หมายเหตุ |
 |----------|-----------------|----------|
-| **PWA (Web)** | **Stripe** | ✅ Checkout Session พร้อม (Monthly $3.99 + Lifetime $29.99) |
-| **Android** | **RevenueCat** → Google Play Billing | Scaffold พร้อม รอ API keys |
+| **PWA (Web)** | **Stripe** | ✅ Checkout Session พร้อม (Monthly $3.99 + Yearly $29.99) |
+| **Android** | **RevenueCat** → Google Play Billing | ✅ Code complete + API key inserted, รอสร้าง products ใน Play Console |
 | **iOS** | **RevenueCat** → Apple IAP | Scaffold พร้อม รอ API keys + Mac/Xcode |
 
 **หลักการ:**
@@ -147,14 +153,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Native apps ต้องใช้ RevenueCat (ข้อบังคับ Apple/Google)
 - ใช้ `Capacitor.isNativePlatform()` แยก flow ระหว่าง Web vs Native
 - Landing page มี pricing cards ทั้ง Monthly + Lifetime แล้ว → App ต้องมีให้ตรงกัน
-- **Lifetime option**: ✅ Pricing Modal มีทั้ง Monthly + Lifetime แล้ว
+- **Yearly option**: ✅ Pricing Modal มีทั้ง Monthly + Yearly แล้ว (เปลี่ยนจาก Lifetime)
 
 **Stripe Implementation (PWA):**
 - `functions/api/stripe/checkout.ts` — สร้าง Checkout Session (REST API, no SDK)
 - `functions/api/stripe/webhook.ts` — รับ Stripe events, อัปเดต KV
 - `functions/api/stripe/status.ts` — ตรวจสถานะ subscription จาก KV
 - `src/services/stripeService.ts` — Frontend API calls
-- Pricing Modal: 2 cards (Monthly $3.99 + Lifetime $29.99) ใน App.tsx
+- Pricing Modal: 2 cards (Monthly $3.99 + Yearly $29.99) ใน App.tsx
 - Return handler: `?stripe=success` → verify + activate PRO
 
 **Stripe Environment Variables (ตั้งใน Cloudflare Dashboard):**
@@ -162,7 +168,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 STRIPE_SECRET_KEY = sk_test_... (or sk_live_... for production)
 STRIPE_WEBHOOK_SECRET = whsec_...
 STRIPE_PRO_MONTHLY_PRICE_ID = price_1Sy1nW16LYJ3RyorkLS7LxMG
-STRIPE_PRO_LIFETIME_PRICE_ID = price_1Sy1oM16LYJ3Ryorh9we4HXg
+STRIPE_PRO_YEARLY_PRICE_ID = (ต้องสร้าง yearly recurring price ใหม่ใน Stripe แล้วใส่ที่นี่)
 ```
 
 **TODO เมื่อพร้อมเปิด:**
@@ -174,7 +180,10 @@ STRIPE_PRO_LIFETIME_PRICE_ID = price_1Sy1oM16LYJ3Ryorh9we4HXg
 - [x] สร้าง KV namespace "SUBSCRIPTIONS" ใน Cloudflare Dashboard
 - [x] ตั้ง Stripe Webhook → `https://app.candlemaster.app/api/stripe/webhook`
 - [x] Stripe redirect URL แก้เป็น `https://app.candlemaster.app` (ไม่ใช่ candlemaster.app ซึ่งเป็น Landing Page)
-- [ ] ใส่ RevenueCat API keys (สำหรับ Native)
+- [x] ใส่ RevenueCat API keys (Android: `test_CopsGEpeTMAmmkTYvNOOmcnELao`)
+- [x] เปลี่ยน Lifetime → Yearly ทุกไฟล์
+- [ ] Cloudflare env: เปลี่ยน `STRIPE_PRO_LIFETIME_PRICE_ID` → `STRIPE_PRO_YEARLY_PRICE_ID`
+- [ ] Stripe: สร้าง yearly recurring price (ตอนนี้ยังใช้ lifetime one-time price)
 - [ ] Sync subscription status ข้าม platform ผ่าน Firebase user ID
 - [ ] เปลี่ยนจาก Stripe test mode → live mode (เมื่อพร้อม launch)
 
@@ -285,12 +294,13 @@ STRIPE_PRO_LIFETIME_PRICE_ID = price_1Sy1oM16LYJ3Ryorh9we4HXg
 
 **Primary Working Folder:**
 ```
-E:\CANDLE MASTER\PROJECT\Candle Master
+E:\CANDLE-MASTER\PROJECT\Candle-Master-app
 ```
 
 **Do NOT use the old folder:**
 ```
 D:\000 BATT\เรียนสร้าง Application\Candle Master
+E:\CANDLE MASTER\PROJECT\Candle Master
 ```
 (Thai characters cause Gradle build issues)
 
@@ -351,7 +361,7 @@ cd android && ./gradlew assembleDebug
 - **Live URL**: https://candlemaster.app
 - **Repo**: https://github.com/diydesignbybatt/candle-master-landing
 - **Framework**: Astro + Cloudflare adapter
-- **Location**: `E:\CANDLE MASTER\PROJECT\candle-master-landing`
+- **Location**: `E:\CANDLE-MASTER\PROJECT\candle-master-landing`
 
 ### PWA (Cloudflare Pages) — Primary
 - **Live URL**: https://app.candlemaster.app (production)
@@ -526,11 +536,23 @@ npm run build && npx wrangler pages deploy dist --project-name=candle-master   #
 
 ### 🔴 Blockers ที่เหลือ (ต้องแก้ก่อน Production)
 
-**1. RevenueCat (Native IAP) — ยังไม่ implement**
-- [ ] สมัคร RevenueCat → ใส่ API keys
-- [ ] สร้าง Google Play Service Account + JSON key
-- [ ] Implement `revenueCatService.ts` (ตอนนี้มีแต่ TODO)
-- [ ] สร้าง Subscription Products ใน Play Console
+**1. RevenueCat (Native IAP) — อยู่ระหว่างดำเนินการ**
+- [x] สมัคร RevenueCat → ใส่ API key (`test_CopsGEpeTMAmmkTYvNOOmcnELao`)
+- [x] สร้าง Google Play Service Account + JSON key + อัปโหลดไป RevenueCat
+- [x] Service Account invite ใน Play Console + ให้สิทธิ์ financial data + manage subscriptions
+- [x] Implement `revenueCatService.ts` — code สมบูรณ์แล้ว
+- [x] เปลี่ยน Lifetime → Yearly ทุกไฟล์ (frontend + backend)
+- [ ] Build AAB ใหม่ (`cd android && .\gradlew.bat bundleRelease`)
+- [ ] อัปโหลด AAB ไป Play Console (Internal Testing)
+- [ ] สร้าง Subscription Products ใน Play Console:
+  - `candle_master_pro_monthly` — $3.99/mo
+  - `candle_master_pro_yearly` — $29.99/yr
+- [ ] สร้าง Entitlements & Offerings ใน RevenueCat Dashboard:
+  - Entitlement: `pro`
+  - Products: ผูก monthly + yearly เข้ากับ entitlement "pro"
+  - Offering: สร้าง "default" → เพิ่ม Monthly + Annual packages
+- [ ] Cloudflare env var: เพิ่ม `STRIPE_PRO_YEARLY_PRICE_ID` (แทน LIFETIME)
+- [ ] Stripe: สร้าง yearly recurring price ใหม่ (ตอนนี้ยังใช้ lifetime one-time price ID)
 - [ ] ทดสอบ purchase flow บน device จริง
 
 ### ⚠️ Closed Testing Requirement (สำคัญมาก!)

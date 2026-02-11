@@ -810,14 +810,14 @@ const AppContent: React.FC = () => {
                     onClick={async () => {
                       if (!user?.id || user.id.startsWith('guest_')) { setShowUpgradeModal(null); setActiveTab('profile'); return; }
                       setStripeLoading(true);
-                      try { await purchaseProWeb('lifetime', user.id, user.email); } catch (e) { console.error('Checkout error:', e); setStripeLoading(false); }
+                      try { await purchaseProWeb('yearly', user.id, user.email); } catch (e) { console.error('Checkout error:', e); setStripeLoading(false); }
                     }}
                   >
                     <span className="pricing-best-badge">BEST VALUE</span>
-                    <span className="pricing-label">Lifetime</span>
-                    <span className="pricing-price">$29.99</span>
-                    <span className="pricing-original">$39.99</span>
-                    <span className="pricing-btn-text">{stripeLoading ? 'Loading...' : 'Get Lifetime'}</span>
+                    <span className="pricing-label">Yearly</span>
+                    <span className="pricing-price">$19.99<span className="pricing-period">/yr</span></span>
+                    <span className="pricing-original">$47.88</span>
+                    <span className="pricing-btn-text">{stripeLoading ? 'Loading...' : 'Get Yearly'}</span>
                   </button>
                 </div>
               </motion.div>
@@ -1703,7 +1703,7 @@ const AppContent: React.FC = () => {
                     <Star size={20} fill="currentColor" />
                     <span>PRO Member</span>
                     <span className="pro-plan-badge">
-                      {proPlan === 'lifetime' ? <><span className="pro-badge-icon">∞</span> Lifetime</> : proPlan === 'monthly' ? 'Monthly' : 'Active'}
+                      {proPlan === 'yearly' ? <><span className="pro-badge-icon">★</span> Yearly</> : proPlan === 'monthly' ? 'Monthly' : 'Active'}
                     </span>
                   </div>
                 ) : (
@@ -2053,14 +2053,14 @@ const AppContent: React.FC = () => {
                     onClick={async () => {
                       if (!user?.id || user.id.startsWith('guest_')) { setShowUpgradeModal(null); setActiveTab('profile'); return; }
                       setStripeLoading(true);
-                      try { await purchaseProWeb('lifetime', user.id, user.email); } catch (e) { console.error('Checkout error:', e); setStripeLoading(false); }
+                      try { await purchaseProWeb('yearly', user.id, user.email); } catch (e) { console.error('Checkout error:', e); setStripeLoading(false); }
                     }}
                   >
                     <span className="pricing-best-badge">BEST VALUE</span>
-                    <span className="pricing-label">Lifetime</span>
-                    <span className="pricing-price">$29.99</span>
-                    <span className="pricing-original">$39.99</span>
-                    <span className="pricing-btn-text">{stripeLoading ? 'Loading...' : 'Get Lifetime'}</span>
+                    <span className="pricing-label">Yearly</span>
+                    <span className="pricing-price">$19.99<span className="pricing-period">/yr</span></span>
+                    <span className="pricing-original">$47.88</span>
+                    <span className="pricing-btn-text">{stripeLoading ? 'Loading...' : 'Get Yearly'}</span>
                   </button>
                 </div>
               </motion.div>

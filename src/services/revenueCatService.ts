@@ -1,16 +1,17 @@
 /**
  * RevenueCat Service
  *
- * เตรียมไว้สำหรับเชื่อมต่อ RevenueCat subscription management
+ * จัดการ In-App Purchases ผ่าน RevenueCat SDK
+ * ใช้สำหรับ native Android (Google Play Billing) และ iOS (Apple IAP)
+ * Web/PWA ใช้ Stripe แทน (ไม่ผ่าน RevenueCat)
  *
  * Setup Steps:
  * 1. สมัคร RevenueCat: https://app.revenuecat.com/signup
- * 2. สร้าง Project ใน RevenueCat Dashboard
- * 3. เชื่อม App Store Connect (iOS) และ Google Play Console (Android)
- * 4. สร้าง Products และ Entitlements
- * 5. Copy API Keys มาใส่ด้านล่าง
- *
- * Documentation: https://docs.revenuecat.com/docs
+ * 2. สร้าง Project → เพิ่ม Native Android app (com.candlemaster.app)
+ * 3. เชื่อม Google Play Console (Service Account JSON key)
+ * 4. สร้าง Products ใน Play Console → Import เข้า RevenueCat
+ * 5. สร้าง Entitlement "pro" → ผูก products → สร้าง Offering "default"
+ * 6. Copy API Key (goog_xxx) มาใส่ด้านล่าง
  */
 
 import { Capacitor } from '@capacitor/core';
@@ -21,10 +22,10 @@ import { Capacitor } from '@capacitor/core';
 const REVENUECAT_CONFIG = {
   // Get these from RevenueCat Dashboard > Project > API Keys
   ios: {
-    apiKey: '', // ใส่ iOS API Key ตรงนี้
+    apiKey: '', // ใส่ iOS API Key ตรงนี้ (apple_xxx)
   },
   android: {
-    apiKey: '', // ใส่ Android API Key ตรงนี้
+    apiKey: 'test_CopsGEpeTMAmmkTYvNOOmcnELao', // RevenueCat Android API Key
   },
   // Entitlement identifier ที่สร้างใน RevenueCat
   entitlements: {
@@ -34,7 +35,6 @@ const REVENUECAT_CONFIG = {
   products: {
     monthly: 'candle_master_pro_monthly',
     yearly: 'candle_master_pro_yearly',
-    lifetime: 'candle_master_pro_lifetime',
   },
 };
 
@@ -46,6 +46,7 @@ export interface SubscriptionStatus {
   expirationDate: Date | null;
   productId: string | null;
   willRenew: boolean;
+  plan?: 'monthly' | 'yearly';
 }
 
 export interface Product {
@@ -55,6 +56,8 @@ export interface Product {
   price: number;
   priceString: string;
   currencyCode: string;
+  /** 'monthly' | 'yearly' — derived from package type or product id */
+  planType?: 'monthly' | 'yearly';
 }
 
 export interface PurchaseResult {
@@ -69,7 +72,8 @@ class RevenueCatService {
   private initialized = false;
 
   /**
-   * Check if RevenueCat is configured
+   * Check if RevenueCat is configured (has API key for current platform)
+   * ถ้า return false → useSubscription จะ fallback ไป localStorage/Stripe
    */
   isConfigured(): boolean {
     const platform = Capacitor.getPlatform();
@@ -78,12 +82,12 @@ class RevenueCatService {
     } else if (platform === 'android') {
       return !!REVENUECAT_CONFIG.android.apiKey;
     }
-    return false;
+    return false; // web ไม่ใช้ RevenueCat
   }
 
   /**
    * Initialize RevenueCat SDK
-   * Call this on app startup after user authentication
+   * ต้องเรียกก่อนใช้ method อื่น — ปกติเรียกตอน app startup
    */
   async initialize(userId?: string): Promise<void> {
     if (this.initialized) return;
@@ -97,22 +101,26 @@ class RevenueCatService {
     }
 
     if (!this.isConfigured()) {
-      console.warn('[RevenueCat] API Key not configured. Please add your API key.');
+      console.warn('[RevenueCat] API Key not configured. Add your key in revenueCatService.ts');
       return;
     }
 
     try {
-      // TODO: Import and initialize RevenueCat Capacitor plugin
-      // import { Purchases } from '@revenuecat/purchases-capacitor';
-      //
-      // const apiKey = platform === 'ios'
-      //   ? REVENUECAT_CONFIG.ios.apiKey
-      //   : REVENUECAT_CONFIG.android.apiKey;
-      //
-      // await Purchases.configure({
-      //   apiKey,
-      //   appUserID: userId || null, // null = anonymous user
-      // });
+      const { Purchases, LOG_LEVEL } = await import('@revenuecat/purchases-capacitor');
+
+      const apiKey = platform === 'ios'
+        ? REVENUECAT_CONFIG.ios.apiKey
+        : REVENUECAT_CONFIG.android.apiKey;
+
+      // Enable debug logs in development
+      if (import.meta.env.DEV) {
+        await Purchases.setLogLevel({ level: LOG_LEVEL.DEBUG });
+      }
+
+      await Purchases.configure({
+        apiKey,
+        appUserID: userId || null, // null = anonymous user
+      });
 
       this.initialized = true;
       console.log('[RevenueCat] Initialized successfully', userId ? `for user: ${userId}` : '(anonymous)');
@@ -122,7 +130,8 @@ class RevenueCatService {
   }
 
   /**
-   * Login user (link purchases to user account)
+   * Login user — links purchases to user account
+   * เรียกเมื่อ user sign in (ไม่ใช่ guest)
    */
   async login(userId: string): Promise<void> {
     if (!this.initialized) {
@@ -131,25 +140,22 @@ class RevenueCatService {
     }
 
     try {
-      // TODO: Implement login
-      // import { Purchases } from '@revenuecat/purchases-capacitor';
-      // await Purchases.logIn({ appUserID: userId });
-
-      console.log('[RevenueCat] User logged in:', userId);
+      const { Purchases } = await import('@revenuecat/purchases-capacitor');
+      const { customerInfo } = await Purchases.logIn({ appUserID: userId });
+      console.log('[RevenueCat] User logged in:', userId, '| PRO:', !!customerInfo.entitlements.active[REVENUECAT_CONFIG.entitlements.pro]);
     } catch (error) {
       console.error('[RevenueCat] Login failed:', error);
     }
   }
 
   /**
-   * Logout user (switch to anonymous)
+   * Logout user — switch back to anonymous
+   * เรียกเมื่อ user sign out
    */
   async logout(): Promise<void> {
     try {
-      // TODO: Implement logout
-      // import { Purchases } from '@revenuecat/purchases-capacitor';
-      // await Purchases.logOut();
-
+      const { Purchases } = await import('@revenuecat/purchases-capacitor');
+      await Purchases.logOut();
       console.log('[RevenueCat] User logged out');
     } catch (error) {
       console.error('[RevenueCat] Logout failed:', error);
@@ -158,6 +164,7 @@ class RevenueCatService {
 
   /**
    * Get current subscription status
+   * ตรวจว่า user มี "pro" entitlement อยู่ไหม
    */
   async getSubscriptionStatus(): Promise<SubscriptionStatus> {
     const defaultStatus: SubscriptionStatus = {
@@ -172,20 +179,23 @@ class RevenueCatService {
     }
 
     try {
-      // TODO: Implement subscription check
-      // import { Purchases } from '@revenuecat/purchases-capacitor';
-      // const { customerInfo } = await Purchases.getCustomerInfo();
-      //
-      // const proEntitlement = customerInfo.entitlements.active[REVENUECAT_CONFIG.entitlements.pro];
-      //
-      // if (proEntitlement) {
-      //   return {
-      //     isPro: true,
-      //     expirationDate: proEntitlement.expirationDate ? new Date(proEntitlement.expirationDate) : null,
-      //     productId: proEntitlement.productIdentifier,
-      //     willRenew: proEntitlement.willRenew,
-      //   };
-      // }
+      const { Purchases } = await import('@revenuecat/purchases-capacitor');
+      const { customerInfo } = await Purchases.getCustomerInfo();
+
+      const proEntitlement = customerInfo.entitlements.active[REVENUECAT_CONFIG.entitlements.pro];
+
+      if (proEntitlement) {
+        // Derive plan type from product identifier
+        const plan = this.derivePlanType(proEntitlement.productIdentifier);
+
+        return {
+          isPro: true,
+          expirationDate: proEntitlement.expirationDate ? new Date(proEntitlement.expirationDate) : null,
+          productId: proEntitlement.productIdentifier,
+          willRenew: proEntitlement.willRenew,
+          plan,
+        };
+      }
 
       return defaultStatus;
     } catch (error) {
@@ -195,7 +205,8 @@ class RevenueCatService {
   }
 
   /**
-   * Get available products for purchase
+   * Get available products from RevenueCat Offerings
+   * ดึง packages จาก "default" offering แล้ว map เป็น Product[]
    */
   async getProducts(): Promise<Product[]> {
     if (!this.initialized || !this.isConfigured()) {
@@ -203,22 +214,63 @@ class RevenueCatService {
     }
 
     try {
-      // TODO: Implement get products
-      // import { Purchases } from '@revenuecat/purchases-capacitor';
-      // const { products } = await Purchases.getProducts({
-      //   productIdentifiers: Object.values(REVENUECAT_CONFIG.products),
-      // });
-      //
-      // return products.map(p => ({
-      //   identifier: p.identifier,
-      //   title: p.title,
-      //   description: p.description,
-      //   price: p.price,
-      //   priceString: p.priceString,
-      //   currencyCode: p.currencyCode,
-      // }));
+      const { Purchases } = await import('@revenuecat/purchases-capacitor');
+      const offerings = await Purchases.getOfferings();
 
-      return [];
+      const currentOffering = offerings.current;
+      if (!currentOffering) {
+        console.warn('[RevenueCat] No current offering found');
+        return [];
+      }
+
+      // Map available packages → Product[]
+      const products: Product[] = [];
+
+      // Monthly package
+      if (currentOffering.monthly) {
+        const pkg = currentOffering.monthly;
+        products.push({
+          identifier: pkg.product.identifier,
+          title: pkg.product.title,
+          description: pkg.product.description,
+          price: pkg.product.price,
+          priceString: pkg.product.priceString,
+          currencyCode: pkg.product.currencyCode,
+          planType: 'monthly',
+        });
+      }
+
+      // Annual package
+      if (currentOffering.annual) {
+        const pkg = currentOffering.annual;
+        products.push({
+          identifier: pkg.product.identifier,
+          title: pkg.product.title,
+          description: pkg.product.description,
+          price: pkg.product.price,
+          priceString: pkg.product.priceString,
+          currencyCode: pkg.product.currencyCode,
+          planType: 'yearly',
+        });
+      }
+
+      // Fallback: ถ้าไม่มี named packages → iterate availablePackages
+      if (products.length === 0 && currentOffering.availablePackages.length > 0) {
+        for (const pkg of currentOffering.availablePackages) {
+          products.push({
+            identifier: pkg.product.identifier,
+            title: pkg.product.title,
+            description: pkg.product.description,
+            price: pkg.product.price,
+            priceString: pkg.product.priceString,
+            currencyCode: pkg.product.currencyCode,
+            planType: this.derivePlanType(pkg.product.identifier),
+          });
+        }
+      }
+
+      console.log(`[RevenueCat] Loaded ${products.length} products:`, products.map(p => `${p.planType}: ${p.priceString}`));
+      return products;
     } catch (error) {
       console.error('[RevenueCat] Failed to get products:', error);
       return [];
@@ -226,29 +278,64 @@ class RevenueCatService {
   }
 
   /**
-   * Purchase a product
+   * Purchase a product by identifier
+   * ใช้ purchaseStoreProduct — ต้องส่ง full product object
    */
-  async purchase(_productId: string): Promise<PurchaseResult> {
+  async purchase(productId: string): Promise<PurchaseResult> {
     if (!this.initialized || !this.isConfigured()) {
       return { success: false, error: 'RevenueCat not initialized' };
     }
 
     try {
-      // TODO: Implement purchase (will use _productId)
-      // import { Purchases } from '@revenuecat/purchases-capacitor';
-      // const { customerInfo } = await Purchases.purchaseProduct({
-      //   productIdentifier: productId,
-      // });
-      //
-      // const isPro = !!customerInfo.entitlements.active[REVENUECAT_CONFIG.entitlements.pro];
-      // return { success: isPro };
+      const { Purchases } = await import('@revenuecat/purchases-capacitor');
 
-      return { success: false, error: 'Purchase not implemented yet' };
+      // Get offerings to find the package containing this product
+      const offerings = await Purchases.getOfferings();
+      const currentOffering = offerings.current;
+
+      if (!currentOffering) {
+        return { success: false, error: 'No offering available' };
+      }
+
+      // Find matching package by product identifier
+      const targetPackage = currentOffering.availablePackages.find(
+        pkg => pkg.product.identifier === productId
+      );
+
+      let customerInfo;
+
+      if (targetPackage) {
+        // ✅ Preferred: purchase via package (RevenueCat tracks it better)
+        const result = await Purchases.purchasePackage({
+          aPackage: targetPackage,
+        });
+        customerInfo = result.customerInfo;
+      } else {
+        // Fallback: purchase via product identifier directly
+        const { products } = await Purchases.getProducts({
+          productIdentifiers: [productId],
+        });
+
+        if (products.length === 0) {
+          return { success: false, error: 'Product not found' };
+        }
+
+        const result = await Purchases.purchaseStoreProduct({
+          product: products[0],
+        });
+        customerInfo = result.customerInfo;
+      }
+
+      // Check if PRO entitlement is now active
+      const isPro = !!customerInfo.entitlements.active[REVENUECAT_CONFIG.entitlements.pro];
+      console.log(`[RevenueCat] Purchase result — PRO: ${isPro}, product: ${productId}`);
+
+      return { success: isPro };
     } catch (error: any) {
       console.error('[RevenueCat] Purchase failed:', error);
 
-      // Handle user cancellation
-      if (error?.userCancelled) {
+      // Handle user cancellation gracefully
+      if (error?.code === '1' || error?.userCancelled) {
         return { success: false, error: 'Purchase cancelled' };
       }
 
@@ -258,6 +345,7 @@ class RevenueCatService {
 
   /**
    * Restore previous purchases
+   * สำคัญสำหรับ App Store / Play Store compliance — ต้องมีปุ่ม restore
    */
   async restorePurchases(): Promise<SubscriptionStatus> {
     const defaultStatus: SubscriptionStatus = {
@@ -272,26 +360,45 @@ class RevenueCatService {
     }
 
     try {
-      // TODO: Implement restore
-      // import { Purchases } from '@revenuecat/purchases-capacitor';
-      // const { customerInfo } = await Purchases.restorePurchases();
-      //
-      // const proEntitlement = customerInfo.entitlements.active[REVENUECAT_CONFIG.entitlements.pro];
-      //
-      // if (proEntitlement) {
-      //   return {
-      //     isPro: true,
-      //     expirationDate: proEntitlement.expirationDate ? new Date(proEntitlement.expirationDate) : null,
-      //     productId: proEntitlement.productIdentifier,
-      //     willRenew: proEntitlement.willRenew,
-      //   };
-      // }
+      const { Purchases } = await import('@revenuecat/purchases-capacitor');
+      const { customerInfo } = await Purchases.restorePurchases();
 
+      const proEntitlement = customerInfo.entitlements.active[REVENUECAT_CONFIG.entitlements.pro];
+
+      if (proEntitlement) {
+        const plan = this.derivePlanType(proEntitlement.productIdentifier);
+        console.log(`[RevenueCat] Restore successful — PRO: true, plan: ${plan}`);
+
+        return {
+          isPro: true,
+          expirationDate: proEntitlement.expirationDate ? new Date(proEntitlement.expirationDate) : null,
+          productId: proEntitlement.productIdentifier,
+          willRenew: proEntitlement.willRenew,
+          plan,
+        };
+      }
+
+      console.log('[RevenueCat] Restore completed — no PRO entitlement found');
       return defaultStatus;
     } catch (error) {
       console.error('[RevenueCat] Restore failed:', error);
       return defaultStatus;
     }
+  }
+
+  // ============================================
+  // HELPER METHODS
+  // ============================================
+
+  /**
+   * Derive plan type from product identifier
+   * candle_master_pro_monthly → 'monthly'
+   * candle_master_pro_yearly → 'yearly'
+   */
+  private derivePlanType(productId: string): 'monthly' | 'yearly' | undefined {
+    if (productId.includes('monthly')) return 'monthly';
+    if (productId.includes('yearly') || productId.includes('annual')) return 'yearly';
+    return undefined;
   }
 }
 

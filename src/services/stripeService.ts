@@ -8,12 +8,12 @@
 // Price IDs (test mode) — public keys safe to expose
 export const STRIPE_PRICES = {
   MONTHLY: 'price_1Sy1nW16LYJ3RyorkLS7LxMG',
-  LIFETIME: 'price_1Sy1oM16LYJ3Ryorh9we4HXg',
+  YEARLY: 'price_1Sy1oM16LYJ3Ryorh9we4HXg', // TODO: Update to yearly Stripe price ID when created
 } as const;
 
 export interface SubscriptionStatus {
   isPro: boolean;
-  plan: 'monthly' | 'lifetime' | null;
+  plan: 'monthly' | 'yearly' | null;
   expiresAt: string | null;
 }
 

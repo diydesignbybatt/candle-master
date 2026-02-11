@@ -10,7 +10,7 @@
 interface Env {
   STRIPE_SECRET_KEY: string;
   STRIPE_PRO_MONTHLY_PRICE_ID: string;
-  STRIPE_PRO_LIFETIME_PRICE_ID: string;
+  STRIPE_PRO_YEARLY_PRICE_ID: string;
   SUBSCRIPTIONS: KVNamespace;
 }
 
@@ -38,9 +38,9 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     }
 
     // Determine mode based on price ID
-    const isSubscription = priceId === context.env.STRIPE_PRO_MONTHLY_PRICE_ID;
-    const mode = isSubscription ? 'subscription' : 'payment';
-    const plan = isSubscription ? 'monthly' : 'lifetime';
+    const isMonthly = priceId === context.env.STRIPE_PRO_MONTHLY_PRICE_ID;
+    const mode = 'subscription'; // Both monthly and yearly are subscriptions now
+    const plan = isMonthly ? 'monthly' : 'yearly';
 
     // Determine base URL for redirects
     const origin = new URL(context.request.url).origin;

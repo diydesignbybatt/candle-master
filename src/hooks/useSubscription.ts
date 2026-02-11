@@ -64,10 +64,15 @@ export const useSubscription = (userId: string | null = null) => {
   }
 
   const [tier, setTier] = useState<SubscriptionTier>('free');
-  const [proPlan, setProPlan] = useState<'monthly' | 'lifetime' | null>(() => {
+  const [proPlan, setProPlan] = useState<'monthly' | 'yearly' | null>(() => {
     const key = getPlanStorageKey(userId);
     const saved = localStorage.getItem(key);
-    return saved === 'monthly' || saved === 'lifetime' ? saved : null;
+    // Migrate old 'lifetime' to 'yearly'
+    if (saved === 'lifetime') {
+      localStorage.setItem(key, 'yearly');
+      return 'yearly';
+    }
+    return saved === 'monthly' || saved === 'yearly' ? saved : null;
   });
   const [gamesToday, setGamesToday] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
@@ -102,7 +107,7 @@ export const useSubscription = (userId: string | null = null) => {
         }
         // Restore plan type
         const savedPlan = localStorage.getItem(planStorageKey);
-        if (savedPlan === 'monthly' || savedPlan === 'lifetime') {
+        if (savedPlan === 'monthly' || savedPlan === 'yearly') {
           setProPlan(savedPlan);
         }
 
@@ -250,8 +255,8 @@ export const useSubscription = (userId: string | null = null) => {
    * Purchase PRO via Stripe (Web/PWA)
    * Redirects to Stripe Checkout — user returns to app after payment
    */
-  const purchaseProWeb = useCallback(async (plan: 'monthly' | 'lifetime', userId: string, email?: string | null) => {
-    const priceId = plan === 'monthly' ? STRIPE_PRICES.MONTHLY : STRIPE_PRICES.LIFETIME;
+  const purchaseProWeb = useCallback(async (plan: 'monthly' | 'yearly', userId: string, email?: string | null) => {
+    const priceId = plan === 'monthly' ? STRIPE_PRICES.MONTHLY : STRIPE_PRICES.YEARLY;
     await createCheckoutSession(priceId, userId, email);
     // User is redirected to Stripe — no code runs after this
   }, []);

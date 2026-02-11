@@ -2138,7 +2138,7 @@ export const MODAL_STYLES = `
     letter-spacing: 0.05em;
   }
 
-  /* PRO Plan Badge (Monthly / Lifetime) */
+  /* PRO Plan Badge (Monthly / Yearly) */
   .profile-action-btn.pro-toggle.is-pro span {
     flex: 1;
   }
