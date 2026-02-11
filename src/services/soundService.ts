@@ -29,7 +29,10 @@ class SoundService {
   private sfxGain: GainNode | null = null;    // gain node สำหรับ sound effects
   private musicGain: GainNode | null = null;  // gain node สำหรับ BGM
   private musicSource: MediaElementAudioSourceNode | null = null;
-  private sfxSources: Map<SoundType, MediaElementAudioSourceNode> = new Map();
+
+  // AudioBuffer cache — ใช้สำหรับ play SFX ผ่าน Web Audio API โดยตรง (ไม่พึ่ง HTMLAudioElement)
+  // แก้ปัญหา Android WebView ที่ HTMLAudioElement.play() ถูก interrupt โดย heavy state updates
+  private audioBuffers: Map<SoundType, AudioBuffer> = new Map();
 
   // Volume ในหน่วย dB (0 dB = เสียงเต็ม, ค่าติดลบ = เบาลง)
   private sfxVolumeDb: number = 0;      // SFX: 0 dB (เสียงเต็ม)
@@ -45,6 +48,9 @@ class SoundService {
   private pendingMusic: MusicType | null = null;
   private userHasInteracted: boolean = false;
 
+  // SFX file paths สำหรับ preload AudioBuffer
+  private sfxPaths: Map<SoundType, string> = new Map();
+
   constructor() {
     // Load sound setting from localStorage
     const saved = localStorage.getItem('sound_enabled');
@@ -53,7 +59,7 @@ class SoundService {
     const musicSaved = localStorage.getItem('music_enabled');
     this.musicEnabled = musicSaved !== null ? JSON.parse(musicSaved) : true;
 
-    // Preload all sounds
+    // Preload all sounds (HTMLAudioElement fallback + save paths for AudioBuffer)
     this.loadSound('trade-open', '/sounds/tradeopen.mp3');
     this.loadSound('profit', '/sounds/profit.mp3');
     this.loadSound('loss', '/sounds/loss.mp3');
@@ -67,6 +73,7 @@ class SoundService {
 
   /**
    * สร้าง AudioContext + GainNode (ต้องเรียกหลัง user interaction ครั้งแรก)
+   * แล้ว preload AudioBuffer สำหรับ SFX ทุกตัว
    */
   private initAudioContext() {
     if (this.audioCtx) return;
@@ -83,20 +90,31 @@ class SoundService {
       this.musicGain.gain.value = dbToGain(this.musicVolumeDb);
       this.musicGain.connect(this.audioCtx.destination);
 
-      // Connect preloaded SFX elements ผ่าน sfxGain
-      this.sounds.forEach((audio, type) => {
-        if (this.audioCtx && this.sfxGain) {
-          const source = this.audioCtx.createMediaElementSource(audio);
-          source.connect(this.sfxGain);
-          this.sfxSources.set(type, source);
-          // ตั้ง element volume เป็น 1.0 เพราะ GainNode ควบคุมแทน
-          audio.volume = 1.0;
-        }
+      // Preload AudioBuffer สำหรับ SFX ทุกตัว (ใช้แทน HTMLAudioElement บน Android)
+      // AudioBufferSourceNode สร้างใหม่ทุกครั้งที่ play → ไม่มีปัญหา reuse/interrupt
+      this.sfxPaths.forEach((path, type) => {
+        this.preloadAudioBuffer(type, path);
       });
 
       console.log(`[Audio] Web Audio API initialized — SFX: ${this.sfxVolumeDb}dB, Music: ${this.musicVolumeDb}dB`);
     } catch (err) {
       console.warn('[Audio] Web Audio API not supported, falling back to HTMLAudioElement volume', err);
+    }
+  }
+
+  /**
+   * Fetch + decode MP3 เป็น AudioBuffer (เร็ว, ไม่ block main thread ตอน play)
+   */
+  private async preloadAudioBuffer(type: SoundType, path: string) {
+    if (!this.audioCtx) return;
+    try {
+      const response = await fetch(path);
+      const arrayBuffer = await response.arrayBuffer();
+      const audioBuffer = await this.audioCtx.decodeAudioData(arrayBuffer);
+      this.audioBuffers.set(type, audioBuffer);
+      console.log(`[Audio] AudioBuffer loaded: ${type}`);
+    } catch (err) {
+      console.warn(`[Audio] Failed to preload AudioBuffer: ${type}`, err);
     }
   }
 
@@ -131,6 +149,7 @@ class SoundService {
       audio.preload = 'auto';
       audio.volume = 1.0;
       this.sounds.set(type, audio);
+      this.sfxPaths.set(type, path); // เก็บ path ไว้สำหรับ preload AudioBuffer ภายหลัง
     } catch (error) {
       console.warn(`Failed to load sound: ${type}`, error);
     }
@@ -145,16 +164,14 @@ class SoundService {
 
   /**
    * Play a sound effect
-   * volume parameter เป็น dB (เช่น -3, -6, -12) ถ้าไม่ระบุใช้ค่า default
+   *
+   * ใช้ AudioBuffer (Web Audio API) เป็นหลัก — สร้าง BufferSourceNode ใหม่ทุกครั้ง
+   * ไม่มีปัญหา reuse/interrupt ที่เกิดกับ HTMLAudioElement บน Android WebView
+   *
+   * Fallback เป็น cloneNode HTMLAudioElement ถ้า AudioBuffer ยังไม่พร้อม
    */
   play(type: SoundType, volume?: number) {
     if (!this.enabled) return;
-
-    const sound = this.sounds.get(type);
-    if (!sound) {
-      console.warn(`Sound not found: ${type}`);
-      return;
-    }
 
     try {
       // Resume AudioContext ถ้า suspended (จำเป็นสำหรับ Android WebView)
@@ -162,26 +179,27 @@ class SoundService {
         this.audioCtx.resume();
       }
 
-      sound.currentTime = 0;
-
-      // ถ้ามี Web Audio API → ใช้ GainNode (volume param ไม่มีผลต่อ per-sound เพราะใช้ shared gain)
-      // ถ้าไม่มี → fallback เป็น HTMLAudioElement.volume
-      if (!this.sfxGain && volume !== undefined) {
-        sound.volume = Math.max(0, Math.min(1, dbToGain(volume)));
+      // ✅ Primary: ใช้ AudioBuffer + BufferSourceNode (เร็ว, ไม่ interrupt, play ซ้อนได้)
+      const buffer = this.audioBuffers.get(type);
+      if (buffer && this.audioCtx && this.sfxGain) {
+        const source = this.audioCtx.createBufferSource();
+        source.buffer = buffer;
+        source.connect(this.sfxGain);
+        source.start(0);
+        return;
       }
 
-      sound.play().catch(err => {
-        // ถ้า play ผ่าน Web Audio API ไม่ได้ ลอง fallback
-        if (this.sfxSources.has(type) && this.audioCtx) {
-          console.warn(`[Audio] Retrying ${type} without Web Audio API`);
-          try {
-            const fallback = new Audio(sound.src);
-            fallback.volume = 1.0;
-            fallback.play().catch(() => {});
-          } catch {}
-        } else {
-          console.warn(`Failed to play sound: ${type}`, err);
-        }
+      // 🔄 Fallback: clone HTMLAudioElement (ไม่ reuse ตัวเดิม → หลีกเลี่ยง interrupt)
+      const original = this.sounds.get(type);
+      if (!original) {
+        console.warn(`Sound not found: ${type}`);
+        return;
+      }
+
+      const clone = original.cloneNode() as HTMLAudioElement;
+      clone.volume = volume !== undefined ? Math.max(0, Math.min(1, dbToGain(volume))) : 1.0;
+      clone.play().catch(err => {
+        console.warn(`Failed to play sound: ${type}`, err);
       });
     } catch (error) {
       console.warn(`Error playing sound: ${type}`, error);

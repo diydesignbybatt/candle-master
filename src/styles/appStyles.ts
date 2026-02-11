@@ -2332,6 +2332,94 @@ export const MODAL_STYLES = `
   .thankyou-btn:active {
     transform: scale(0.97);
   }
+
+  /* ===== New Game Confirmation Modal ===== */
+  .confirm-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 1001;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+
+  .confirm-modal {
+    background: var(--bg-primary, #fff);
+    border-radius: 20px;
+    padding: 32px 24px 24px;
+    max-width: 300px;
+    width: 100%;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    position: relative;
+  }
+
+  .confirm-icon {
+    font-size: 2.4rem;
+    margin-bottom: 12px;
+    line-height: 1;
+  }
+
+  .confirm-title {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: var(--color-text, #333);
+    margin: 0 0 8px 0;
+    letter-spacing: -0.02em;
+  }
+
+  .confirm-subtitle {
+    font-size: 0.85rem;
+    color: var(--color-text-secondary, #666);
+    margin: 0 0 24px 0;
+    line-height: 1.5;
+  }
+
+  .confirm-buttons {
+    display: flex;
+    gap: 10px;
+    width: 100%;
+  }
+
+  .btn-confirm-cancel {
+    flex: 1;
+    padding: 14px 16px;
+    border: 2px solid var(--color-border, #e0e0e0);
+    border-radius: 12px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    background: transparent;
+    color: var(--color-text-secondary, #666);
+    transition: all 0.15s;
+  }
+
+  .btn-confirm-cancel:active {
+    background: var(--bg-tertiary, #f5f5f5);
+    transform: scale(0.97);
+  }
+
+  .btn-confirm-action {
+    flex: 1;
+    padding: 14px 16px;
+    border: none;
+    border-radius: 12px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    background: var(--color-text, #333);
+    color: var(--bg-primary, #fff);
+    transition: all 0.15s;
+  }
+
+  .btn-confirm-action:active {
+    opacity: 0.85;
+    transform: scale(0.97);
+  }
 `;
 
 // Tablet Landscape Layout Styles

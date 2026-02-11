@@ -138,6 +138,7 @@ const AppContent: React.FC = () => {
   const [musicEnabled, setMusicEnabled] = useState(soundService.isMusicEnabled());
   const [tradeAmount, setTradeAmount] = useState(20000);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [showNewGameConfirm, setShowNewGameConfirm] = useState(false);
   const [academySection, setAcademySection] = useState<'candle' | 'chart' | 'risk'>('candle');
   const [selectedChartPattern, setSelectedChartPattern] = useState<ChartPattern | null>(null);
   const [riskCategory, setRiskCategory] = useState<string | null>(null);
@@ -292,12 +293,12 @@ const AppContent: React.FC = () => {
 
   // Wrap trading actions with sound effects
   const long = () => {
-    playSound('click');
+    playSound('trade-open');
     originalLong(tradeAmount);
   };
 
   const short = () => {
-    playSound('click');
+    playSound('trade-open');
     originalShort(tradeAmount);
   };
 
@@ -2135,7 +2136,41 @@ const AppContent: React.FC = () => {
                   </motion.div>
                 )}
 
-                <button className="btn btn-primary" onClick={() => loadNewStock(true)}>START NEW GAME</button>
+                <button className="btn btn-primary" onClick={() => setShowNewGameConfirm(true)}>START NEW GAME</button>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* New Game Confirmation Modal */}
+        <AnimatePresence>
+          {showNewGameConfirm && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="confirm-overlay"
+              onClick={() => setShowNewGameConfirm(false)}
+            >
+              <motion.div
+                initial={{ scale: 0.85, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.85, opacity: 0 }}
+                transition={{ type: 'spring', damping: 22, stiffness: 300 }}
+                className="confirm-modal"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="confirm-icon">🎮</div>
+                <h3 className="confirm-title">Start New Game?</h3>
+                <p className="confirm-subtitle">Your current results will be cleared.</p>
+                <div className="confirm-buttons">
+                  <button className="btn-confirm-cancel" onClick={() => setShowNewGameConfirm(false)}>
+                    Go Back
+                  </button>
+                  <button className="btn-confirm-action" onClick={() => { setShowNewGameConfirm(false); loadNewStock(true); }}>
+                    New Game
+                  </button>
+                </div>
               </motion.div>
             </motion.div>
           )}

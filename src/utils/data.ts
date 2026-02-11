@@ -64,6 +64,12 @@ const generateMockHistory = (info: { symbol: string, name: string }): StockData 
   return { symbol: info.symbol.split('.')[0], name: info.name + " (Simulated)", data };
 };
 
+// startIndex(200) + maxMoves ต้องพอ → PRO: 200+250=450, Free: 200+100=300
+const WINDOW_SIZE_PRO = 450;
+const WINDOW_SIZE_FREE = 300;
+const MIN_DATA_PRO = 500;   // ต้องมี data อย่างน้อยนี้ถึงจะ slice ได้
+const MIN_DATA_FREE = 350;
+
 /**
  * Fetch CSV data from Stooq via Cloudflare Workers or CORS proxy
  */
@@ -139,7 +145,12 @@ const fetchCandleData = async (symbol: string): Promise<Candle[]> => {
   let csvData: string;
 
   if (isNative) {
-    const response = await CapacitorHttp.get({ url: stooqUrl });
+    const response = await CapacitorHttp.get({
+      url: stooqUrl,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+      }
+    });
     csvData = response.data;
   } else {
     csvData = await fetchStockCSV(symbol);
@@ -151,13 +162,13 @@ const fetchCandleData = async (symbol: string): Promise<Candle[]> => {
 
 /**
  * Try to fetch event mode data for a historical crisis.
- * Uses dynamic window: prefers 250 candles, but accepts down to 150.
+ * Uses dynamic window: prefers 450 candles (200 display + 250 PRO moves), min 350.
  */
 const tryEventMode = async (event: HistoricalEvent): Promise<StockData | null> => {
   const eventStart = new Date(event.startDate).getTime();
   const eventEnd = new Date(event.endDate).getTime();
-  const preferredWindow = 250;
-  const minWindow = 150;
+  const preferredWindow = WINDOW_SIZE_PRO; // 450 — enough for PRO (event mode is PRO-only)
+  const minWindow = MIN_DATA_FREE;         // 350 — at least enough for free-tier moves
 
   // Shuffle event stocks and try each one
   const shuffledStocks = [...event.stocks].sort(() => Math.random() - 0.5);
@@ -239,18 +250,20 @@ export const fetchRandomStockData = async (isPro: boolean = false): Promise<Stoc
   }
 
   // Normal mode: random stock, random window
+  // PRO ต้องการ 450 candles (200 แสดง + 250 moves), Free ต้องการ 300 (200 + 100)
+  const windowSize = isPro ? WINDOW_SIZE_PRO : WINDOW_SIZE_FREE;
+  const minDataRequired = isPro ? MIN_DATA_PRO : MIN_DATA_FREE;
   const stockInfo = stocks[Math.floor(Math.random() * stocks.length)];
 
   try {
     const allCandles = await fetchCandleData(stockInfo.symbol);
 
-    if (allCandles.length < 300) throw new Error('Data too short');
+    if (allCandles.length < minDataRequired) throw new Error(`Data too short: ${allCandles.length} < ${minDataRequired}`);
 
-    const windowSize = 250;
     const maxStartIndex = allCandles.length - windowSize;
     const randomStartIndex = Math.floor(Math.random() * maxStartIndex);
 
-    console.log(`[Data] Stock: ${stockInfo.symbol}, Total candles: ${allCandles.length}, Random start: ${randomStartIndex}, Date range: ${allCandles[randomStartIndex].time} to ${allCandles[randomStartIndex + windowSize - 1].time}`);
+    console.log(`[Data] Stock: ${stockInfo.symbol}, Total candles: ${allCandles.length}, Window: ${windowSize}, Random start: ${randomStartIndex}, Date range: ${allCandles[randomStartIndex].time} to ${allCandles[randomStartIndex + windowSize - 1].time}`);
 
     return {
       symbol: stockInfo.symbol.split('.')[0],
