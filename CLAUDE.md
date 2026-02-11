@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Candle Master v2.4.0** is a **Trading Simulator Game & Education Platform**.
+**Candle Master v2.5.0** is a **Trading Simulator Game & Education Platform**.
 - **Core Concept**: Users practice trading on historical data without knowing the stock beforehand (Blind Trading).
 - **Gameplay**:
     - Users see candlesticks, MA indicators (20/50), and Volume.
@@ -40,9 +40,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - [x] **Tutorial Screenshots**: Updated 9 high-quality tutorial images (shared with landing page)
 - [x] **Touch Swipe Fix**: `touch-action: pan-x` prevents vertical scroll during horizontal swipe
 - [ ] **Apple Sign-In**: Required by Apple (if Google Sign-In exists)
-- [x] **Stripe (PWA)**: Checkout Sessions for Monthly ($3.99) + Yearly ($29.99) via Cloudflare Workers
+- [x] **Stripe (PWA)**: Checkout Sessions for Monthly ($3.99) + Yearly ($19.99) via Cloudflare Workers
+- [x] **Stripe Live Mode**: ✅ Switched from test → live keys (Feb 2026)
 - [x] **Stripe Webhook**: Webhook endpoint configured → `https://app.candlemaster.app/api/stripe/webhook`
-- [x] **Cloudflare KV**: SUBSCRIPTIONS namespace created + env vars set (STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, STRIPE_PRO_MONTHLY_PRICE_ID)
+- [x] **Cloudflare KV**: SUBSCRIPTIONS namespace created + env vars set (STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, STRIPE_PRO_MONTHLY_PRICE_ID, STRIPE_PRO_YEARLY_PRICE_ID)
 - [x] **Lifetime → Yearly Migration**: เปลี่ยนทุกไฟล์จาก lifetime เป็น yearly (useSubscription, stripeService, App.tsx, webhook, checkout, status)
 - [x] **Firebase Auth (Web)**: Real Google Sign-In via `signInWithPopup` + `prompt: 'select_account'`
 - [x] **Thank You Modal**: Full-screen modal after Stripe payment (mascot + celebration animation)
@@ -57,9 +58,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - [x] **PRO Badge Fix**: Lifetime badge aligned right, ∞ icon golden, Star icon forced gold on Sandstone
 - [x] **Test PRO Toggle**: Dashed "Activate Test PRO / FOR TEST" button on Profile for testers
 - [x] **OG Image Updated**: Uncle mascot teaching trade image for social sharing (landing page)
-- [x] **RevenueCat**: Code complete + Android API key inserted, Dashboard partially configured
+- [x] **RevenueCat**: ✅ Fully configured — Products imported, Entitlement `pro` created, Offering `default` with Monthly + Yearly packages
+- [x] **Google Play Subscriptions**: ✅ `candle_master_pro_monthly` ($3.99/mo) + `candle_master_pro_yearly` ($19.99/yr) created & active
+- [x] **Google Cloud Pub/Sub**: ✅ API enabled + Service Account has Pub/Sub Admin role
+- [x] **Stripe Live Mode**: ✅ Switched from test → live keys
+- [x] **Favicon**: Uncle mascot favicon for both App and Landing Page
+- [x] **Install Page Icon**: Uncle mascot replaces candlestick SVG on install pages
 - [ ] **iOS Testing**: Requires Mac + Xcode
-- [ ] **Stripe Live Mode**: Switch test → live keys when ready to launch
 
 ## PRO Features
 
@@ -113,15 +118,23 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **API Key Security**: Firebase API key (`AIzaSy...`) เป็น public key ปลอดภัย — ควรเพิ่ม HTTP referrer restrictions ใน Google Cloud Console
 - **Web Auth Flow**: `signInWithPopup(auth, googleProvider)` ใน `src/contexts/AuthContext.tsx`
 
-### RevenueCat (Subscription - In Progress)
+### RevenueCat (Subscription - ✅ Fully Configured)
 - **Service File**: `src/services/revenueCatService.ts`
 - **Hook**: `src/hooks/useSubscription.ts`
-- **Status**: Code complete, API key inserted, Dashboard partially configured
+- **Status**: ✅ Code complete + Dashboard fully configured
 - **Android API Key**: `test_CopsGEpeTMAmmkTYvNOOmcnELao`
+- **RevenueCat App ID**: `app866dc003da`
 - **Package**: `com.candlemaster.app`
-- **Service Account**: `revenuecat@candle-master-d4bbd.iam.gserviceaccount.com`
-- **Entitlement**: `pro` (ยังไม่ได้สร้างใน Dashboard)
-- **Products**: `candle_master_pro_monthly`, `candle_master_pro_yearly` (ยังไม่ได้สร้างใน Play Console)
+- **Service Account**: `revenuecat@candle-master-d4bbd.iam.gserviceaccount.com` (Pub/Sub Admin ✅)
+- **Entitlement**: `pro` ✅ (created, all 4 products attached)
+- **Offering**: `default` ✅ (RevenueCat ID: `ofrngf2f1708a7d`)
+- **Products (Google Play)**:
+  - `candle_master_pro_monthly:monthly-base` — $3.99/mo ✅
+  - `candle_master_pro_yearly:yearly-base` — $19.99/yr ✅
+- **Products (Test Store)**:
+  - `monthly` (test) ✅
+  - `yearly` (test) ✅
+- **Packages**: `$rc_monthly` + `$rc_annual` ✅
 
 ### Per-User Subscription Scoping
 - **localStorage keys scoped by userId**: `candle_master_subscription_${userId}`, `candle_master_plan_${userId}`
@@ -138,13 +151,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | Plan | Product ID (RevenueCat) | ราคา | หมายเหตุ |
 |------|------------------------|------|----------|
 | PRO Monthly | `candle_master_pro_monthly` | $3.99/mo | สมัครรายเดือน |
-| PRO Yearly | `candle_master_pro_yearly` | $29.99/yr | สมัครรายปี (เดิมเป็น Lifetime) |
+| PRO Yearly | `candle_master_pro_yearly` | $19.99/yr | สมัครรายปี (เดิมเป็น Lifetime $29.99) |
 
 **แยกช่องทางตาม Platform:**
 | Platform | Payment Provider | หมายเหตุ |
 |----------|-----------------|----------|
-| **PWA (Web)** | **Stripe** | ✅ Checkout Session พร้อม (Monthly $3.99 + Yearly $29.99) |
-| **Android** | **RevenueCat** → Google Play Billing | ✅ Code complete + API key inserted, รอสร้าง products ใน Play Console |
+| **PWA (Web)** | **Stripe** | ✅ Live mode — Monthly $3.99 + Yearly $19.99 |
+| **Android** | **RevenueCat** → Google Play Billing | ✅ Fully configured — Products, Entitlement, Offering ครบ |
 | **iOS** | **RevenueCat** → Apple IAP | Scaffold พร้อม รอ API keys + Mac/Xcode |
 
 **หลักการ:**
@@ -160,15 +173,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `functions/api/stripe/webhook.ts` — รับ Stripe events, อัปเดต KV
 - `functions/api/stripe/status.ts` — ตรวจสถานะ subscription จาก KV
 - `src/services/stripeService.ts` — Frontend API calls
-- Pricing Modal: 2 cards (Monthly $3.99 + Yearly $29.99) ใน App.tsx
+- Pricing Modal: 2 cards (Monthly $3.99 + Yearly $19.99) ใน App.tsx
 - Return handler: `?stripe=success` → verify + activate PRO
 
-**Stripe Environment Variables (ตั้งใน Cloudflare Dashboard):**
+**Stripe Environment Variables (ตั้งใน Cloudflare Dashboard) — ✅ Live mode:**
 ```
-STRIPE_SECRET_KEY = sk_test_... (or sk_live_... for production)
-STRIPE_WEBHOOK_SECRET = whsec_...
-STRIPE_PRO_MONTHLY_PRICE_ID = price_1Sy1nW16LYJ3RyorkLS7LxMG
-STRIPE_PRO_YEARLY_PRICE_ID = (ต้องสร้าง yearly recurring price ใหม่ใน Stripe แล้วใส่ที่นี่)
+STRIPE_SECRET_KEY = sk_live_... ✅
+STRIPE_WEBHOOK_SECRET = whsec_... ✅
+STRIPE_PRO_MONTHLY_PRICE_ID = price_1SzX9500THgK6a8eMmajk8sQ ✅
+STRIPE_PRO_YEARLY_PRICE_ID = price_1SzX9X00THgK6a8eQ6GfnYnn ✅
 ```
 
 **TODO เมื่อพร้อมเปิด:**
@@ -182,16 +195,16 @@ STRIPE_PRO_YEARLY_PRICE_ID = (ต้องสร้าง yearly recurring price
 - [x] Stripe redirect URL แก้เป็น `https://app.candlemaster.app` (ไม่ใช่ candlemaster.app ซึ่งเป็น Landing Page)
 - [x] ใส่ RevenueCat API keys (Android: `test_CopsGEpeTMAmmkTYvNOOmcnELao`)
 - [x] เปลี่ยน Lifetime → Yearly ทุกไฟล์
-- [ ] Cloudflare env: เปลี่ยน `STRIPE_PRO_LIFETIME_PRICE_ID` → `STRIPE_PRO_YEARLY_PRICE_ID`
-- [ ] Stripe: สร้าง yearly recurring price (ตอนนี้ยังใช้ lifetime one-time price)
+- [x] Cloudflare env: เปลี่ยน `STRIPE_PRO_LIFETIME_PRICE_ID` → `STRIPE_PRO_YEARLY_PRICE_ID` ✅
+- [x] Stripe: สร้าง yearly recurring price ✅ (Monthly + Yearly live prices)
+- [x] เปลี่ยนจาก Stripe test mode → live mode ✅
 - [ ] Sync subscription status ข้าม platform ผ่าน Firebase user ID
-- [ ] เปลี่ยนจาก Stripe test mode → live mode (เมื่อพร้อม launch)
 
 ### Subscription Roadmap (Phased)
 
 | Phase | Feature | Status |
 |-------|---------|--------|
-| **1** | Stripe Checkout (PWA) — ซื้อ PRO ได้ | ✅ Done + Deployed (Sandbox) |
+| **1** | Stripe Checkout (PWA) — ซื้อ PRO ได้ | ✅ Done + Deployed (Live) |
 | 2 | Cancellation (App) — anchor text ยกเลิกในหน้า Profile + retention modal ลดราคา | ⬜ |
 | 3 | Landing Page Profile — Login/Profile บน landing page ดูสถานะ + ยกเลิก | ⬜ |
 | 4 | Lemon Squeezy Affiliate — referral/affiliate system | ⬜ |
@@ -536,23 +549,23 @@ npm run build && npx wrangler pages deploy dist --project-name=candle-master   #
 
 ### 🔴 Blockers ที่เหลือ (ต้องแก้ก่อน Production)
 
-**1. RevenueCat (Native IAP) — อยู่ระหว่างดำเนินการ**
+**1. RevenueCat (Native IAP) — ✅ Dashboard Complete, รอทดสอบ**
 - [x] สมัคร RevenueCat → ใส่ API key (`test_CopsGEpeTMAmmkTYvNOOmcnELao`)
 - [x] สร้าง Google Play Service Account + JSON key + อัปโหลดไป RevenueCat
 - [x] Service Account invite ใน Play Console + ให้สิทธิ์ financial data + manage subscriptions
+- [x] Google Cloud Pub/Sub API enabled + Service Account มี Pub/Sub Admin role
 - [x] Implement `revenueCatService.ts` — code สมบูรณ์แล้ว
 - [x] เปลี่ยน Lifetime → Yearly ทุกไฟล์ (frontend + backend)
-- [ ] Build AAB ใหม่ (`cd android && .\gradlew.bat bundleRelease`)
-- [ ] อัปโหลด AAB ไป Play Console (Internal Testing)
-- [ ] สร้าง Subscription Products ใน Play Console:
-  - `candle_master_pro_monthly` — $3.99/mo
-  - `candle_master_pro_yearly` — $29.99/yr
-- [ ] สร้าง Entitlements & Offerings ใน RevenueCat Dashboard:
-  - Entitlement: `pro`
-  - Products: ผูก monthly + yearly เข้ากับ entitlement "pro"
-  - Offering: สร้าง "default" → เพิ่ม Monthly + Annual packages
-- [ ] Cloudflare env var: เพิ่ม `STRIPE_PRO_YEARLY_PRICE_ID` (แทน LIFETIME)
-- [ ] Stripe: สร้าง yearly recurring price ใหม่ (ตอนนี้ยังใช้ lifetime one-time price ID)
+- [x] สร้าง Subscription Products ใน Play Console:
+  - `candle_master_pro_monthly` ($3.99/mo, base plan: `monthly-base`)
+  - `candle_master_pro_yearly` ($19.99/yr, base plan: `yearly-base`)
+- [x] สร้าง Entitlements & Offerings ใน RevenueCat Dashboard:
+  - Entitlement: `pro` ✅ (4 products attached)
+  - Offering: `default` ✅ ($rc_monthly + $rc_annual packages)
+- [x] Cloudflare env var: STRIPE_PRO_YEARLY_PRICE_ID ✅
+- [x] Stripe: Live mode with Monthly + Yearly prices ✅
+- [ ] Build AAB v2.5.0(14) + อัปโหลด Play Console (Internal Testing)
+- [ ] เพิ่ม License Testers ใน Play Console
 - [ ] ทดสอบ purchase flow บน device จริง
 
 ### ⚠️ Closed Testing Requirement (สำคัญมาก!)
@@ -601,15 +614,33 @@ npm run build && npx wrangler pages deploy dist --project-name=candle-master   #
 - **Subscription terms**: ต้องแสดงราคา, auto-renew, วิธียกเลิก ให้ชัดเจนก่อนซื้อ
 
 ### Version Info
-- `package.json`: v2.4.1
-- `build.gradle`: versionName "2.4.1" / versionCode 12
-- `App.tsx`: Profile page → `<p className="app-version">v2.4.1</p>`
+- `package.json`: v2.5.0
+- `build.gradle`: versionName "2.5.0" / versionCode 14
+- `App.tsx`: Profile page → `<p className="app-version">v2.5.0</p>`
 - **หมายเหตุ**: `android/` อยู่ใน `.gitignore` — versionCode ต้องเพิ่มเอง manual ทุกครั้งก่อนอัปโหลด Play Console
 
 ### ⚠️ Version Bump Checklist (ทำทุกครั้งก่อน build release)
 1. `package.json` → `"version": "x.y.z"`
 2. `android/app/build.gradle` → `versionName "x.y.z"` + `versionCode` +1
 3. `src/App.tsx` → Profile page `app-version` text → `vx.y.z`
+
+### Changes ใน v2.5.0
+- ✅ Stripe Live Mode — switched from sandbox to live keys
+- ✅ Stripe Live Prices — Monthly $3.99 (`price_1SzX9500THgK6a8eMmajk8sQ`) + Yearly $19.99 (`price_1SzX9X00THgK6a8eQ6GfnYnn`)
+- ✅ Stripe Webhook live endpoint configured
+- ✅ Cloudflare env vars updated (4 values + KV namespace)
+- ✅ Google Play Subscriptions created (`candle_master_pro_monthly` + `candle_master_pro_yearly`)
+- ✅ RevenueCat fully configured (Products, Entitlement `pro`, Offering `default`)
+- ✅ Google Cloud Pub/Sub API enabled + Service Account Pub/Sub Admin role
+- ✅ Landing page: Lifetime → Yearly pricing migration (all pages)
+- ✅ Landing page: Uncle mascot favicon + install page icon
+- ✅ Landing page: Checkout buttons redirect to PWA app instead of Stripe Payment Links
+- ✅ Yearly price changed from $29.99 → $19.99
+
+### Changes ใน v2.4.2
+- ✅ Price update: Yearly $29.99 → $19.99 in App.tsx (tablet + mobile layouts)
+- ✅ stripeService.ts updated with live price IDs
+- ✅ Version bump for pricing changes
 
 ### Changes ใน v2.4.1
 - ✅ Fix PRO 50-move limit → เพิ่ม windowSize 250→450 (PRO) / 300 (Free)
