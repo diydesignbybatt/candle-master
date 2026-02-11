@@ -1217,6 +1217,15 @@ export const MODAL_STYLES = `
     color: var(--color-red);
   }
 
+  .app-version {
+    text-align: center;
+    font-size: 0.7rem;
+    color: var(--color-text-tertiary);
+    margin: 24px 0 8px;
+    letter-spacing: 0.5px;
+    opacity: 0.5;
+  }
+
   /* Chart Pattern Detail Modal */
   .academy-card.clickable {
     cursor: pointer;

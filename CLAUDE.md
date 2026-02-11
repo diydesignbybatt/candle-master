@@ -579,9 +579,23 @@ npm run build && npx wrangler pages deploy dist --project-name=candle-master   #
 - **Subscription terms**: ต้องแสดงราคา, auto-renew, วิธียกเลิก ให้ชัดเจนก่อนซื้อ
 
 ### Version Info
-- `package.json`: v2.4.0
-- `build.gradle`: versionName "2.4.0" / versionCode 11
+- `package.json`: v2.4.1
+- `build.gradle`: versionName "2.4.1" / versionCode 12
+- `App.tsx`: Profile page → `<p className="app-version">v2.4.1</p>`
 - **หมายเหตุ**: `android/` อยู่ใน `.gitignore` — versionCode ต้องเพิ่มเอง manual ทุกครั้งก่อนอัปโหลด Play Console
+
+### ⚠️ Version Bump Checklist (ทำทุกครั้งก่อน build release)
+1. `package.json` → `"version": "x.y.z"`
+2. `android/app/build.gradle` → `versionName "x.y.z"` + `versionCode` +1
+3. `src/App.tsx` → Profile page `app-version` text → `vx.y.z`
+
+### Changes ใน v2.4.1
+- ✅ Fix PRO 50-move limit → เพิ่ม windowSize 250→450 (PRO) / 300 (Free)
+- ✅ Fix Android SFX → AudioBuffer + BufferSourceNode แทน HTMLAudioElement
+- ✅ เพิ่ม User-Agent header ใน CapacitorHttp สำหรับ Stooq
+- ✅ กลับไปใช้ tradeopen.mp3 สำหรับปุ่ม Long/Short
+- ✅ เพิ่ม Start New Game confirmation modal กันเผลอกด
+- ✅ เพิ่ม app version ล่างสุดหน้า Profile
 
 ### Changes ใน v2.4.0
 - ✅ อัปเดตภาพ character judge ทั้ง 39 รูป (crop ใหม่ + ลบ background + แปลง webp ใหม่)

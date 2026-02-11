@@ -430,5 +430,5 @@ export const toggleSound = (enabled: boolean) => {
 };
 
 export const isSoundEnabled = () => {
-  soundService.isEnabled();
+  return soundService.isEnabled();
 };

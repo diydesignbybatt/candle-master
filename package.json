@@ -1,7 +1,7 @@
 {
   "name": "candle-master",
   "private": true,
-  "version": "2.4.0",
+  "version": "2.4.1",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -31,7 +31,6 @@
     "date-fns": "^4.1.0",
     "firebase": "^12.9.0",
     "framer-motion": "^12.26.2",
-    "lightweight-charts": "^5.1.0",
     "lucide-react": "^0.562.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0"

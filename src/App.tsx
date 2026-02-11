@@ -1779,6 +1779,8 @@ const AppContent: React.FC = () => {
                     <span>Sign Out</span>
                   </button>
                 )}
+
+                <p className="app-version">v2.4.1</p>
               </div>
             </div>
           )}
