@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Candle Master v2.5.0** is a **Trading Simulator Game & Education Platform**.
+**Candle Master v2.5.3** is a **Trading Simulator Game & Education Platform**.
 - **Core Concept**: Users practice trading on historical data without knowing the stock beforehand (Blind Trading).
 - **Gameplay**:
     - Users see candlesticks, MA indicators (20/50), and Volume.
@@ -251,12 +251,12 @@ STRIPE_PRO_YEARLY_PRICE_ID = price_1SzX9X00THgK6a8eQ6GfnYnn ✅
         - **Native**: Uses `CapacitorHttp` for direct requests.
     - **Data Processing**: Sorts candles by date ascending (Stooq returns descending).
     - **Random Window**: Selects random 250-candle window from full history.
-    - **Event Mode (PRO)**: 1/7 chance → picks historical crisis event → fetches event-era stock data (dynamic window: min 150, preferred 250 candles).
+    - **Event Mode (PRO)**: 1/7 chance → picks historical crisis event → fetches event-era stock data (dynamic window: min 200, preferred 250 candles).
     - **Fallback**: Generates mock geometric brownian motion data if API fails.
 
 ### Application Structure
-- **Core Logic (`App.tsx`)**: ~1,900 lines. Contains gameplay, tab navigation, Pattern Academy (incl. Money & Mind with Lucide icons), Game Over, crisis banner, Tablet layout.
-- **Styles (`src/styles/appStyles.ts`)**: ~2,200 lines. Centralized CSS constants including TABLET_STYLES.
+- **Core Logic (`App.tsx`)**: ~1,900 lines. Contains gameplay, tab navigation, Pattern Academy (incl. Money & Mind with Lucide icons), Game Over, crisis banner, Tablet layout, isPro race condition fix.
+- **Styles (`src/styles/appStyles.ts`)**: ~2,200 lines. Centralized CSS constants including TABLET_STYLES + mobile landscape `@media` query.
 - **Constants (`src/constants/`)**:
     - `patterns.tsx`: `ACADEMY_PATTERNS` (20 candlestick) + `CHART_PATTERNS` (image-based)
     - `guides.ts`: Money & Mind academy — 9 categories, 30 guide cards with Lucide icons (gold `#D4A017`)
@@ -614,15 +614,27 @@ npm run build && npx wrangler pages deploy dist --project-name=candle-master   #
 - **Subscription terms**: ต้องแสดงราคา, auto-renew, วิธียกเลิก ให้ชัดเจนก่อนซื้อ
 
 ### Version Info
-- `package.json`: v2.5.0
-- `build.gradle`: versionName "2.5.0" / versionCode 14
-- `App.tsx`: Profile page → `<p className="app-version">v2.5.0</p>`
+- `package.json`: v2.5.3
+- `build.gradle`: versionName "2.5.3" / versionCode 17
+- `App.tsx`: Profile page → `<p className="app-version">v2.5.3</p>`
 - **หมายเหตุ**: `android/` อยู่ใน `.gitignore` — versionCode ต้องเพิ่มเอง manual ทุกครั้งก่อนอัปโหลด Play Console
 
 ### ⚠️ Version Bump Checklist (ทำทุกครั้งก่อน build release)
 1. `package.json` → `"version": "x.y.z"`
 2. `android/app/build.gradle` → `versionName "x.y.z"` + `versionCode` +1
 3. `src/App.tsx` → Profile page `app-version` text → `vx.y.z`
+
+### Changes ใน v2.5.3
+- ✅ Fix Crisis Event Race Condition: `isPro` เริ่ม `false` แล้ว resolve เป็น `true` หลัง initial load → เพิ่ม `prevIsProRef` + แยก useEffect เป็น mount-once + isPro transition guard
+- ✅ Fix Crisis Event Date Range: COVID-19, Oil 2014, China 2015 มี candles ไม่ถึง 350 → ขยาย date range + ลด minWindow จาก 350 → 200
+- ✅ Fix Crisis Banner on Desktop/Tablet: Banner มีแค่ใน mobile layout → เพิ่มใน tablet layout ด้วย
+- ✅ Mobile Landscape Clean Chart: ซ่อน floating controls ด้วย CSS `@media (max-height: 500px) and (orientation: landscape)` เพื่อแสดงแค่ Chart
+- ✅ Version bump: v2.5.3 (versionCode 17)
+
+### Changes ใน v2.5.2
+- ✅ Tablet/Desktop Responsive Layout: แยก layout สำหรับ tablet landscape (isWideScreen >= 768px)
+- ✅ Android Purchase Flow Fix: Capacitor import + purchase button routing
+- ✅ Mobile Landscape Full Chart Mode: initial landscape detection
 
 ### Changes ใน v2.5.1
 - ✅ RevenueCat: เปลี่ยน test API key → production key (`goog_peJadJCRMfojllXEemlRszrhyep`)
