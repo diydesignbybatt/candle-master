@@ -89,7 +89,8 @@ export const Chart: React.FC<ChartProps> = ({ data, zoom = 1 }) => {
   const paddingLeft = 48; // Space for Y-Axis
   const paddingRight = 20;
   const paddingTop = 20;
-  const volumeHeight = showVolume ? 80 : 0; // Height reserved for volume bars
+  // Volume height scales with chart — 20% of height, clamped between 60-120px
+  const volumeHeight = showVolume ? Math.min(120, Math.max(60, Math.round(height * 0.2))) : 0;
   const paddingBottom = 40 + volumeHeight; // Extra room for scrollbar + volume
 
   // Total width grows with data
@@ -147,7 +148,7 @@ export const Chart: React.FC<ChartProps> = ({ data, zoom = 1 }) => {
         minHeight: '200px', /* Ensure it never collapses completely */
         background: colors.background,
         borderRadius: '12px',
-        padding: '10px 10px 0 5px', /* Reduced left padding for more chart space */
+        padding: '10px 10px 10px 5px', /* Reduced left padding for more chart space */
         position: 'relative',
         display: 'flex',
         overflow: 'hidden',
@@ -351,7 +352,7 @@ export const Chart: React.FC<ChartProps> = ({ data, zoom = 1 }) => {
             const isUp = d.close >= d.open;
             const color = isUp ? colors.candleUp : colors.candleDown;
             const barHeight = getVolumeHeight(d.volume);
-            const volumeY = height - 40;
+            const volumeY = height - 20;
 
             return (
               <rect

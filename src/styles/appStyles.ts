@@ -2787,7 +2787,7 @@ export const TABLET_STYLES = `
     width: 100%;
     height: 100%;
     overflow-x: auto;
-    overflow-y: hidden;
+    overflow-y: visible;
   }
 
   /* Tablet Floating Controls (zoom, indicators) */
