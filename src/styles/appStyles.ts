@@ -846,6 +846,56 @@ export const UI_STYLES = `
     color: #FFD700 !important;
     fill: #FFD700 !important;
   }
+
+  /* ═══════════════════════════════════════════════════
+     Mobile Landscape — Full Chart Mode
+     Hide ALL UI, chart fills the entire screen.
+     Only applies to phones (height ≤ 500px in landscape).
+     Tablets (height > 500px) use the tablet-layout instead.
+     ═══════════════════════════════════════════════════ */
+  .landscape-mode {
+    /* Override shell to fill entire viewport */
+    align-items: stretch !important;
+    justify-content: stretch !important;
+  }
+
+  .landscape-mode .app-container {
+    max-width: 100vw;
+    width: 100vw;
+    height: 100vh;
+    max-height: 100vh;
+  }
+
+  .landscape-mode .main-content {
+    height: 100vh;
+    padding: 0;
+  }
+
+  .landscape-mode .chart-wrapper {
+    padding-bottom: 0;
+    gap: 0;
+  }
+
+  .landscape-mode .scroll-chart-container {
+    padding: 0;
+    height: 100%;
+  }
+
+  .landscape-mode .chart-footer {
+    display: none;
+  }
+
+  .landscape-mode .zoom-controls-floating {
+    top: 4px;
+    left: 4px;
+    z-index: 100;
+  }
+
+  .landscape-mode .info-btn-floating {
+    bottom: 4px;
+    left: 4px;
+    z-index: 100;
+  }
 `;
 
 export const MODAL_STYLES = `

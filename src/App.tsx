@@ -1,5 +1,6 @@
 import React, { useState, useEffect, Component, useCallback, useRef, Suspense, lazy } from 'react';
 import type { ErrorInfo, ReactNode } from 'react';
+import { Capacitor } from '@capacitor/core';
 
 class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean }> {
   constructor(props: { children: ReactNode }) {
