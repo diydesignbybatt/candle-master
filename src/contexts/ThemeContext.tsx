@@ -49,6 +49,8 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       root.style.setProperty('--color-border', '#334155');
       root.style.setProperty('--color-green', '#22c55e');
       root.style.setProperty('--color-red', '#ef4444');
+      root.style.setProperty('--candle-up', '#10B981');
+      root.style.setProperty('--candle-down', '#FF6B6B');
 
       root.setAttribute('data-theme', 'dark');
       root.style.colorScheme = 'dark';
@@ -63,6 +65,8 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       root.style.setProperty('--color-border', '#D1C7BC');
       root.style.setProperty('--color-green', '#0E7C7B');
       root.style.setProperty('--color-red', '#D62246');
+      root.style.setProperty('--candle-up', '#2D7A5A');
+      root.style.setProperty('--candle-down', '#C85A54');
 
       root.setAttribute('data-theme', 'light');
       root.style.colorScheme = 'light';
@@ -77,6 +81,8 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       root.style.setProperty('--color-border', '#586e75');
       root.style.setProperty('--color-green', '#22c55e');
       root.style.setProperty('--color-red', '#ef4444');
+      root.style.setProperty('--candle-up', '#2aa198');
+      root.style.setProperty('--candle-down', '#cb4b16');
 
       root.setAttribute('data-theme', 'dark');
       root.style.colorScheme = 'dark';
@@ -91,6 +97,8 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       root.style.setProperty('--color-border', '#D1C7BC');
       root.style.setProperty('--color-green', '#0E7C7B');
       root.style.setProperty('--color-red', '#D62246');
+      root.style.setProperty('--candle-up', '#2D7A5A');
+      root.style.setProperty('--candle-down', '#C85A54');
       root.setAttribute('data-theme', 'light');
       root.style.colorScheme = 'light';
     }

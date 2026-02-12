@@ -2616,8 +2616,8 @@ export const TABLET_STYLES = `
   .tablet-btn:active { transform: scale(0.95); }
   .tablet-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-  .tablet-btn-long { background: var(--color-green); color: white; }
-  .tablet-btn-short { background: var(--color-red); color: white; }
+  .tablet-btn-long { background: var(--candle-up, var(--color-green)); color: white; }
+  .tablet-btn-short { background: var(--candle-down, var(--color-red)); color: white; }
   .tablet-btn-skip { background: var(--bg-secondary); color: var(--color-text-primary); border: 1px solid var(--color-border); }
   .tablet-btn-stop { background: var(--bg-secondary); color: var(--color-text-primary); border: 1px solid var(--color-border); }
 
@@ -2749,7 +2749,7 @@ export const TABLET_STYLES = `
     display: flex;
     flex-direction: column;
     gap: 8px;
-    z-index: 10;
+    z-index: 50;
   }
 
   .tablet-floating-btn {
@@ -2786,6 +2786,20 @@ export const TABLET_STYLES = `
     align-items: center;
     justify-content: center;
     overflow: hidden;
+  }
+
+  .tablet-pro-status-banner {
+    height: 28px;
+    background: var(--bg-primary);
+    border-top: 1px solid var(--color-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    color: #f59e0b;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
   }
 
   .tablet-nav-item {

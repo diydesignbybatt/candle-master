@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 export interface OrientationState {
   isLandscape: boolean;
   isTablet: boolean;
+  isWideScreen: boolean;
 }
 
 export const useOrientation = (): OrientationState => {
@@ -12,7 +13,8 @@ export const useOrientation = (): OrientationState => {
     const height = window.innerHeight;
     return {
       isLandscape: width > height,
-      isTablet: Math.min(width, height) >= 768
+      isTablet: Math.min(width, height) >= 768,
+      isWideScreen: width >= 768,
     };
   });
 
@@ -23,7 +25,8 @@ export const useOrientation = (): OrientationState => {
 
       setState({
         isLandscape: width > height,
-        isTablet: Math.min(width, height) >= 768
+        isTablet: Math.min(width, height) >= 768,
+        isWideScreen: width >= 768,
       });
     };
 

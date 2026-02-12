@@ -296,20 +296,14 @@ export const useSubscription = (userId: string | null = null) => {
   }, [userId]);
 
   /**
-   * Upgrade to PRO — platform-aware
-   * Web → opens Pricing Modal (handled in App.tsx)
-   * Native → RevenueCat
+   * Upgrade to PRO — testing helper (mock toggle, no real purchase)
+   * Always uses localStorage regardless of platform
    */
   const upgradeToPro = useCallback(() => {
-    if (Capacitor.isNativePlatform() && revenueCatService.isConfigured()) {
-      purchasePro();
-    } else {
-      // Web: upgrade to PRO (real flow uses purchaseProWeb via Pricing Modal)
-      console.log('[useSubscription] Upgrade to PRO');
-      setTier('pro');
-      localStorage.setItem(storageKey, 'pro');
-    }
-  }, [purchasePro, storageKey]);
+    console.log('[useSubscription] Test upgrade to PRO (mock)');
+    setTier('pro');
+    localStorage.setItem(storageKey, 'pro');
+  }, [storageKey]);
 
   /**
    * Reset to free (for testing only)

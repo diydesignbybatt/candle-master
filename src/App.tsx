@@ -70,7 +70,8 @@ const AppContent: React.FC = () => {
   const { mode, setMode, resolvedTheme } = useTheme();
   const { user, isAuthenticated, isGuest, signOut, linkAccount } = useAuth();
   const orientation = useOrientation();
-  const { isPro, proPlan, isLoading: subLoading, upgradeToPro, resetToFree, purchaseProWeb, openManageSubscription } = useSubscription(user?.id ?? null);
+  const { isPro, proPlan, isLoading: subLoading, upgradeToPro, resetToFree, purchaseProWeb, purchasePro, products: rcProducts, openManageSubscription } = useSubscription(user?.id ?? null);
+  const isNative = Capacitor.isNativePlatform();
   const [stripeLoading, setStripeLoading] = useState(false);
   const [showThankYouModal, setShowThankYouModal] = useState(false);
 
@@ -149,8 +150,8 @@ const AppContent: React.FC = () => {
 
   // Check if in landscape mode and on trade screen
   const isLandscapeTrading = orientation.isLandscape && activeTab === 'trade';
-  // Check if tablet in landscape mode (special layout)
-  const isTabletLandscape = orientation.isTablet && orientation.isLandscape;
+  // Check if tablet in landscape mode OR desktop browser wide enough (special layout)
+  const isTabletLandscape = (orientation.isTablet && orientation.isLandscape) || orientation.isWideScreen;
   // Track active tab separately for tablet (avoid TypeScript narrowing)
   const tabletActiveTab = activeTab;
 
@@ -637,6 +638,13 @@ const AppContent: React.FC = () => {
                 <ZoomOut size={18} />
               </button>
               <button
+                className={`tablet-floating-btn${musicEnabled ? ' active' : ''}`}
+                onClick={toggleMusic}
+                title={musicEnabled ? 'Music On' : 'Music Off'}
+              >
+                {musicEnabled ? <Music size={18} /> : <Music2 size={18} />}
+              </button>
+              <button
                 className="tablet-floating-btn"
                 onClick={() => setShowInfo(true)}
               >
@@ -655,8 +663,13 @@ const AppContent: React.FC = () => {
 
         {/* Bottom Section */}
         <div className="tablet-bottom">
-          {/* Promo Banner */}
-          {!isPro && (
+          {/* Promo / PRO Status Banner */}
+          {isPro ? (
+            <div className="tablet-pro-status-banner">
+              <Star size={14} fill="currentColor" />
+              <span>PRO Member{proPlan ? ` — ${proPlan === 'yearly' ? 'Yearly' : 'Monthly'}` : ''}</span>
+            </div>
+          ) : (
             <div className="tablet-promo-banner" onClick={() => setShowUpgradeModal('general')}>
               <div className="promo-marquee">
                 <span className="promo-text">
@@ -737,7 +750,39 @@ const AppContent: React.FC = () => {
                   </button>
                 </div>
                 <div className="info-content">
-                  <p>Trade on real historical data from 1970-2025. Open up to 3 positions with 0.15% commission per trade.</p>
+                  <div className="info-item intro">
+                    <h3>🌍 Welcome to Real Market Trading</h3>
+                    <p>Candle Master is a stock trading simulator using <strong>real historical market data</strong> from around the world (1970-2025). You never know which period you'll face - just price, candlesticks, and daily timeframes.</p>
+                  </div>
+                  <div className="info-item">
+                    <h3>🎯 Your Mission</h3>
+                    <p><strong>Starting Capital:</strong> $100,000 virtual money</p>
+                    <ul>
+                      <li>Open up to <strong>3 positions</strong> simultaneously</li>
+                      <li>Set your own position size per trade</li>
+                      <li>All trades execute at <strong>candle close price</strong> only</li>
+                    </ul>
+                  </div>
+                  <div className="info-item warning">
+                    <h3>⚠️ Reality Check</h3>
+                    <ul>
+                      <li><strong>0.15%</strong> commission fee per trade</li>
+                      <li>You need <strong>{'>'}0.3% profit</strong> per round-trip just to break even</li>
+                      <li>Real market conditions = Real challenges</li>
+                    </ul>
+                  </div>
+                  <div className="info-item">
+                    <h3>🎮 Controls</h3>
+                    <ul>
+                      <li><strong>SKIP</strong> → Move to next day's candle</li>
+                      <li><strong>STOP</strong> → End current session & lock in results</li>
+                    </ul>
+                  </div>
+                  <div className="info-item challenge">
+                    <h3>🏆 The Challenge</h3>
+                    <p>Can you survive the markets and grow your account? If you're truly skilled, you'll become the next <strong>Candle Master</strong>.</p>
+                    <p className="good-luck">Good luck, trader. 🍀</p>
+                  </div>
                 </div>
               </motion.div>
             </motion.div>
@@ -796,7 +841,15 @@ const AppContent: React.FC = () => {
                     onClick={async () => {
                       if (!user?.id || user.id.startsWith('guest_')) { setShowUpgradeModal(null); setActiveTab('profile'); return; }
                       setStripeLoading(true);
-                      try { await purchaseProWeb('monthly', user.id, user.email); } catch (e) { console.error('Checkout error:', e); setStripeLoading(false); }
+                      try {
+                        if (isNative) {
+                          const monthly = rcProducts.find(p => p.identifier.includes('monthly'));
+                          const result = await purchasePro(monthly?.identifier);
+                          if (result?.success) setShowUpgradeModal(null);
+                        } else {
+                          await purchaseProWeb('monthly', user.id, user.email);
+                        }
+                      } catch (e) { console.error('Purchase error:', e); } finally { setStripeLoading(false); }
                     }}
                   >
                     <span className="pricing-label">Monthly</span>
@@ -810,7 +863,15 @@ const AppContent: React.FC = () => {
                     onClick={async () => {
                       if (!user?.id || user.id.startsWith('guest_')) { setShowUpgradeModal(null); setActiveTab('profile'); return; }
                       setStripeLoading(true);
-                      try { await purchaseProWeb('yearly', user.id, user.email); } catch (e) { console.error('Checkout error:', e); setStripeLoading(false); }
+                      try {
+                        if (isNative) {
+                          const yearly = rcProducts.find(p => p.identifier.includes('yearly'));
+                          const result = await purchasePro(yearly?.identifier);
+                          if (result?.success) setShowUpgradeModal(null);
+                        } else {
+                          await purchaseProWeb('yearly', user.id, user.email);
+                        }
+                      } catch (e) { console.error('Purchase error:', e); } finally { setStripeLoading(false); }
                     }}
                   >
                     <span className="pricing-best-badge">BEST VALUE</span>
@@ -2048,7 +2109,15 @@ const AppContent: React.FC = () => {
                     onClick={async () => {
                       if (!user?.id || user.id.startsWith('guest_')) { setShowUpgradeModal(null); setActiveTab('profile'); return; }
                       setStripeLoading(true);
-                      try { await purchaseProWeb('monthly', user.id, user.email); } catch (e) { console.error('Checkout error:', e); setStripeLoading(false); }
+                      try {
+                        if (isNative) {
+                          const monthly = rcProducts.find(p => p.identifier.includes('monthly'));
+                          const result = await purchasePro(monthly?.identifier);
+                          if (result?.success) setShowUpgradeModal(null);
+                        } else {
+                          await purchaseProWeb('monthly', user.id, user.email);
+                        }
+                      } catch (e) { console.error('Purchase error:', e); } finally { setStripeLoading(false); }
                     }}
                   >
                     <span className="pricing-label">Monthly</span>
@@ -2062,7 +2131,15 @@ const AppContent: React.FC = () => {
                     onClick={async () => {
                       if (!user?.id || user.id.startsWith('guest_')) { setShowUpgradeModal(null); setActiveTab('profile'); return; }
                       setStripeLoading(true);
-                      try { await purchaseProWeb('yearly', user.id, user.email); } catch (e) { console.error('Checkout error:', e); setStripeLoading(false); }
+                      try {
+                        if (isNative) {
+                          const yearly = rcProducts.find(p => p.identifier.includes('yearly'));
+                          const result = await purchasePro(yearly?.identifier);
+                          if (result?.success) setShowUpgradeModal(null);
+                        } else {
+                          await purchaseProWeb('yearly', user.id, user.email);
+                        }
+                      } catch (e) { console.error('Purchase error:', e); } finally { setStripeLoading(false); }
                     }}
                   >
                     <span className="pricing-best-badge">BEST VALUE</span>
