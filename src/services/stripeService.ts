@@ -15,6 +15,7 @@ export interface SubscriptionStatus {
   isPro: boolean;
   plan: 'monthly' | 'yearly' | null;
   expiresAt: string | null;
+  cancelAtPeriodEnd?: boolean;
 }
 
 /**
@@ -66,4 +67,29 @@ export async function checkSubscriptionStatus(userId: string): Promise<Subscript
     console.warn('Subscription status check failed:', error);
     return { isPro: false, plan: null, expiresAt: null };
   }
+}
+
+/**
+ * สร้าง Stripe Customer Portal session เพื่อจัดการ/ยกเลิก subscription
+ * Return URL สำหรับ redirect ไป Stripe Portal
+ */
+export async function createPortalSession(userId: string): Promise<string> {
+  const res = await fetch('/api/stripe/portal', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ userId }),
+  });
+
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({ error: 'Unknown error' }));
+    throw new Error((error as { error: string }).error || 'Failed to create portal session');
+  }
+
+  const { url } = await res.json() as { url: string };
+
+  if (!url) {
+    throw new Error('No portal URL returned');
+  }
+
+  return url;
 }

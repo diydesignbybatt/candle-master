@@ -2160,6 +2160,40 @@ export const MODAL_STYLES = `
     font-weight: 900;
   }
 
+  /* Manage Subscription Section */
+  .pro-subscription-section {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+  }
+  .manage-subscription-link {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 0.72rem;
+    color: #94A3B8;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    padding: 6px 0 2px 32px;
+    text-align: left;
+    font-weight: 500;
+    opacity: 0.7;
+    transition: opacity 0.15s;
+  }
+  .manage-subscription-link:hover {
+    opacity: 1;
+  }
+  .manage-subscription-link:active {
+    opacity: 0.5;
+  }
+  .manage-subscription-link:disabled {
+    opacity: 0.4;
+    cursor: wait;
+  }
+  [data-theme="dark"] .manage-subscription-link {
+    color: #94A3B8;
+  }
+
   /* PRO Upgrade CTA Button (Free users) */
   .pro-upgrade-cta {
     width: 100%;

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { revenueCatService, type SubscriptionStatus, type Product } from '../services/revenueCatService';
-import { createCheckoutSession, checkSubscriptionStatus as checkStripeStatus, STRIPE_PRICES } from '../services/stripeService';
+import { createCheckoutSession, checkSubscriptionStatus as checkStripeStatus, createPortalSession, STRIPE_PRICES } from '../services/stripeService';
 
 // Subscription tiers
 export type SubscriptionTier = 'free' | 'pro';
@@ -262,6 +262,40 @@ export const useSubscription = (userId: string | null = null) => {
   }, []);
 
   /**
+   * Open subscription management — platform-aware
+   * Web → Stripe Customer Portal
+   * Android → Google Play subscription management
+   * iOS → Apple subscription management
+   */
+  const openManageSubscription = useCallback(async () => {
+    if (Capacitor.isNativePlatform()) {
+      const platform = Capacitor.getPlatform();
+      if (platform === 'android') {
+        window.open('https://play.google.com/store/account/subscriptions', '_blank');
+      } else if (platform === 'ios') {
+        window.open('https://apps.apple.com/account/subscriptions', '_blank');
+      }
+      return;
+    }
+
+    // Web/PWA: Stripe Customer Portal
+    if (!userId || userId.startsWith('guest_')) {
+      console.warn('[useSubscription] Cannot open portal: no userId');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const url = await createPortalSession(userId);
+      window.location.href = url;
+    } catch (error) {
+      console.error('[useSubscription] Failed to open subscription portal:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [userId]);
+
+  /**
    * Upgrade to PRO — platform-aware
    * Web → opens Pricing Modal (handled in App.tsx)
    * Native → RevenueCat
@@ -328,11 +362,12 @@ export const useSubscription = (userId: string | null = null) => {
     // Feature access
     hasAccess,
 
-    // Purchase & Restore
+    // Purchase & Restore & Manage
     products,
     isLoading,
     purchasePro,
     purchaseProWeb,
+    openManageSubscription,
     restorePurchases,
 
     // Testing helpers (remove in production)

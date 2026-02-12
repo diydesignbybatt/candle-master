@@ -29,6 +29,8 @@ interface StripeEvent {
       subscription?: string;
       payment_status?: string;
       status?: string;
+      cancel_at_period_end?: boolean;
+      current_period_end?: number;
     };
   };
 }
@@ -40,6 +42,7 @@ interface SubscriptionRecord {
   stripeSubscriptionId: string | null;
   activatedAt: string;
   expiresAt: string | null;
+  cancelAtPeriodEnd?: boolean;
 }
 
 // Verify Stripe webhook signature using Web Crypto API
@@ -160,23 +163,33 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       case 'customer.subscription.updated': {
         const subscription = event.data.object;
         const status = subscription.status;
+        const customerId = subscription.customer;
 
-        // If subscription becomes active again (e.g., payment succeeded after failed)
-        if (status === 'active') {
-          const customerId = subscription.customer;
-          if (customerId) {
-            const list = await context.env.SUBSCRIPTIONS.list();
-            for (const key of list.keys) {
-              const data = await context.env.SUBSCRIPTIONS.get(key.name);
-              if (data) {
-                const record: SubscriptionRecord = JSON.parse(data);
-                if (record.stripeCustomerId === customerId) {
-                  record.isPro = true;
-                  record.plan = 'monthly';
-                  await context.env.SUBSCRIPTIONS.put(key.name, JSON.stringify(record));
-                  console.log(`PRO re-activated for user ${key.name}`);
-                  break;
+        if (customerId) {
+          const list = await context.env.SUBSCRIPTIONS.list();
+          for (const key of list.keys) {
+            const data = await context.env.SUBSCRIPTIONS.get(key.name);
+            if (data) {
+              const record: SubscriptionRecord = JSON.parse(data);
+              if (record.stripeCustomerId === customerId) {
+                // Track cancel_at_period_end (user cancelled but sub still active until period end)
+                if (subscription.cancel_at_period_end !== undefined) {
+                  record.cancelAtPeriodEnd = subscription.cancel_at_period_end;
                 }
+
+                // Update expiresAt from current_period_end
+                if (subscription.current_period_end) {
+                  record.expiresAt = new Date(subscription.current_period_end * 1000).toISOString();
+                }
+
+                // If subscription becomes active (e.g., payment succeeded after failed)
+                if (status === 'active') {
+                  record.isPro = true;
+                }
+
+                await context.env.SUBSCRIPTIONS.put(key.name, JSON.stringify(record));
+                console.log(`Subscription updated for user ${key.name}: status=${status}, cancelAtPeriodEnd=${record.cancelAtPeriodEnd}`);
+                break;
               }
             }
           }

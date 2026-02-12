@@ -25,7 +25,7 @@ const REVENUECAT_CONFIG = {
     apiKey: '', // ใส่ iOS API Key ตรงนี้ (apple_xxx)
   },
   android: {
-    apiKey: 'test_CopsGEpeTMAmmkTYvNOOmcnELao', // RevenueCat Android API Key
+    apiKey: 'goog_peJadJCRMfojllXEemlRszrhyep', // RevenueCat Android API Key (Production)
   },
   // Entitlement identifier ที่สร้างใน RevenueCat
   entitlements: {

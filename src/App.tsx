@@ -70,7 +70,7 @@ const AppContent: React.FC = () => {
   const { mode, setMode, resolvedTheme } = useTheme();
   const { user, isAuthenticated, isGuest, signOut, linkAccount } = useAuth();
   const orientation = useOrientation();
-  const { isPro, proPlan, upgradeToPro, resetToFree, purchaseProWeb } = useSubscription(user?.id ?? null);
+  const { isPro, proPlan, isLoading: subLoading, upgradeToPro, resetToFree, purchaseProWeb, openManageSubscription } = useSubscription(user?.id ?? null);
   const [stripeLoading, setStripeLoading] = useState(false);
   const [showThankYouModal, setShowThankYouModal] = useState(false);
 
@@ -1699,12 +1699,21 @@ const AppContent: React.FC = () => {
 
                 {/* PRO Subscription */}
                 {isPro ? (
-                  <div className="profile-action-btn pro-toggle is-pro">
-                    <Star size={20} fill="currentColor" />
-                    <span>PRO Member</span>
-                    <span className="pro-plan-badge">
-                      {proPlan === 'yearly' ? <><span className="pro-badge-icon">★</span> Yearly</> : proPlan === 'monthly' ? 'Monthly' : 'Active'}
-                    </span>
+                  <div className="pro-subscription-section">
+                    <div className="profile-action-btn pro-toggle is-pro">
+                      <Star size={20} fill="currentColor" />
+                      <span>PRO Member</span>
+                      <span className="pro-plan-badge">
+                        {proPlan === 'yearly' ? <><span className="pro-badge-icon">★</span> Yearly</> : proPlan === 'monthly' ? 'Monthly' : 'Active'}
+                      </span>
+                    </div>
+                    <button
+                      className="manage-subscription-link"
+                      onClick={openManageSubscription}
+                      disabled={subLoading}
+                    >
+                      {subLoading ? 'Opening...' : 'Manage Subscription'}
+                    </button>
                   </div>
                 ) : (
                   <button

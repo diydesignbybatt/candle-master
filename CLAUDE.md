@@ -122,7 +122,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Service File**: `src/services/revenueCatService.ts`
 - **Hook**: `src/hooks/useSubscription.ts`
 - **Status**: ✅ Code complete + Dashboard fully configured
-- **Android API Key**: `test_CopsGEpeTMAmmkTYvNOOmcnELao`
+- **Android API Key**: `goog_peJadJCRMfojllXEemlRszrhyep`
 - **RevenueCat App ID**: `app866dc003da`
 - **Package**: `com.candlemaster.app`
 - **Service Account**: `revenuecat@candle-master-d4bbd.iam.gserviceaccount.com` (Pub/Sub Admin ✅)
@@ -193,7 +193,7 @@ STRIPE_PRO_YEARLY_PRICE_ID = price_1SzX9X00THgK6a8eQ6GfnYnn ✅
 - [x] สร้าง KV namespace "SUBSCRIPTIONS" ใน Cloudflare Dashboard
 - [x] ตั้ง Stripe Webhook → `https://app.candlemaster.app/api/stripe/webhook`
 - [x] Stripe redirect URL แก้เป็น `https://app.candlemaster.app` (ไม่ใช่ candlemaster.app ซึ่งเป็น Landing Page)
-- [x] ใส่ RevenueCat API keys (Android: `test_CopsGEpeTMAmmkTYvNOOmcnELao`)
+- [x] ใส่ RevenueCat API keys (Android: `goog_peJadJCRMfojllXEemlRszrhyep`)
 - [x] เปลี่ยน Lifetime → Yearly ทุกไฟล์
 - [x] Cloudflare env: เปลี่ยน `STRIPE_PRO_LIFETIME_PRICE_ID` → `STRIPE_PRO_YEARLY_PRICE_ID` ✅
 - [x] Stripe: สร้าง yearly recurring price ✅ (Monthly + Yearly live prices)
@@ -205,7 +205,7 @@ STRIPE_PRO_YEARLY_PRICE_ID = price_1SzX9X00THgK6a8eQ6GfnYnn ✅
 | Phase | Feature | Status |
 |-------|---------|--------|
 | **1** | Stripe Checkout (PWA) — ซื้อ PRO ได้ | ✅ Done + Deployed (Live) |
-| 2 | Cancellation (App) — anchor text ยกเลิกในหน้า Profile + retention modal ลดราคา | ⬜ |
+| **2** | Cancellation (App) — Manage Subscription → Stripe Customer Portal | ✅ Done |
 | 3 | Landing Page Profile — Login/Profile บน landing page ดูสถานะ + ยกเลิก | ⬜ |
 | 4 | Lemon Squeezy Affiliate — referral/affiliate system | ⬜ |
 | 5 | RevenueCat Native — iOS/Android payment | ⬜ |
@@ -550,7 +550,7 @@ npm run build && npx wrangler pages deploy dist --project-name=candle-master   #
 ### 🔴 Blockers ที่เหลือ (ต้องแก้ก่อน Production)
 
 **1. RevenueCat (Native IAP) — ✅ Dashboard Complete, รอทดสอบ**
-- [x] สมัคร RevenueCat → ใส่ API key (`test_CopsGEpeTMAmmkTYvNOOmcnELao`)
+- [x] สมัคร RevenueCat → ใส่ API key (`goog_peJadJCRMfojllXEemlRszrhyep`)
 - [x] สร้าง Google Play Service Account + JSON key + อัปโหลดไป RevenueCat
 - [x] Service Account invite ใน Play Console + ให้สิทธิ์ financial data + manage subscriptions
 - [x] Google Cloud Pub/Sub API enabled + Service Account มี Pub/Sub Admin role
@@ -623,6 +623,15 @@ npm run build && npx wrangler pages deploy dist --project-name=candle-master   #
 1. `package.json` → `"version": "x.y.z"`
 2. `android/app/build.gradle` → `versionName "x.y.z"` + `versionCode` +1
 3. `src/App.tsx` → Profile page `app-version` text → `vx.y.z`
+
+### Changes ใน v2.5.1
+- ✅ RevenueCat: เปลี่ยน test API key → production key (`goog_peJadJCRMfojllXEemlRszrhyep`)
+- ✅ Stripe Customer Portal: `functions/api/stripe/portal.ts` — สร้าง Billing Portal session
+- ✅ Manage Subscription: ปุ่ม "Manage Subscription" ในหน้า Profile (PRO users)
+- ✅ Webhook: Track `cancel_at_period_end` + `current_period_end` ใน KV
+- ✅ Status API: Expose `cancelAtPeriodEnd` field
+- ✅ Platform-aware: Web→Stripe Portal, Android→Play Store, iOS→App Store
+- ✅ Stripe Dashboard: Customer Portal configured (cancel at period end + collect reason)
 
 ### Changes ใน v2.5.0
 - ✅ Stripe Live Mode — switched from sandbox to live keys

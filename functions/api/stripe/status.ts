@@ -44,6 +44,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
         isPro: record.isPro || false,
         plan: record.plan || null,
         expiresAt: record.expiresAt || null,
+        cancelAtPeriodEnd: record.cancelAtPeriodEnd || false,
       }),
       { status: 200, headers: { 'Content-Type': 'application/json', ...CORS_HEADERS } }
     );
