@@ -2899,4 +2899,23 @@ export const TABLET_STYLES = `
     border-top: 1px solid var(--color-border);
     gap: 16px;
   }
+
+  /* Mobile landscape: hide floating controls for clean full-screen chart */
+  @media (max-height: 500px) and (orientation: landscape) {
+    .tablet-floating-left {
+      display: none;
+    }
+    .tablet-header {
+      display: none;
+    }
+    .tablet-bottom {
+      display: none;
+    }
+    .tablet-position-cards-section {
+      display: none;
+    }
+    .tablet-main {
+      flex: 1;
+    }
+  }
 `;

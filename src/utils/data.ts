@@ -168,7 +168,7 @@ const tryEventMode = async (event: HistoricalEvent): Promise<StockData | null> =
   const eventStart = new Date(event.startDate).getTime();
   const eventEnd = new Date(event.endDate).getTime();
   const preferredWindow = WINDOW_SIZE_PRO; // 450 — enough for PRO (event mode is PRO-only)
-  const minWindow = MIN_DATA_FREE;         // 350 — at least enough for free-tier moves
+  const minWindow = 200;                   // 200 = candles ที่แสดง (startIndex), crisis events สั้นกว่า normal
 
   // Shuffle event stocks and try each one
   const shuffledStocks = [...event.stocks].sort(() => Math.random() - 0.5);

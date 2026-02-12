@@ -72,6 +72,7 @@ const AppContent: React.FC = () => {
   const { user, isAuthenticated, isGuest, signOut, linkAccount } = useAuth();
   const orientation = useOrientation();
   const { isPro, proPlan, isLoading: subLoading, upgradeToPro, resetToFree, purchaseProWeb, purchasePro, products: rcProducts, openManageSubscription } = useSubscription(user?.id ?? null);
+  const prevIsProRef = useRef(isPro);
   const isNative = Capacitor.isNativePlatform();
   const [stripeLoading, setStripeLoading] = useState(false);
   const [showThankYouModal, setShowThankYouModal] = useState(false);
@@ -234,9 +235,11 @@ const AppContent: React.FC = () => {
     setIsLoading(false);
   }, [isPro]);
 
+  // Initial load — run once on mount
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
-    loadNewStock(false); // ครั้งแรกลอง restore session ก่อน
-  }, [loadNewStock]);
+    loadNewStock(false);
+  }, []);
 
   const {
     stockName,
@@ -262,6 +265,21 @@ const AppContent: React.FC = () => {
     skipDay: originalSkipDay,
     stop: originalStop
   } = useTradingSession(stock, isPro);
+
+  // Fix race condition: เมื่อ subscription resolve isPro false→true หลัง initial load
+  // force re-fetch เพื่อให้ PRO users ได้ event roll + full stock pool
+  // จะ re-fetch เฉพาะเมื่อ user ยังไม่เริ่มเล่น (tradeCount === 0)
+  useEffect(() => {
+    const wasFree = !prevIsProRef.current;
+    const isNowPro = isPro;
+    prevIsProRef.current = isPro;
+
+    if (wasFree && isNowPro && stock && tradeCount === 0) {
+      console.log('[App] isPro resolved false→true, re-fetching with PRO content');
+      loadNewStock(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isPro]);
 
   // Screen Orientation Lock/Unlock based on device type and active tab
   useEffect(() => {
@@ -498,6 +516,23 @@ const AppContent: React.FC = () => {
   if (isTabletLandscape && tabletActiveTab === 'trade' && !isGameOver) {
     return (
       <div className="tablet-layout">
+        {/* Crisis Event Banner — tablet/desktop layout */}
+        <AnimatePresence>
+          {showCrisisBanner && (
+            <motion.div
+              style={appStyles.crisisBannerWrapper as React.CSSProperties}
+              initial={{ y: -120, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ opacity: 0, y: -80, transition: { duration: 0.5 } }}
+              transition={{ type: 'spring', stiffness: 260, damping: 22 }}
+            >
+              <div style={{ ...appStyles.crisisBannerText as React.CSSProperties, marginTop: '35vh' }}>
+                🔥 CRISIS EVENT! 🔥
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* Tablet Header - Stats + Trade Amount + Action Buttons */}
         <div className="tablet-header">
           <div className="tablet-header-left">
@@ -1107,50 +1142,54 @@ const AppContent: React.FC = () => {
                   )}
                 </AnimatePresence>
                 <div className="scroll-chart-container">
-                  <div className="zoom-controls-floating">
-                    <button
-                      className="zoom-btn-mini"
-                      onClick={() => setZoom(prev => Math.min(3, prev + 0.25))}
-                      disabled={zoom >= 3}
-                      title="Zoom In"
-                    >
-                      <ZoomIn size={14} />
-                    </button>
-                    <button
-                      className="zoom-btn-mini"
-                      onClick={() => setZoom(prev => Math.max(0.5, prev - 0.25))}
-                      disabled={zoom <= 0.5}
-                      title="Zoom Out"
-                    >
-                      <ZoomOut size={14} />
-                    </button>
-                    <button
-                      className={`zoom-btn-mini music-toggle-mini ${musicEnabled ? 'music-on' : ''}`}
-                      onClick={() => {
-                        const newState = !musicEnabled;
-                        setMusicEnabled(newState);
-                        soundService.setMusicEnabled(newState);
-                        if (newState && stock) {
-                          if ('event' in stock && stock.event) {
-                            soundService.playMusic('bgm-event');
-                          } else {
-                            soundService.playMusic('bgm-normal');
+                  {!isLandscapeTrading && (
+                    <div className="zoom-controls-floating">
+                      <button
+                        className="zoom-btn-mini"
+                        onClick={() => setZoom(prev => Math.min(3, prev + 0.25))}
+                        disabled={zoom >= 3}
+                        title="Zoom In"
+                      >
+                        <ZoomIn size={14} />
+                      </button>
+                      <button
+                        className="zoom-btn-mini"
+                        onClick={() => setZoom(prev => Math.max(0.5, prev - 0.25))}
+                        disabled={zoom <= 0.5}
+                        title="Zoom Out"
+                      >
+                        <ZoomOut size={14} />
+                      </button>
+                      <button
+                        className={`zoom-btn-mini music-toggle-mini ${musicEnabled ? 'music-on' : ''}`}
+                        onClick={() => {
+                          const newState = !musicEnabled;
+                          setMusicEnabled(newState);
+                          soundService.setMusicEnabled(newState);
+                          if (newState && stock) {
+                            if ('event' in stock && stock.event) {
+                              soundService.playMusic('bgm-event');
+                            } else {
+                              soundService.playMusic('bgm-normal');
+                            }
                           }
-                        }
-                      }}
-                      title={musicEnabled ? 'Music On' : 'Music Off'}
-                    >
-                      {musicEnabled ? <Music size={14} /> : <Music2 size={14} />}
-                    </button>
-                  </div>
-                  <div className="info-btn-floating">
-                    <button
-                      className="zoom-btn-mini"
-                      onClick={() => setShowInfo(true)}
-                    >
-                      <Info size={14} />
-                    </button>
-                  </div>
+                        }}
+                        title={musicEnabled ? 'Music On' : 'Music Off'}
+                      >
+                        {musicEnabled ? <Music size={14} /> : <Music2 size={14} />}
+                      </button>
+                    </div>
+                  )}
+                  {!isLandscapeTrading && (
+                    <div className="info-btn-floating">
+                      <button
+                        className="zoom-btn-mini"
+                        onClick={() => setShowInfo(true)}
+                      >
+                        <Info size={14} />
+                      </button>
+                    </div>
+                  )}
                   <ErrorBoundary>
                     {visibleData.length > 0 ? <Chart data={visibleData} zoom={zoom} /> : <div className="loading-placeholder">Initializing chart...</div>}
                   </ErrorBoundary>
@@ -1851,7 +1890,7 @@ const AppContent: React.FC = () => {
                   </button>
                 )}
 
-                <p className="app-version">v2.5.1</p>
+                <p className="app-version">v2.5.3</p>
               </div>
             </div>
           )}

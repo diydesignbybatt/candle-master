@@ -38,8 +38,8 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
     id: 'covid-2020',
     name: 'COVID-19 Crash',
     revealText: 'You just traded through the COVID-19 Crash!',
-    startDate: '2020-01-01',
-    endDate: '2020-12-31',
+    startDate: '2019-06-01',
+    endDate: '2021-06-30',
     stocks: [
       'AAPL.US', 'MSFT.US', 'AMZN.US', 'GOOGL.US', 'TSLA.US',
       'BA.US', 'DAL.US', 'UAL.US', 'AAL.US', 'MAR.US',
@@ -51,8 +51,8 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
     id: 'oil-crisis-2014',
     name: '2014 Oil Crisis',
     revealText: 'You survived the 2014 Oil Crisis!',
-    startDate: '2014-03-01',
-    endDate: '2015-06-30',
+    startDate: '2013-06-01',
+    endDate: '2016-03-31',
     stocks: [
       'XOM.US', 'CVX.US', 'COP.US', 'SLB.US', 'HAL.US',
       'OXY.US', 'MPC.US', 'VLO.US', 'PSX.US', 'EOG.US',
@@ -63,8 +63,8 @@ export const HISTORICAL_EVENTS: HistoricalEvent[] = [
     id: 'china-crash-2015',
     name: '2015 China Crash',
     revealText: 'You traded through the 2015 China Stock Crash!',
-    startDate: '2015-03-01',
-    endDate: '2016-06-30',
+    startDate: '2014-06-01',
+    endDate: '2017-03-31',
     stocks: [
       'BABA.US', 'JD.US', 'BIDU.US', 'FXI.US', 'MCHI.US',
       'AAPL.US', 'MSFT.US', 'INTC.US', 'CAT.US', 'DE.US',
