@@ -1890,7 +1890,7 @@ const AppContent: React.FC = () => {
                   </button>
                 )}
 
-                <p className="app-version">v2.5.4</p>
+                <p className="app-version">v2.5.5</p>
               </div>
             </div>
           )}
