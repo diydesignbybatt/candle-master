@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Candle Master v2.5.3** is a **Trading Simulator Game & Education Platform**.
+**Candle Master v2.5.4** is a **Trading Simulator Game & Education Platform**.
 - **Core Concept**: Users practice trading on historical data without knowing the stock beforehand (Blind Trading).
 - **Gameplay**:
     - Users see candlesticks, MA indicators (20/50), and Volume.
@@ -614,15 +614,21 @@ npm run build && npx wrangler pages deploy dist --project-name=candle-master   #
 - **Subscription terms**: ต้องแสดงราคา, auto-renew, วิธียกเลิก ให้ชัดเจนก่อนซื้อ
 
 ### Version Info
-- `package.json`: v2.5.3
-- `build.gradle`: versionName "2.5.3" / versionCode 17
-- `App.tsx`: Profile page → `<p className="app-version">v2.5.3</p>`
+- `package.json`: v2.5.4
+- `build.gradle`: versionName "2.5.4" / versionCode 18
+- `App.tsx`: Profile page → `<p className="app-version">v2.5.4</p>`
 - **หมายเหตุ**: `android/` อยู่ใน `.gitignore` — versionCode ต้องเพิ่มเอง manual ทุกครั้งก่อนอัปโหลด Play Console
 
 ### ⚠️ Version Bump Checklist (ทำทุกครั้งก่อน build release)
 1. `package.json` → `"version": "x.y.z"`
 2. `android/app/build.gradle` → `versionName "x.y.z"` + `versionCode` +1
 3. `src/App.tsx` → Profile page `app-version` text → `vx.y.z`
+
+### Changes ใน v2.5.4
+- ✅ Fix Volume Bars: proportional volumeHeight (20% of chart, min 60 max 120px), volumeY positioning, padding-bottom fix, overflow-y visible
+- ✅ Fix iPhone PWA Landscape: `manifest.json` orientation "portrait" → "any" (PWA ไม่ยอมหมุนจอ)
+- ✅ Fix iPhone Landscape Layout Routing: `isTabletLandscape` ใช้ `isTablet` (short side ≥ 768) แทน `isWideScreen` (width ≥ 768) — iPhone landscape กลับไปใช้ mobile layout เดิมที่สวยงาม
+- ✅ Version bump: v2.5.4 (versionCode 18)
 
 ### Changes ใน v2.5.3
 - ✅ Fix Crisis Event Race Condition: `isPro` เริ่ม `false` แล้ว resolve เป็น `true` หลัง initial load → เพิ่ม `prevIsProRef` + แยก useEffect เป็น mount-once + isPro transition guard

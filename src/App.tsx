@@ -152,8 +152,8 @@ const AppContent: React.FC = () => {
 
   // Check if in landscape mode and on trade screen
   const isLandscapeTrading = orientation.isLandscape && activeTab === 'trade';
-  // Check if tablet in landscape mode OR desktop browser wide enough (special layout)
-  const isTabletLandscape = (orientation.isTablet && orientation.isLandscape) || orientation.isWideScreen;
+  // Check if tablet/desktop (short side ≥ 768) — iPhone landscape ต้องไม่เข้า tablet layout
+  const isTabletLandscape = orientation.isTablet || (orientation.isWideScreen && !orientation.isLandscape);
   // Track active tab separately for tablet (avoid TypeScript narrowing)
   const tabletActiveTab = activeTab;
 
