@@ -44,6 +44,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - [x] **Stripe Live Mode**: ✅ Switched from test → live keys (Feb 2026)
 - [x] **Stripe Webhook**: Webhook endpoint configured → `https://app.candlemaster.app/api/stripe/webhook`
 - [x] **Cloudflare KV**: SUBSCRIPTIONS namespace created + env vars set (STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, STRIPE_PRO_MONTHLY_PRICE_ID, STRIPE_PRO_YEARLY_PRICE_ID)
+- [x] **Security Hardening v1**: Firebase Auth middleware, CORS lockdown, input validation, webhook idempotency, security headers (Feb 2026)
 - [x] **Lifetime → Yearly Migration**: เปลี่ยนทุกไฟล์จาก lifetime เป็น yearly (useSubscription, stripeService, App.tsx, webhook, checkout, status)
 - [x] **Firebase Auth (Web)**: Real Google Sign-In via `signInWithPopup` + `prompt: 'select_account'`
 - [x] **Thank You Modal**: Full-screen modal after Stripe payment (mascot + celebration animation)
@@ -209,6 +210,65 @@ STRIPE_PRO_YEARLY_PRICE_ID = price_1SzX9X00THgK6a8eQ6GfnYnn ✅
 | 3 | Landing Page Profile — Login/Profile บน landing page ดูสถานะ + ยกเลิก | ⬜ |
 | 4 | Lemon Squeezy Affiliate — referral/affiliate system | ⬜ |
 | 5 | RevenueCat Native — iOS/Android payment | ⬜ |
+
+### Security Hardening (Feb 2026) ✅
+
+**สถานะ**: ✅ Deployed to production — Soft enforcement mode (log warnings, ยังอนุญาตผ่าน)
+
+**ปัญหาที่แก้:**
+1. ❌ API endpoints ทั้งหมดไม่มี authentication → ✅ Firebase Auth middleware
+2. ❌ CORS เปิดกว้าง `*` → ✅ Origin allowlist (app.candlemaster.app, candlemaster.app, localhost)
+3. ❌ ไม่มี input validation → ✅ Regex validation สำหรับ symbol, userId, priceId
+4. ❌ Webhook scan O(n) → ✅ Reverse index `stripe_customer:{customerId}` → O(1) lookup
+5. ❌ ไม่มี idempotency → ✅ Event ID tracking ด้วย TTL 24 ชม.
+6. ❌ Error messages expose Stripe errors → ✅ Generic error messages (log server-side only)
+7. ❌ Guest ID ใช้ `Date.now()` (guessable) → ✅ `crypto.randomUUID()`
+
+**ไฟล์ที่สร้างใหม่:**
+| ไฟล์ | หน้าที่ |
+|------|--------|
+| `functions/api/_shared/auth.ts` | Firebase token verifier (Google JWKS + Web Crypto RS256) |
+| `functions/api/_shared/cors.ts` | CORS origin allowlist utility |
+| `functions/api/_shared/validation.ts` | Input validation (symbol, userId) |
+| `functions/api/stripe/_middleware.ts` | Auth middleware สำหรับ Stripe endpoints |
+| `public/_headers` | Security headers (HSTS, X-Frame-Options, etc.) |
+
+**ไฟล์ที่แก้ไข:**
+- `functions/api/stripe/checkout.ts` — auth check, priceId allowlist, CORS, error sanitize
+- `functions/api/stripe/status.ts` — auth check, userId validation, CORS
+- `functions/api/stripe/portal.ts` — auth check, userId validation, CORS, error sanitize
+- `functions/api/stripe/webhook.ts` — reverse index, idempotency, try-catch hardening
+- `functions/api/stock.ts` — symbol validation, `new URL()` (SSRF prevention), CORS
+- `src/contexts/AuthContext.tsx` — เพิ่ม `getIdToken()`, แก้ guest ID
+- `src/services/stripeService.ts` — ส่ง `Authorization: Bearer` header
+- `src/hooks/useSubscription.ts` — รับ `getIdToken` parameter, ส่ง token ไปทุก API call
+- `src/App.tsx` — ส่ง `getIdToken` ให้ `useSubscription()`
+
+**⚠️ TODO (ต้องทำภายหลัง):**
+- [ ] **เปลี่ยน SOFT_ENFORCEMENT** ใน `functions/api/stripe/_middleware.ts` จาก `true` → `false` (หลังจากทดสอบ 1-2 สัปดาห์ ว่า frontend ส่ง token ถูกต้อง)
+- [x] **Cloudflare Rate Limiting**: ตั้งค่าแล้ว — 5 req/10s สำหรับ `/api/stripe/*` (Free plan, 1 rule)
+
+**CORS Allowed Origins:**
+```
+https://app.candlemaster.app
+https://candlemaster.app
+http://localhost:5173
+http://localhost:8788
+capacitor://localhost
+http://localhost
+```
+
+**Auth Flow:**
+1. Frontend: `AuthContext.getIdToken()` → `auth.currentUser?.getIdToken()`
+2. Frontend: ส่ง `Authorization: Bearer <token>` header ในทุก Stripe API call
+3. Backend: `_middleware.ts` → verify token ด้วย Google JWKS
+4. Backend: แต่ละ endpoint ตรวจ `authenticatedUser.uid === userId`
+5. Webhook: ไม่ใช้ auth (ใช้ Stripe signature verification แทน)
+
+**Android/iOS ไม่กระทบ:**
+- Native app ใช้ RevenueCat (ไม่เรียก Stripe API)
+- Stock API ไม่ต้อง auth
+- CORS allowlist มี `capacitor://localhost` แล้ว
 
 ### Referral / Affiliate Program (แผนอนาคต)
 
@@ -434,10 +494,11 @@ npm run build && npx wrangler pages deploy dist --project-name=candle-master   #
 
 ### 🔒 Security Guard
 - **XSS**: Never use `dangerouslySetInnerHTML` without `DOMPurify.sanitize()`
-- **API keys**: Server-side only, never in frontend code
-- **Passwords**: `bcrypt.hash(password, 12)`, never store plain text
-- **CORS**: Specific origins only, never `origin: '*'` in production
-- **Validation**: Always validate on backend, frontend validation is UX only
+- **API keys**: Server-side only, never in frontend code (Stripe secret key อยู่ใน Cloudflare env vars เท่านั้น)
+- **CORS**: Origin allowlist ใน `functions/api/_shared/cors.ts` — ห้ามเปลี่ยนเป็น `*`
+- **Auth**: Firebase token verification ใน `functions/api/_shared/auth.ts` — ใช้ Google JWKS (ไม่ใช่ firebase-admin)
+- **Validation**: Backend validation ใน `functions/api/_shared/validation.ts` — symbol regex, userId format
+- **Error messages**: ห้าม expose Stripe/internal errors ให้ client — ใช้ generic message, log server-side
 - **Run regularly**: `npm audit` for dependency vulnerabilities
 
 ### 📱 React Native Specialist
