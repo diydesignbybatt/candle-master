@@ -381,13 +381,15 @@ E:\CANDLE MASTER\PROJECT\Candle Master
 
 | Branch | Purpose | Deployment |
 |--------|---------|------------|
-| `main` | Production | Cloudflare Pages (auto-deploy) |
-| `dev-lab` | Testing/Development | Cloudflare Pages |
+| `dev-lab` | **Production** | Cloudflare Pages (auto-deploy to app.candlemaster.app) |
+| `main` | Integration/Staging | Cloudflare Pages (Preview only) |
+
+**⚠️ IMPORTANT: `dev-lab` = Production branch ใน Cloudflare Pages**
 
 **Workflow**:
-1. Create feature branches from `dev-lab` for new features
-2. Test on `dev-lab`, when stable merge to `main`
-3. Push to `main` → Cloudflare Pages deploys automatically
+1. Develop and commit on `main`
+2. Merge `main` → `dev-lab` แล้ว push `dev-lab` เพื่อ deploy Production
+3. `git checkout dev-lab && git merge main && git push origin dev-lab && git checkout main`
 
 ## Common Commands
 
@@ -439,7 +441,8 @@ cd android && ./gradlew assembleDebug
 ### PWA (Cloudflare Pages) — Primary
 - **Live URL**: https://app.candlemaster.app (production)
 - **Pages URL**: https://candle-master.pages.dev/
-- **Auto-deploy**: Push to `main` branch → Cloudflare Pages deploys automatically
+- **Auto-deploy**: Push to `dev-lab` branch → Cloudflare Pages deploys Production automatically
+- **⚠️ Production branch = `dev-lab`** (ไม่ใช่ main! push main จะได้แค่ Preview)
 - **GitHub Repo**: https://github.com/diydesignbybatt/candle-master (public)
 - **Dashboard**: https://dash.cloudflare.com/ → Workers & Pages → candle-master
 - **Functions**: `/functions/api/stock.ts` (Cloudflare Workers format)
