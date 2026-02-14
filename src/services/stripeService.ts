@@ -20,13 +20,14 @@ export const STRIPE_PRICES = {
 export type StripeCurrency = 'USD' | 'THB';
 
 /**
- * ตรวจ locale ของ user แล้วเลือก currency ที่เหมาะสม
- * ถ้า locale เป็น th หรือ th-TH → ใช้ THB, ไม่งั้นใช้ USD
+ * ตรวจ timezone ของ user แล้วเลือก currency ที่เหมาะสม
+ * ถ้า timezone = Asia/Bangkok → ใช้ THB, ไม่งั้นใช้ USD
+ * (ใช้ timezone แทน locale เพราะคนไทยส่วนใหญ่ตั้ง OS เป็น EN)
  */
 export function detectCurrency(): StripeCurrency {
   try {
-    const lang = navigator.language || navigator.languages?.[0] || '';
-    if (lang.startsWith('th')) return 'THB';
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    if (tz === 'Asia/Bangkok') return 'THB';
   } catch { /* fallback */ }
   return 'USD';
 }
