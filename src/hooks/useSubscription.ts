@@ -44,8 +44,9 @@ function getPlanStorageKey(userId: string | null): string {
  * Integrates with RevenueCat when configured, falls back to localStorage for testing
  *
  * @param userId - Current user ID (from AuthContext). Subscription status is scoped per-user.
+ * @param getIdToken - Optional function to get Firebase ID token for authenticated API calls.
  */
-export const useSubscription = (userId: string | null = null) => {
+export const useSubscription = (userId: string | null = null, getIdToken?: () => Promise<string | null>) => {
   // Derive storage keys from userId
   const storageKey = getStorageKey(userId);
   const planStorageKey = getPlanStorageKey(userId);
@@ -114,7 +115,8 @@ export const useSubscription = (userId: string | null = null) => {
         // Also verify with server if user is logged in (not guest)
         if (userId && !userId.startsWith('guest_')) {
           try {
-            const stripeStatus = await checkStripeStatus(userId);
+            const token = getIdToken ? await getIdToken() : null;
+            const stripeStatus = await checkStripeStatus(userId, token);
             if (stripeStatus.isPro) {
               setTier('pro');
               localStorage.setItem(storageKey, 'pro');
@@ -257,9 +259,10 @@ export const useSubscription = (userId: string | null = null) => {
    */
   const purchaseProWeb = useCallback(async (plan: 'monthly' | 'yearly', userId: string, email?: string | null) => {
     const priceId = plan === 'monthly' ? STRIPE_PRICES.MONTHLY : STRIPE_PRICES.YEARLY;
-    await createCheckoutSession(priceId, userId, email);
+    const token = getIdToken ? await getIdToken() : null;
+    await createCheckoutSession(priceId, userId, email, token);
     // User is redirected to Stripe — no code runs after this
-  }, []);
+  }, [getIdToken]);
 
   /**
    * Open subscription management — platform-aware
@@ -286,14 +289,15 @@ export const useSubscription = (userId: string | null = null) => {
 
     setIsLoading(true);
     try {
-      const url = await createPortalSession(userId);
+      const token = getIdToken ? await getIdToken() : null;
+      const url = await createPortalSession(userId, token);
       window.location.href = url;
     } catch (error) {
       console.error('[useSubscription] Failed to open subscription portal:', error);
     } finally {
       setIsLoading(false);
     }
-  }, [userId]);
+  }, [userId, getIdToken]);
 
   /**
    * Upgrade to PRO — testing helper (mock toggle, no real purchase)

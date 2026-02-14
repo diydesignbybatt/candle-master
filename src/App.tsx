@@ -69,9 +69,9 @@ interface TradeRecord {
 const AppContent: React.FC = () => {
   // All hooks must be called before any conditional returns (React Rules of Hooks)
   const { mode, setMode, resolvedTheme } = useTheme();
-  const { user, isAuthenticated, isGuest, signOut, linkAccount } = useAuth();
+  const { user, isAuthenticated, isGuest, signOut, linkAccount, getIdToken } = useAuth();
   const orientation = useOrientation();
-  const { isPro, proPlan, isLoading: subLoading, upgradeToPro, resetToFree, purchaseProWeb, purchasePro, products: rcProducts, openManageSubscription } = useSubscription(user?.id ?? null);
+  const { isPro, proPlan, isLoading: subLoading, upgradeToPro, resetToFree, purchaseProWeb, purchasePro, products: rcProducts, openManageSubscription } = useSubscription(user?.id ?? null, getIdToken);
   const prevIsProRef = useRef(isPro);
   const isNative = Capacitor.isNativePlatform();
   const [stripeLoading, setStripeLoading] = useState(false);

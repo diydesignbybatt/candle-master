@@ -19,16 +19,28 @@ export interface SubscriptionStatus {
 }
 
 /**
+ * Build request headers with optional auth token.
+ */
+function buildHeaders(idToken?: string | null): Record<string, string> {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (idToken) {
+    headers['Authorization'] = `Bearer ${idToken}`;
+  }
+  return headers;
+}
+
+/**
  * สร้าง Stripe Checkout Session แล้ว redirect ไปหน้าชำระเงิน
  */
 export async function createCheckoutSession(
   priceId: string,
   userId: string,
-  email?: string | null
+  email?: string | null,
+  idToken?: string | null
 ): Promise<void> {
   const res = await fetch('/api/stripe/checkout', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: buildHeaders(idToken),
     body: JSON.stringify({
       priceId,
       userId,
@@ -53,9 +65,17 @@ export async function createCheckoutSession(
 /**
  * ตรวจสถานะ subscription จาก Cloudflare KV
  */
-export async function checkSubscriptionStatus(userId: string): Promise<SubscriptionStatus> {
+export async function checkSubscriptionStatus(
+  userId: string,
+  idToken?: string | null
+): Promise<SubscriptionStatus> {
   try {
-    const res = await fetch(`/api/stripe/status?userId=${userId}`);
+    const headers: Record<string, string> = {};
+    if (idToken) {
+      headers['Authorization'] = `Bearer ${idToken}`;
+    }
+
+    const res = await fetch(`/api/stripe/status?userId=${userId}`, { headers });
 
     if (!res.ok) {
       console.warn('Failed to check subscription status:', res.status);
@@ -73,10 +93,13 @@ export async function checkSubscriptionStatus(userId: string): Promise<Subscript
  * สร้าง Stripe Customer Portal session เพื่อจัดการ/ยกเลิก subscription
  * Return URL สำหรับ redirect ไป Stripe Portal
  */
-export async function createPortalSession(userId: string): Promise<string> {
+export async function createPortalSession(
+  userId: string,
+  idToken?: string | null
+): Promise<string> {
   const res = await fetch('/api/stripe/portal', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: buildHeaders(idToken),
     body: JSON.stringify({ userId }),
   });
 

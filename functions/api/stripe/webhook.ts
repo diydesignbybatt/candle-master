@@ -8,6 +8,12 @@
  * - checkout.session.completed → activate PRO
  * - customer.subscription.deleted → deactivate PRO (monthly cancel)
  * - customer.subscription.updated → update status (renewal, etc.)
+ *
+ * Security:
+ * - Webhook signature verification (HMAC-SHA256)
+ * - Timestamp validation (5-minute window)
+ * - Idempotency via event ID tracking
+ * - Reverse index for O(1) customer lookup
  */
 
 interface Env {
@@ -86,6 +92,52 @@ async function verifyWebhookSignature(
   }
 }
 
+/**
+ * Look up userId by Stripe customer ID using reverse index.
+ * Falls back to O(n) scan if reverse index doesn't exist yet.
+ */
+async function findUserByCustomerId(
+  kv: KVNamespace,
+  customerId: string,
+): Promise<{ userId: string; record: SubscriptionRecord } | null> {
+  // Fast path: reverse index lookup O(1)
+  const userId = await kv.get(`stripe_customer:${customerId}`);
+  if (userId) {
+    const data = await kv.get(userId);
+    if (data) {
+      try {
+        return { userId, record: JSON.parse(data) };
+      } catch {
+        return null;
+      }
+    }
+  }
+
+  // Fallback: scan KV (for records created before reverse index existed)
+  const list = await kv.list();
+  for (const key of list.keys) {
+    // Skip reverse index keys and event tracking keys
+    if (key.name.startsWith('stripe_customer:') || key.name.startsWith('stripe_event:')) {
+      continue;
+    }
+    const data = await kv.get(key.name);
+    if (data) {
+      try {
+        const record: SubscriptionRecord = JSON.parse(data);
+        if (record.stripeCustomerId === customerId) {
+          // Create reverse index for next time
+          await kv.put(`stripe_customer:${customerId}`, key.name);
+          return { userId: key.name, record };
+        }
+      } catch {
+        continue;
+      }
+    }
+  }
+
+  return null;
+}
+
 export const onRequestPost: PagesFunction<Env> = async (context) => {
   try {
     const payload = await context.request.text();
@@ -109,6 +161,17 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     const event: StripeEvent = JSON.parse(payload);
     console.log(`Stripe webhook: ${event.type} (${event.id})`);
 
+    // Idempotency: skip already-processed events
+    const eventKey = `stripe_event:${event.id}`;
+    const alreadyProcessed = await context.env.SUBSCRIPTIONS.get(eventKey);
+    if (alreadyProcessed) {
+      console.log(`Skipping duplicate event ${event.id}`);
+      return new Response(JSON.stringify({ received: true }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
     switch (event.type) {
       case 'checkout.session.completed': {
         const session = event.data.object;
@@ -130,6 +193,15 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
         };
 
         await context.env.SUBSCRIPTIONS.put(userId, JSON.stringify(record));
+
+        // Create reverse index: customerId -> userId (O(1) lookup)
+        if (session.customer) {
+          await context.env.SUBSCRIPTIONS.put(
+            `stripe_customer:${session.customer}`,
+            userId,
+          );
+        }
+
         console.log(`PRO activated for user ${userId} (${plan})`);
         break;
       }
@@ -140,21 +212,22 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
         const customerId = subscription.customer;
 
         if (customerId) {
-          // Find user by customer ID — scan KV (small scale is fine)
-          const list = await context.env.SUBSCRIPTIONS.list();
-          for (const key of list.keys) {
-            const data = await context.env.SUBSCRIPTIONS.get(key.name);
-            if (data) {
-              const record: SubscriptionRecord = JSON.parse(data);
-              if (record.stripeCustomerId === customerId) {
-                record.isPro = false;
-                record.plan = null;
-                record.stripeSubscriptionId = null;
-                await context.env.SUBSCRIPTIONS.put(key.name, JSON.stringify(record));
-                console.log(`PRO deactivated for user ${key.name} (subscription deleted)`);
-                break;
-              }
-            }
+          const result = await findUserByCustomerId(
+            context.env.SUBSCRIPTIONS,
+            customerId,
+          );
+
+          if (result) {
+            result.record.isPro = false;
+            result.record.plan = null;
+            result.record.stripeSubscriptionId = null;
+            await context.env.SUBSCRIPTIONS.put(
+              result.userId,
+              JSON.stringify(result.record),
+            );
+            console.log(
+              `PRO deactivated for user ${result.userId} (subscription deleted)`,
+            );
           }
         }
         break;
@@ -166,32 +239,36 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
         const customerId = subscription.customer;
 
         if (customerId) {
-          const list = await context.env.SUBSCRIPTIONS.list();
-          for (const key of list.keys) {
-            const data = await context.env.SUBSCRIPTIONS.get(key.name);
-            if (data) {
-              const record: SubscriptionRecord = JSON.parse(data);
-              if (record.stripeCustomerId === customerId) {
-                // Track cancel_at_period_end (user cancelled but sub still active until period end)
-                if (subscription.cancel_at_period_end !== undefined) {
-                  record.cancelAtPeriodEnd = subscription.cancel_at_period_end;
-                }
+          const result = await findUserByCustomerId(
+            context.env.SUBSCRIPTIONS,
+            customerId,
+          );
 
-                // Update expiresAt from current_period_end
-                if (subscription.current_period_end) {
-                  record.expiresAt = new Date(subscription.current_period_end * 1000).toISOString();
-                }
-
-                // If subscription becomes active (e.g., payment succeeded after failed)
-                if (status === 'active') {
-                  record.isPro = true;
-                }
-
-                await context.env.SUBSCRIPTIONS.put(key.name, JSON.stringify(record));
-                console.log(`Subscription updated for user ${key.name}: status=${status}, cancelAtPeriodEnd=${record.cancelAtPeriodEnd}`);
-                break;
-              }
+          if (result) {
+            // Track cancel_at_period_end (user cancelled but sub still active until period end)
+            if (subscription.cancel_at_period_end !== undefined) {
+              result.record.cancelAtPeriodEnd = subscription.cancel_at_period_end;
             }
+
+            // Update expiresAt from current_period_end
+            if (subscription.current_period_end) {
+              result.record.expiresAt = new Date(
+                subscription.current_period_end * 1000,
+              ).toISOString();
+            }
+
+            // If subscription becomes active (e.g., payment succeeded after failed)
+            if (status === 'active') {
+              result.record.isPro = true;
+            }
+
+            await context.env.SUBSCRIPTIONS.put(
+              result.userId,
+              JSON.stringify(result.record),
+            );
+            console.log(
+              `Subscription updated for user ${result.userId}: status=${status}, cancelAtPeriodEnd=${result.record.cancelAtPeriodEnd}`,
+            );
           }
         }
         break;
@@ -200,6 +277,11 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       default:
         console.log(`Unhandled event type: ${event.type}`);
     }
+
+    // Mark event as processed (TTL 24 hours to prevent KV bloat)
+    await context.env.SUBSCRIPTIONS.put(eventKey, 'processed', {
+      expirationTtl: 86400,
+    });
 
     // Always return 200 to Stripe to acknowledge receipt
     return new Response(JSON.stringify({ received: true }), {

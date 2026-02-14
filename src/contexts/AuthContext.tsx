@@ -23,6 +23,7 @@ interface AuthContextType {
   continueAsGuest: () => void;
   signOut: () => void;
   linkAccount: (provider: 'google' | 'apple') => Promise<void>;
+  getIdToken: () => Promise<string | null>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -153,7 +154,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const continueAsGuest = useCallback(() => {
     setUser({
-      id: 'guest_' + Date.now(),
+      id: 'guest_' + crypto.randomUUID(),
       email: null,
       displayName: 'Guest Player',
       photoUrl: null,
@@ -180,6 +181,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Don't reset hasSeenWelcome - they already know about the app
   }, [user]);
 
+  /**
+   * Get Firebase ID token for authenticated API calls.
+   * Returns null for guest/native users (they don't use Stripe APIs).
+   * Firebase auto-refreshes expired tokens.
+   */
+  const getIdToken = useCallback(async (): Promise<string | null> => {
+    if (!Capacitor.isNativePlatform() && auth.currentUser) {
+      return auth.currentUser.getIdToken();
+    }
+    return null;
+  }, []);
+
   const linkAccount = useCallback(async (provider: 'google' | 'apple') => {
     // For guest users who want to link their account later
     if (provider === 'google') {
@@ -205,6 +218,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         continueAsGuest,
         signOut,
         linkAccount,
+        getIdToken,
       }}
     >
       {children}

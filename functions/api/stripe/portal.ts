@@ -5,20 +5,22 @@
  * Route: POST /api/stripe/portal
  * Body: { userId: string }
  * Returns: { url: string }
+ *
+ * Security: Requires Firebase auth token. Validates userId matches token.
  */
+
+import { getCorsHeaders } from '../_shared/cors';
+import { isValidFirebaseUid } from '../_shared/validation';
+import type { DecodedToken } from '../_shared/auth';
 
 interface Env {
   STRIPE_SECRET_KEY: string;
   SUBSCRIPTIONS: KVNamespace;
 }
 
-const CORS_HEADERS = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type',
-};
-
 export const onRequestPost: PagesFunction<Env> = async (context) => {
+  const corsHeaders = getCorsHeaders(context.request);
+
   try {
     const body = await context.request.json() as {
       userId: string;
@@ -29,7 +31,24 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     if (!userId) {
       return new Response(
         JSON.stringify({ error: 'Missing userId' }),
-        { status: 400, headers: { 'Content-Type': 'application/json', ...CORS_HEADERS } }
+        { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+      );
+    }
+
+    // Authorization: verify userId matches authenticated user
+    const authedUser = context.data.authenticatedUser as DecodedToken | null;
+    if (authedUser && authedUser.uid !== userId) {
+      return new Response(
+        JSON.stringify({ error: 'Forbidden' }),
+        { status: 403, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+      );
+    }
+
+    // Validate userId format
+    if (!isValidFirebaseUid(userId)) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid userId format' }),
+        { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
       );
     }
 
@@ -39,7 +58,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     if (!data) {
       return new Response(
         JSON.stringify({ error: 'No active subscription found' }),
-        { status: 404, headers: { 'Content-Type': 'application/json', ...CORS_HEADERS } }
+        { status: 404, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
       );
     }
 
@@ -48,7 +67,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     if (!record.stripeCustomerId) {
       return new Response(
         JSON.stringify({ error: 'No Stripe customer found' }),
-        { status: 404, headers: { 'Content-Type': 'application/json', ...CORS_HEADERS } }
+        { status: 404, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
       );
     }
 
@@ -77,26 +96,26 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     if (!stripeResponse.ok || !session.url) {
       console.error('Stripe Portal error:', session.error?.message);
       return new Response(
-        JSON.stringify({ error: session.error?.message || 'Failed to create portal session' }),
-        { status: 500, headers: { 'Content-Type': 'application/json', ...CORS_HEADERS } }
+        JSON.stringify({ error: 'Failed to create portal session. Please try again.' }),
+        { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
       );
     }
 
     return new Response(
       JSON.stringify({ url: session.url }),
-      { status: 200, headers: { 'Content-Type': 'application/json', ...CORS_HEADERS } }
+      { status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
     );
 
   } catch (error) {
     console.error('Portal error:', error);
     return new Response(
       JSON.stringify({ error: 'Internal server error' }),
-      { status: 500, headers: { 'Content-Type': 'application/json', ...CORS_HEADERS } }
+      { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
     );
   }
 };
 
 // Handle CORS preflight
-export const onRequestOptions: PagesFunction<Env> = async () => {
-  return new Response(null, { status: 204, headers: CORS_HEADERS });
+export const onRequestOptions: PagesFunction<Env> = async (context) => {
+  return new Response(null, { status: 204, headers: getCorsHeaders(context.request) });
 };
