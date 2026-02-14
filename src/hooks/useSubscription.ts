@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { revenueCatService, type SubscriptionStatus, type Product } from '../services/revenueCatService';
-import { createCheckoutSession, checkSubscriptionStatus as checkStripeStatus, createPortalSession, STRIPE_PRICES } from '../services/stripeService';
+import { createCheckoutSession, checkSubscriptionStatus as checkStripeStatus, createPortalSession, STRIPE_PRICES, detectCurrency } from '../services/stripeService';
 
 // Subscription tiers
 export type SubscriptionTier = 'free' | 'pro';
@@ -258,7 +258,9 @@ export const useSubscription = (userId: string | null = null, getIdToken?: () =>
    * Redirects to Stripe Checkout — user returns to app after payment
    */
   const purchaseProWeb = useCallback(async (plan: 'monthly' | 'yearly', userId: string, email?: string | null) => {
-    const priceId = plan === 'monthly' ? STRIPE_PRICES.MONTHLY : STRIPE_PRICES.YEARLY;
+    const currency = detectCurrency();
+    const prices = STRIPE_PRICES[currency];
+    const priceId = plan === 'monthly' ? prices.MONTHLY : prices.YEARLY;
     const token = getIdToken ? await getIdToken() : null;
     await createCheckoutSession(priceId, userId, email, token);
     // User is redirected to Stripe — no code runs after this

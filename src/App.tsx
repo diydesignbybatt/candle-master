@@ -37,6 +37,7 @@ const OnboardingTutorial = lazy(() => import('./components/OnboardingTutorial').
 const PositionSizeCalculator = lazy(() => import('./components/PositionSizeCalculator'));
 import { motion, AnimatePresence } from 'framer-motion';
 import { soundService, playSound } from './services/soundService';
+import { detectCurrency, PRICE_DISPLAY } from './services/stripeService';
 import { format } from 'date-fns';
 import { LogOut, Link, Flame, RefreshCw, Globe } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
@@ -889,8 +890,8 @@ const AppContent: React.FC = () => {
                     }}
                   >
                     <span className="pricing-label">Monthly</span>
-                    <span className="pricing-price">$3.99<span className="pricing-period">/mo</span></span>
-                    <span className="pricing-original">$4.99</span>
+                    <span className="pricing-price">{(() => { const d = PRICE_DISPLAY[detectCurrency()].monthly; return <>{d.price}<span className="pricing-period">{d.period}</span></>; })()}</span>
+                    <span className="pricing-original">{PRICE_DISPLAY[detectCurrency()].monthly.original}</span>
                     <span className="pricing-btn-text">{stripeLoading ? 'Loading...' : 'Subscribe'}</span>
                   </button>
                   <button
@@ -912,8 +913,8 @@ const AppContent: React.FC = () => {
                   >
                     <span className="pricing-best-badge">BEST VALUE</span>
                     <span className="pricing-label">Yearly</span>
-                    <span className="pricing-price">$19.99<span className="pricing-period">/yr</span></span>
-                    <span className="pricing-original">$47.88</span>
+                    <span className="pricing-price">{(() => { const d = PRICE_DISPLAY[detectCurrency()].yearly; return <>{d.price}<span className="pricing-period">{d.period}</span></>; })()}</span>
+                    <span className="pricing-original">{PRICE_DISPLAY[detectCurrency()].yearly.original}</span>
                     <span className="pricing-btn-text">{stripeLoading ? 'Loading...' : 'Get Yearly'}</span>
                   </button>
                 </div>
@@ -2161,8 +2162,8 @@ const AppContent: React.FC = () => {
                     }}
                   >
                     <span className="pricing-label">Monthly</span>
-                    <span className="pricing-price">$3.99<span className="pricing-period">/mo</span></span>
-                    <span className="pricing-original">$4.99</span>
+                    <span className="pricing-price">{(() => { const d = PRICE_DISPLAY[detectCurrency()].monthly; return <>{d.price}<span className="pricing-period">{d.period}</span></>; })()}</span>
+                    <span className="pricing-original">{PRICE_DISPLAY[detectCurrency()].monthly.original}</span>
                     <span className="pricing-btn-text">{stripeLoading ? 'Loading...' : 'Subscribe'}</span>
                   </button>
                   <button
@@ -2184,8 +2185,8 @@ const AppContent: React.FC = () => {
                   >
                     <span className="pricing-best-badge">BEST VALUE</span>
                     <span className="pricing-label">Yearly</span>
-                    <span className="pricing-price">$19.99<span className="pricing-period">/yr</span></span>
-                    <span className="pricing-original">$47.88</span>
+                    <span className="pricing-price">{(() => { const d = PRICE_DISPLAY[detectCurrency()].yearly; return <>{d.price}<span className="pricing-period">{d.period}</span></>; })()}</span>
+                    <span className="pricing-original">{PRICE_DISPLAY[detectCurrency()].yearly.original}</span>
                     <span className="pricing-btn-text">{stripeLoading ? 'Loading...' : 'Get Yearly'}</span>
                   </button>
                 </div>

@@ -17,6 +17,8 @@ interface Env {
   STRIPE_SECRET_KEY: string;
   STRIPE_PRO_MONTHLY_PRICE_ID: string;
   STRIPE_PRO_YEARLY_PRICE_ID: string;
+  STRIPE_PRO_MONTHLY_THB_PRICE_ID: string;
+  STRIPE_PRO_YEARLY_THB_PRICE_ID: string;
   SUBSCRIPTIONS: KVNamespace;
 }
 
@@ -60,6 +62,8 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     const allowedPriceIds = [
       context.env.STRIPE_PRO_MONTHLY_PRICE_ID,
       context.env.STRIPE_PRO_YEARLY_PRICE_ID,
+      context.env.STRIPE_PRO_MONTHLY_THB_PRICE_ID,
+      context.env.STRIPE_PRO_YEARLY_THB_PRICE_ID,
     ];
     if (!allowedPriceIds.includes(priceId)) {
       return new Response(
@@ -69,7 +73,8 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     }
 
     // Determine mode based on price ID
-    const isMonthly = priceId === context.env.STRIPE_PRO_MONTHLY_PRICE_ID;
+    const isMonthly = priceId === context.env.STRIPE_PRO_MONTHLY_PRICE_ID
+      || priceId === context.env.STRIPE_PRO_MONTHLY_THB_PRICE_ID;
     const mode = 'subscription'; // Both monthly and yearly are subscriptions now
     const plan = isMonthly ? 'monthly' : 'yearly';
 

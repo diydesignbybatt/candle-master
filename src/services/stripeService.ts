@@ -7,8 +7,42 @@
 
 // Price IDs (live mode) — public keys safe to expose
 export const STRIPE_PRICES = {
-  MONTHLY: 'price_1SzX9500THgK6a8eMmajk8sQ',
-  YEARLY: 'price_1SzX9X00THgK6a8eQ6GfnYnn',
+  USD: {
+    MONTHLY: 'price_1SzX9500THgK6a8eMmajk8sQ',
+    YEARLY: 'price_1SzX9X00THgK6a8eQ6GfnYnn',
+  },
+  THB: {
+    MONTHLY: 'price_1T0Zxj00THgK6a8eOrAd2QU5',
+    YEARLY: 'price_1T0ZyZ00THgK6a8e3M13GCnH',
+  },
+} as const;
+
+export type StripeCurrency = 'USD' | 'THB';
+
+/**
+ * ตรวจ locale ของ user แล้วเลือก currency ที่เหมาะสม
+ * ถ้า locale เป็น th หรือ th-TH → ใช้ THB, ไม่งั้นใช้ USD
+ */
+export function detectCurrency(): StripeCurrency {
+  try {
+    const lang = navigator.language || navigator.languages?.[0] || '';
+    if (lang.startsWith('th')) return 'THB';
+  } catch { /* fallback */ }
+  return 'USD';
+}
+
+/**
+ * ข้อมูลราคาสำหรับแสดงผลใน UI
+ */
+export const PRICE_DISPLAY = {
+  USD: {
+    monthly: { price: '$3.99', period: '/mo', original: '$4.99', symbol: '$' },
+    yearly: { price: '$19.99', period: '/yr', original: '$47.88', symbol: '$' },
+  },
+  THB: {
+    monthly: { price: '฿139', period: '/mo', original: '฿179', symbol: '฿' },
+    yearly: { price: '฿690', period: '/yr', original: '฿1,668', symbol: '฿' },
+  },
 } as const;
 
 export interface SubscriptionStatus {
