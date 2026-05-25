@@ -659,7 +659,7 @@ const AppContent: React.FC = () => {
           {isPro ? (
             <div className="tablet-pro-status-banner">
               <Star size={14} fill="currentColor" />
-              <span>PRO Member</span>
+              <span>PRO ∞</span>
             </div>
           ) : (
             <div className="tablet-promo-banner" onClick={() => setShowUpgradeModal('general')}>
@@ -1046,7 +1046,7 @@ const AppContent: React.FC = () => {
                 isPro ? (
                   <div className="pro-status-badge">
                     <Star size={14} fill="currentColor" />
-                    <span>PRO Member</span>
+                    <span>PRO ∞</span>
                   </div>
                 ) : (
                   <div className="promo-banner" onClick={() => setShowUpgradeModal('general')}>
@@ -1643,8 +1643,8 @@ const AppContent: React.FC = () => {
                   <div className="pro-subscription-section">
                     <div className="profile-action-btn pro-toggle is-pro">
                       <Star size={20} fill="currentColor" />
-                      <span>PRO Member</span>
-                      <span className="pro-plan-badge">Active</span>
+                      <span>PRO Lifetime</span>
+                      <span className="pro-plan-badge">PRO ∞</span>
                     </div>
                     {/* Manage Subscription removed — Stripe billing portal no longer used (lifetime model). Task 2.5 rebuilds Profile PRO section. */}
                   </div>

@@ -2188,14 +2188,14 @@ export const MODAL_STYLES = `
     letter-spacing: 0.05em;
   }
 
-  /* PRO Plan Badge (Monthly / Yearly) */
+  /* PRO Plan Badge (Lifetime) */
   .profile-action-btn.pro-toggle.is-pro span {
     flex: 1;
   }
   .pro-plan-badge {
     flex: 0 0 auto !important;
     margin-left: auto;
-    font-size: 0.7rem;
+    font-size: 0.75rem;
     font-weight: 700;
     color: #fff;
     background: linear-gradient(135deg, #C5A059, #E6C775);
