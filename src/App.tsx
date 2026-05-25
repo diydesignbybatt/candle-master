@@ -34,10 +34,11 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 const WelcomeScreen = lazy(() => import('./components/WelcomeScreen').then(m => ({ default: m.WelcomeScreen })));
 const OnboardingTutorial = lazy(() => import('./components/OnboardingTutorial').then(m => ({ default: m.OnboardingTutorial })));
 const PositionSizeCalculator = lazy(() => import('./components/PositionSizeCalculator'));
+import { PricingModal } from './components/PricingModal';
 import { motion, AnimatePresence } from 'framer-motion';
 import { soundService, playSound } from './services/soundService';
 import { format } from 'date-fns';
-import { LogOut, Link, Flame, RefreshCw, Globe } from 'lucide-react';
+import { LogOut, Link, RefreshCw } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 // Map icon name strings (from guides.ts) to Lucide components
@@ -70,7 +71,7 @@ const AppContent: React.FC = () => {
   const { mode, setMode, resolvedTheme } = useTheme();
   const { user, isAuthenticated, isGuest, signOut, linkAccount } = useAuth();
   const orientation = useOrientation();
-  const { isPro, upgradeToPro, resetToFree } = useSubscription(user?.id ?? null);
+  const { isPro, upgradeToPro, resetToFree, purchasePro, isLoading: isPurchaseLoading } = useSubscription(user?.id ?? null);
   const prevIsProRef = useRef(isPro);
 
   // Onboarding state - check if user has completed the tutorial
@@ -777,56 +778,20 @@ const AppContent: React.FC = () => {
             </motion.div>
           )}
 
-          {/* Upgrade Modal */}
-          {showUpgradeModal && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="modal-overlay"
-              onClick={() => setShowUpgradeModal(null)}
-            >
-              <motion.div
-                initial={{ scale: 0.9, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.9, opacity: 0 }}
-                className="upgrade-modal"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <button className="upgrade-modal-close" onClick={() => setShowUpgradeModal(null)}>
-                  <X size={20} />
-                </button>
-                <div className="upgrade-modal-icon">
-                  <Star size={48} fill="currentColor" />
-                </div>
-                <h2 className="upgrade-modal-title">
-                  {showUpgradeModal === 'calc' && 'Position Sizing Calculator'}
-                  {showUpgradeModal === 'learn' && 'Candle Academy'}
-                  {showUpgradeModal === 'general' && 'Upgrade to PRO'}
-                </h2>
-                <p className="upgrade-modal-subtitle">
-                  {showUpgradeModal === 'general' ? 'Unlock Everything' : 'PRO Feature'}
-                </p>
-                {showUpgradeModal === 'calc' && (
-                  <p className="upgrade-modal-desc">Use it for your real trading every day. Calculate precise entry positions safely with proper Risk Management principles.</p>
-                )}
-                {showUpgradeModal === 'learn' && (
-                  <p className="upgrade-modal-desc">Master candlestick patterns, chart patterns, and risk management strategies. Learn from comprehensive guides to become a better trader.</p>
-                )}
-                {showUpgradeModal === 'general' && (
-                  <ul className="upgrade-benefits-list">
-                    <li><span className="benefit-icon"><TrendingUp size={18} /></span>250 Trading Days per game</li>
-                    <li><span className="benefit-icon"><BookOpen size={18} /></span>Full Academy Access</li>
-                    <li><span className="benefit-icon"><Calculator size={18} /></span>Position Size Calculator</li>
-                    <li><span className="benefit-icon"><Globe size={18} /></span>500+ Global Stocks & ETFs</li>
-                    <li><span className="benefit-icon"><Flame size={18} /></span>Crisis Event Challenge</li>
-                    <li><span className="benefit-icon"><RefreshCw size={18} /></span>Reset Game Data anytime</li>
-                  </ul>
-                )}
-                {/* Pricing buttons removed — rebuilt in Task 2.2 (PricingModal) */}
-              </motion.div>
-            </motion.div>
-          )}
+          {/* Upgrade Modal — single Lifetime card (Task 2.2) */}
+          <PricingModal
+            isOpen={!!showUpgradeModal}
+            onClose={() => setShowUpgradeModal(null)}
+            onPurchase={async () => {
+              const result = await purchasePro();
+              if (result?.success) {
+                setShowUpgradeModal(null);
+              }
+            }}
+            isLoading={isPurchaseLoading}
+            isPro={isPro}
+            trigger={showUpgradeModal ?? 'general'}
+          />
         </AnimatePresence>
 
         <style>{GLOBAL_STYLES}</style>
@@ -1957,56 +1922,20 @@ const AppContent: React.FC = () => {
             </motion.div>
           )}
 
-          {/* PRO Upgrade Modal */}
-          {showUpgradeModal && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="modal-overlay"
-              onClick={() => setShowUpgradeModal(null)}
-            >
-              <motion.div
-                initial={{ scale: 0.9, opacity: 0, y: 20 }}
-                animate={{ scale: 1, opacity: 1, y: 0 }}
-                exit={{ scale: 0.9, opacity: 0, y: 20 }}
-                className="upgrade-modal"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <button className="upgrade-modal-close" onClick={() => setShowUpgradeModal(null)}>
-                  <X size={20} />
-                </button>
-                <div className="upgrade-modal-icon">
-                  <Star size={48} fill="currentColor" />
-                </div>
-                <h2 className="upgrade-modal-title">
-                  {showUpgradeModal === 'calc' && 'Position Sizing Calculator'}
-                  {showUpgradeModal === 'learn' && 'Candle Academy'}
-                  {showUpgradeModal === 'general' && 'Upgrade to PRO'}
-                </h2>
-                <p className="upgrade-modal-subtitle">
-                  {showUpgradeModal === 'general' ? 'Unlock Everything' : 'PRO Feature'}
-                </p>
-                {showUpgradeModal === 'calc' && (
-                  <p className="upgrade-modal-desc">Use it for your real trading every day. Calculate precise entry positions safely with proper Risk Management principles.</p>
-                )}
-                {showUpgradeModal === 'learn' && (
-                  <p className="upgrade-modal-desc">Master candlestick patterns, chart patterns, and risk management strategies. Learn from comprehensive guides to become a better trader.</p>
-                )}
-                {showUpgradeModal === 'general' && (
-                  <ul className="upgrade-benefits-list">
-                    <li><span className="benefit-icon"><TrendingUp size={18} /></span>250 Trading Days per game</li>
-                    <li><span className="benefit-icon"><BookOpen size={18} /></span>Full Academy Access</li>
-                    <li><span className="benefit-icon"><Calculator size={18} /></span>Position Size Calculator</li>
-                    <li><span className="benefit-icon"><Globe size={18} /></span>500+ Global Stocks & ETFs</li>
-                    <li><span className="benefit-icon"><Flame size={18} /></span>Crisis Event Challenge</li>
-                    <li><span className="benefit-icon"><RefreshCw size={18} /></span>Reset Game Data anytime</li>
-                  </ul>
-                )}
-                {/* Pricing buttons removed — rebuilt in Task 2.2 (PricingModal) */}
-              </motion.div>
-            </motion.div>
-          )}
+          {/* PRO Upgrade Modal — single Lifetime card (Task 2.2) */}
+          <PricingModal
+            isOpen={!!showUpgradeModal}
+            onClose={() => setShowUpgradeModal(null)}
+            onPurchase={async () => {
+              const result = await purchasePro();
+              if (result?.success) {
+                setShowUpgradeModal(null);
+              }
+            }}
+            isLoading={isPurchaseLoading}
+            isPro={isPro}
+            trigger={showUpgradeModal ?? 'general'}
+          />
 
           {isGameOver && (
             <motion.div
