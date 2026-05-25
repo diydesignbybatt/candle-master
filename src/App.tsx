@@ -72,7 +72,7 @@ const AppContent: React.FC = () => {
   const { mode, setMode, resolvedTheme } = useTheme();
   const { user, isAuthenticated, isGuest, signOut, linkAccount } = useAuth();
   const orientation = useOrientation();
-  const { isPro, upgradeToPro, resetToFree, purchasePro, isLoading: isPurchaseLoading } = useSubscription(user?.id ?? null);
+  const { isPro, upgradeToPro, resetToFree, purchasePro, isLoading: isPurchaseLoading, restorePurchases, subscriptionStatus } = useSubscription(user?.id ?? null);
   const prevIsProRef = useRef(isPro);
 
   // Onboarding state - check if user has completed the tutorial
@@ -1646,7 +1646,24 @@ const AppContent: React.FC = () => {
                       <span>PRO Lifetime</span>
                       <span className="pro-plan-badge">PRO ∞</span>
                     </div>
-                    {/* Manage Subscription removed — Stripe billing portal no longer used (lifetime model). Task 2.5 rebuilds Profile PRO section. */}
+                    {subscriptionStatus?.purchaseDate && (
+                      <p style={{ fontSize: '0.85rem', opacity: 0.75, marginTop: '4px', marginBottom: '4px', textAlign: 'center' }}>
+                        Activated: {new Date(subscriptionStatus.purchaseDate).toLocaleDateString()}
+                      </p>
+                    )}
+                    <button
+                      className="profile-action-btn"
+                      onClick={async () => {
+                        const restored = await restorePurchases();
+                        if (restored) {
+                          console.log('[Profile] Purchase restored');
+                        }
+                      }}
+                      disabled={isPurchaseLoading}
+                    >
+                      <Star size={20} />
+                      <span>{isPurchaseLoading ? 'Restoring...' : 'Restore Purchases'}</span>
+                    </button>
                   </div>
                 ) : (
                   <button
@@ -1654,7 +1671,7 @@ const AppContent: React.FC = () => {
                     onClick={() => setShowUpgradeModal('general')}
                   >
                     <Star size={20} fill="none" />
-                    <span>Upgrade to PRO</span>
+                    <span>Upgrade to PRO Lifetime ฿99</span>
                     <span className="pro-cta-arrow">→</span>
                   </button>
                 )}
