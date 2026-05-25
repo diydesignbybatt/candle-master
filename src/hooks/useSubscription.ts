@@ -37,13 +37,6 @@ function getStorageKey(userId: string | null): string {
 export const useSubscription = (userId: string | null = null) => {
   const storageKey = getStorageKey(userId);
 
-  // Migration: clear old un-scoped keys + old subscription plan keys
-  if (userId) {
-    localStorage.removeItem('candle_master_subscription');
-    localStorage.removeItem('candle_master_plan');
-    localStorage.removeItem(`candle_master_plan_${userId}`);
-  }
-
   const [tier, setTier] = useState<SubscriptionTier>('free');
   const [gamesToday, setGamesToday] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
@@ -51,16 +44,28 @@ export const useSubscription = (userId: string | null = null) => {
   const [subscriptionStatus, setSubscriptionStatus] = useState<SubscriptionStatus | null>(null);
 
   useEffect(() => {
+    let mounted = true;
+
+    // Migration: clear old un-scoped keys + old subscription plan keys
+    if (userId) {
+      localStorage.removeItem('candle_master_subscription');
+      localStorage.removeItem('candle_master_plan');
+      localStorage.removeItem(`candle_master_plan_${userId}`);
+    }
+
     setTier('free');
     setSubscriptionStatus(null);
 
     const initSubscription = async () => {
       if (revenueCatService.isConfigured()) {
         await revenueCatService.initialize(userId || undefined);
+        if (!mounted) return;
         const status = await revenueCatService.getSubscriptionStatus();
+        if (!mounted) return;
         setSubscriptionStatus(status);
         if (status.isPro) setTier('pro');
         const availableProducts = await revenueCatService.getProducts();
+        if (!mounted) return;
         setProducts(availableProducts);
       } else {
         // Web fallback: localStorage only (testing helper)
@@ -69,6 +74,7 @@ export const useSubscription = (userId: string | null = null) => {
       }
 
       // Daily game counter
+      if (!mounted) return;
       const today = new Date().toDateString();
       const savedDate = localStorage.getItem(GAMES_DATE_KEY);
       if (savedDate === today) {
@@ -82,6 +88,8 @@ export const useSubscription = (userId: string | null = null) => {
     };
 
     initSubscription();
+
+    return () => { mounted = false; };
   }, [userId, storageKey]);
 
   const limits = TIER_LIMITS[tier];
@@ -151,7 +159,7 @@ export const useSubscription = (userId: string | null = null) => {
     }
   }, [storageKey]);
 
-  // Testing helpers — keep for now (user keeps for friends to test in this period)
+  // Testing helpers — kept intentionally for closed testing period (remove before public release)
   const upgradeToPro = useCallback(() => {
     setTier('pro');
     localStorage.setItem(storageKey, 'pro');
@@ -163,9 +171,9 @@ export const useSubscription = (userId: string | null = null) => {
     localStorage.removeItem(storageKey);
   }, [storageKey]);
 
-  const linkUser = useCallback(async (userId: string) => {
+  const linkUser = useCallback(async (newUserId: string) => {
     if (revenueCatService.isConfigured()) {
-      await revenueCatService.login(userId);
+      await revenueCatService.login(newUserId);
       const status = await revenueCatService.getSubscriptionStatus();
       setSubscriptionStatus(status);
       if (status.isPro) setTier('pro');
