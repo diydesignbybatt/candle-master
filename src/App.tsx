@@ -1,6 +1,5 @@
 import React, { useState, useEffect, Component, useCallback, useRef, Suspense, lazy } from 'react';
 import type { ErrorInfo, ReactNode } from 'react';
-import { Capacitor } from '@capacitor/core';
 
 class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean }> {
   constructor(props: { children: ReactNode }) {
@@ -69,49 +68,10 @@ interface TradeRecord {
 const AppContent: React.FC = () => {
   // All hooks must be called before any conditional returns (React Rules of Hooks)
   const { mode, setMode, resolvedTheme } = useTheme();
-  const { user, isAuthenticated, isGuest, signOut, linkAccount, getIdToken } = useAuth();
+  const { user, isAuthenticated, isGuest, signOut, linkAccount } = useAuth();
   const orientation = useOrientation();
-  const { isPro, proPlan, isLoading: subLoading, upgradeToPro, resetToFree, purchaseProWeb, purchasePro, products: rcProducts, openManageSubscription } = useSubscription(user?.id ?? null, getIdToken);
+  const { isPro, upgradeToPro, resetToFree } = useSubscription(user?.id ?? null);
   const prevIsProRef = useRef(isPro);
-  const isNative = Capacitor.isNativePlatform();
-  const [stripeLoading, setStripeLoading] = useState(false);
-  const [showThankYouModal, setShowThankYouModal] = useState(false);
-
-  // Detect Stripe return from URL on first mount (read before cleaning)
-  const [pendingStripeSuccess] = useState(() => {
-    const params = new URLSearchParams(window.location.search);
-    const result = params.get('stripe');
-    if (result) window.history.replaceState({}, '', window.location.pathname);
-    if (result === 'success') return true;
-    // Also check sessionStorage backup
-    if (sessionStorage.getItem('stripe_pending') === 'true') return true;
-    return false;
-  });
-
-  // Cancel message: detect from URL in initializer (URL already cleaned above)
-  const [stripeMessage, setStripeMessage] = useState<'cancel' | null>(() => {
-    const params = new URLSearchParams(window.location.search);
-    return params.get('stripe') === 'cancel' ? 'cancel' : null;
-  });
-
-  // Auto-dismiss cancel message
-  useEffect(() => {
-    if (stripeMessage === 'cancel') {
-      const timer = setTimeout(() => setStripeMessage(null), 4000);
-      return () => clearTimeout(timer);
-    }
-  }, [stripeMessage]);
-
-  // Handle Stripe success: upgrade immediately (Stripe redirect = payment confirmed)
-  useEffect(() => {
-    if (!pendingStripeSuccess) return;
-
-    // Trust Stripe redirect — upgrade + show modal immediately
-    upgradeToPro();
-    setShowThankYouModal(true);
-    sessionStorage.removeItem('stripe_pending');
-
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Onboarding state - check if user has completed the tutorial
   const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(() => {
@@ -696,7 +656,7 @@ const AppContent: React.FC = () => {
           {isPro ? (
             <div className="tablet-pro-status-banner">
               <Star size={14} fill="currentColor" />
-              <span>PRO Member{proPlan ? ` — ${proPlan === 'yearly' ? 'Yearly' : 'Monthly'}` : ''}</span>
+              <span>PRO Member</span>
             </div>
           ) : (
             <div className="tablet-promo-banner" onClick={() => setShowUpgradeModal('general')}>
@@ -863,91 +823,7 @@ const AppContent: React.FC = () => {
                     <li><span className="benefit-icon"><RefreshCw size={18} /></span>Reset Game Data anytime</li>
                   </ul>
                 )}
-                <div className="pricing-cards">
-                  <button
-                    className="pricing-card"
-                    disabled={stripeLoading}
-                    onClick={async () => {
-                      if (!user?.id || user.id.startsWith('guest_')) { setShowUpgradeModal(null); setActiveTab('profile'); return; }
-                      setStripeLoading(true);
-                      try {
-                        if (isNative) {
-                          const monthly = rcProducts.find(p => p.identifier.includes('monthly'));
-                          const result = await purchasePro(monthly?.identifier);
-                          if (result?.success) setShowUpgradeModal(null);
-                        } else {
-                          await purchaseProWeb('monthly', user.id, user.email);
-                        }
-                      } catch (e) { console.error('Purchase error:', e); } finally { setStripeLoading(false); }
-                    }}
-                  >
-                    <span className="pricing-label">Monthly</span>
-                    <span className="pricing-price">{(() => { const d = PRICE_DISPLAY[detectCurrency()].monthly; return <>{d.price}<span className="pricing-period">{d.period}</span></>; })()}</span>
-                    <span className="pricing-original">{PRICE_DISPLAY[detectCurrency()].monthly.original}</span>
-                    <span className="pricing-btn-text">{stripeLoading ? 'Loading...' : 'Subscribe'}</span>
-                  </button>
-                  <button
-                    className="pricing-card pricing-card-best"
-                    disabled={stripeLoading}
-                    onClick={async () => {
-                      if (!user?.id || user.id.startsWith('guest_')) { setShowUpgradeModal(null); setActiveTab('profile'); return; }
-                      setStripeLoading(true);
-                      try {
-                        if (isNative) {
-                          const yearly = rcProducts.find(p => p.identifier.includes('yearly'));
-                          const result = await purchasePro(yearly?.identifier);
-                          if (result?.success) setShowUpgradeModal(null);
-                        } else {
-                          await purchaseProWeb('yearly', user.id, user.email);
-                        }
-                      } catch (e) { console.error('Purchase error:', e); } finally { setStripeLoading(false); }
-                    }}
-                  >
-                    <span className="pricing-best-badge">BEST VALUE</span>
-                    <span className="pricing-label">Yearly</span>
-                    <span className="pricing-price">{(() => { const d = PRICE_DISPLAY[detectCurrency()].yearly; return <>{d.price}<span className="pricing-period">{d.period}</span></>; })()}</span>
-                    <span className="pricing-original">{PRICE_DISPLAY[detectCurrency()].yearly.original}</span>
-                    <span className="pricing-btn-text">{stripeLoading ? 'Loading...' : 'Get Yearly'}</span>
-                  </button>
-                </div>
-              </motion.div>
-            </motion.div>
-          )}
-
-          {/* Stripe Cancel Message */}
-          {stripeMessage === 'cancel' && (
-            <motion.div
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className="stripe-message cancel"
-              onClick={() => setStripeMessage(null)}
-            >
-              Payment cancelled. You can try again anytime.
-            </motion.div>
-          )}
-
-          {/* Thank You Modal */}
-          {showThankYouModal && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="thankyou-overlay"
-            >
-              <motion.div
-                initial={{ opacity: 0, scale: 0.8, y: 30 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                transition={{ type: 'spring', damping: 20, stiffness: 300, delay: 0.1 }}
-                className="thankyou-modal"
-              >
-                <div className="thankyou-sparkles">&#10024;</div>
-                <img src="/uncle-mascot.webp" alt="Thank you" className="thankyou-mascot" />
-                <h2 className="thankyou-title">Thank You!</h2>
-                <p className="thankyou-subtitle">Welcome to PRO</p>
-                <p className="thankyou-desc">All premium features are now unlocked. Enjoy your trading journey!</p>
-                <button className="thankyou-btn" onClick={() => setShowThankYouModal(false)}>
-                  Start Exploring PRO
-                </button>
+                {/* Pricing buttons removed — rebuilt in Task 2.2 (PricingModal) */}
               </motion.div>
             </motion.div>
           )}
@@ -1797,17 +1673,9 @@ const AppContent: React.FC = () => {
                     <div className="profile-action-btn pro-toggle is-pro">
                       <Star size={20} fill="currentColor" />
                       <span>PRO Member</span>
-                      <span className="pro-plan-badge">
-                        {proPlan === 'yearly' ? <><span className="pro-badge-icon">★</span> Yearly</> : proPlan === 'monthly' ? 'Monthly' : 'Active'}
-                      </span>
+                      <span className="pro-plan-badge">Active</span>
                     </div>
-                    <button
-                      className="manage-subscription-link"
-                      onClick={openManageSubscription}
-                      disabled={subLoading}
-                    >
-                      {subLoading ? 'Opening...' : 'Manage Subscription'}
-                    </button>
+                    {/* Manage Subscription removed — Stripe billing portal no longer used (lifetime model). Task 2.5 rebuilds Profile PRO section. */}
                   </div>
                 ) : (
                   <button
@@ -2135,53 +2003,7 @@ const AppContent: React.FC = () => {
                     <li><span className="benefit-icon"><RefreshCw size={18} /></span>Reset Game Data anytime</li>
                   </ul>
                 )}
-                <div className="pricing-cards">
-                  <button
-                    className="pricing-card"
-                    disabled={stripeLoading}
-                    onClick={async () => {
-                      if (!user?.id || user.id.startsWith('guest_')) { setShowUpgradeModal(null); setActiveTab('profile'); return; }
-                      setStripeLoading(true);
-                      try {
-                        if (isNative) {
-                          const monthly = rcProducts.find(p => p.identifier.includes('monthly'));
-                          const result = await purchasePro(monthly?.identifier);
-                          if (result?.success) setShowUpgradeModal(null);
-                        } else {
-                          await purchaseProWeb('monthly', user.id, user.email);
-                        }
-                      } catch (e) { console.error('Purchase error:', e); } finally { setStripeLoading(false); }
-                    }}
-                  >
-                    <span className="pricing-label">Monthly</span>
-                    <span className="pricing-price">{(() => { const d = PRICE_DISPLAY[detectCurrency()].monthly; return <>{d.price}<span className="pricing-period">{d.period}</span></>; })()}</span>
-                    <span className="pricing-original">{PRICE_DISPLAY[detectCurrency()].monthly.original}</span>
-                    <span className="pricing-btn-text">{stripeLoading ? 'Loading...' : 'Subscribe'}</span>
-                  </button>
-                  <button
-                    className="pricing-card pricing-card-best"
-                    disabled={stripeLoading}
-                    onClick={async () => {
-                      if (!user?.id || user.id.startsWith('guest_')) { setShowUpgradeModal(null); setActiveTab('profile'); return; }
-                      setStripeLoading(true);
-                      try {
-                        if (isNative) {
-                          const yearly = rcProducts.find(p => p.identifier.includes('yearly'));
-                          const result = await purchasePro(yearly?.identifier);
-                          if (result?.success) setShowUpgradeModal(null);
-                        } else {
-                          await purchaseProWeb('yearly', user.id, user.email);
-                        }
-                      } catch (e) { console.error('Purchase error:', e); } finally { setStripeLoading(false); }
-                    }}
-                  >
-                    <span className="pricing-best-badge">BEST VALUE</span>
-                    <span className="pricing-label">Yearly</span>
-                    <span className="pricing-price">{(() => { const d = PRICE_DISPLAY[detectCurrency()].yearly; return <>{d.price}<span className="pricing-period">{d.period}</span></>; })()}</span>
-                    <span className="pricing-original">{PRICE_DISPLAY[detectCurrency()].yearly.original}</span>
-                    <span className="pricing-btn-text">{stripeLoading ? 'Loading...' : 'Get Yearly'}</span>
-                  </button>
-                </div>
+                {/* Pricing buttons removed — rebuilt in Task 2.2 (PricingModal) */}
               </motion.div>
             </motion.div>
           )}
