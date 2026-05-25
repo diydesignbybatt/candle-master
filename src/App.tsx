@@ -111,13 +111,6 @@ const AppContent: React.FC = () => {
     setShowThankYouModal(true);
     sessionStorage.removeItem('stripe_pending');
 
-    // Also verify with server in background (non-blocking)
-    const userId = user?.id && !user.id.startsWith('guest_') ? user.id : null;
-    if (userId) {
-      import('./services/stripeService').then(({ checkSubscriptionStatus }) => {
-        checkSubscriptionStatus(userId).catch(() => {});
-      });
-    }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Onboarding state - check if user has completed the tutorial
