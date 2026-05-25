@@ -35,6 +35,7 @@ const WelcomeScreen = lazy(() => import('./components/WelcomeScreen').then(m => 
 const OnboardingTutorial = lazy(() => import('./components/OnboardingTutorial').then(m => ({ default: m.OnboardingTutorial })));
 const PositionSizeCalculator = lazy(() => import('./components/PositionSizeCalculator'));
 import { PricingModal } from './components/PricingModal';
+import { ThankYouModal } from './components/ThankYouModal';
 import { motion, AnimatePresence } from 'framer-motion';
 import { soundService, playSound } from './services/soundService';
 import { format } from 'date-fns';
@@ -102,6 +103,7 @@ const AppContent: React.FC = () => {
   const [riskGuideIndex, setRiskGuideIndex] = useState(0);
   const riskCarouselRef = useRef<HTMLDivElement>(null);
   const [showUpgradeModal, setShowUpgradeModal] = useState<'calc' | 'learn' | 'general' | null>(null);
+  const [showThankYou, setShowThankYou] = useState(false);
   const [showCrisisBanner, setShowCrisisBanner] = useState(false);
 
   // Check if in landscape mode and on trade screen
@@ -786,12 +788,16 @@ const AppContent: React.FC = () => {
               const result = await purchasePro();
               if (result?.success) {
                 setShowUpgradeModal(null);
+                setShowThankYou(true);
               }
             }}
             isLoading={isPurchaseLoading}
             isPro={isPro}
             trigger={showUpgradeModal ?? 'general'}
           />
+
+          {/* Thank You Modal — shown after successful PRO purchase */}
+          <ThankYouModal isOpen={showThankYou} onClose={() => setShowThankYou(false)} />
         </AnimatePresence>
 
         <style>{GLOBAL_STYLES}</style>
@@ -1930,12 +1936,16 @@ const AppContent: React.FC = () => {
               const result = await purchasePro();
               if (result?.success) {
                 setShowUpgradeModal(null);
+                setShowThankYou(true);
               }
             }}
             isLoading={isPurchaseLoading}
             isPro={isPro}
             trigger={showUpgradeModal ?? 'general'}
           />
+
+          {/* Thank You Modal — shown after successful PRO purchase */}
+          <ThankYouModal isOpen={showThankYou} onClose={() => setShowThankYou(false)} />
 
           {isGameOver && (
             <motion.div
