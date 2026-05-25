@@ -33,8 +33,7 @@ const REVENUECAT_CONFIG = {
   },
   // Product identifiers (ต้องตรงกับที่สร้างใน App Store / Play Store)
   products: {
-    monthly: 'candle_master_pro_monthly',
-    yearly: 'candle_master_pro_yearly',
+    lifetime: 'candle_master_pro_lifetime', // Google Play managed product (one-time purchase)
   },
 };
 
@@ -43,10 +42,8 @@ const REVENUECAT_CONFIG = {
 // ============================================
 export interface SubscriptionStatus {
   isPro: boolean;
-  expirationDate: Date | null;
   productId: string | null;
-  willRenew: boolean;
-  plan?: 'monthly' | 'yearly';
+  purchaseDate: Date | null;
 }
 
 export interface Product {
@@ -56,8 +53,6 @@ export interface Product {
   price: number;
   priceString: string;
   currencyCode: string;
-  /** 'monthly' | 'yearly' — derived from package type or product id */
-  planType?: 'monthly' | 'yearly';
 }
 
 export interface PurchaseResult {
@@ -169,9 +164,8 @@ class RevenueCatService {
   async getSubscriptionStatus(): Promise<SubscriptionStatus> {
     const defaultStatus: SubscriptionStatus = {
       isPro: false,
-      expirationDate: null,
       productId: null,
-      willRenew: false,
+      purchaseDate: null,
     };
 
     if (!this.initialized || !this.isConfigured()) {
@@ -185,15 +179,10 @@ class RevenueCatService {
       const proEntitlement = customerInfo.entitlements.active[REVENUECAT_CONFIG.entitlements.pro];
 
       if (proEntitlement) {
-        // Derive plan type from product identifier
-        const plan = this.derivePlanType(proEntitlement.productIdentifier);
-
         return {
           isPro: true,
-          expirationDate: proEntitlement.expirationDate ? new Date(proEntitlement.expirationDate) : null,
           productId: proEntitlement.productIdentifier,
-          willRenew: proEntitlement.willRenew,
-          plan,
+          purchaseDate: proEntitlement.latestPurchaseDate ? new Date(proEntitlement.latestPurchaseDate) : null,
         };
       }
 
@@ -223,12 +212,11 @@ class RevenueCatService {
         return [];
       }
 
-      // Map available packages → Product[]
       const products: Product[] = [];
 
-      // Monthly package
-      if (currentOffering.monthly) {
-        const pkg = currentOffering.monthly;
+      // Preferred: use the lifetime package from current offering
+      if (currentOffering.lifetime) {
+        const pkg = currentOffering.lifetime;
         products.push({
           identifier: pkg.product.identifier,
           title: pkg.product.title,
@@ -236,25 +224,10 @@ class RevenueCatService {
           price: pkg.product.price,
           priceString: pkg.product.priceString,
           currencyCode: pkg.product.currencyCode,
-          planType: 'monthly',
         });
       }
 
-      // Annual package
-      if (currentOffering.annual) {
-        const pkg = currentOffering.annual;
-        products.push({
-          identifier: pkg.product.identifier,
-          title: pkg.product.title,
-          description: pkg.product.description,
-          price: pkg.product.price,
-          priceString: pkg.product.priceString,
-          currencyCode: pkg.product.currencyCode,
-          planType: 'yearly',
-        });
-      }
-
-      // Fallback: ถ้าไม่มี named packages → iterate availablePackages
+      // Fallback: iterate availablePackages if lifetime not named
       if (products.length === 0 && currentOffering.availablePackages.length > 0) {
         for (const pkg of currentOffering.availablePackages) {
           products.push({
@@ -264,12 +237,11 @@ class RevenueCatService {
             price: pkg.product.price,
             priceString: pkg.product.priceString,
             currencyCode: pkg.product.currencyCode,
-            planType: this.derivePlanType(pkg.product.identifier),
           });
         }
       }
 
-      console.log(`[RevenueCat] Loaded ${products.length} products:`, products.map(p => `${p.planType}: ${p.priceString}`));
+      console.log(`[RevenueCat] Loaded ${products.length} products`);
       return products;
     } catch (error) {
       console.error('[RevenueCat] Failed to get products:', error);
@@ -350,9 +322,8 @@ class RevenueCatService {
   async restorePurchases(): Promise<SubscriptionStatus> {
     const defaultStatus: SubscriptionStatus = {
       isPro: false,
-      expirationDate: null,
       productId: null,
-      willRenew: false,
+      purchaseDate: null,
     };
 
     if (!this.initialized || !this.isConfigured()) {
@@ -366,15 +337,11 @@ class RevenueCatService {
       const proEntitlement = customerInfo.entitlements.active[REVENUECAT_CONFIG.entitlements.pro];
 
       if (proEntitlement) {
-        const plan = this.derivePlanType(proEntitlement.productIdentifier);
-        console.log(`[RevenueCat] Restore successful — PRO: true, plan: ${plan}`);
-
+        console.log(`[RevenueCat] Restore successful — PRO active`);
         return {
           isPro: true,
-          expirationDate: proEntitlement.expirationDate ? new Date(proEntitlement.expirationDate) : null,
           productId: proEntitlement.productIdentifier,
-          willRenew: proEntitlement.willRenew,
-          plan,
+          purchaseDate: proEntitlement.latestPurchaseDate ? new Date(proEntitlement.latestPurchaseDate) : null,
         };
       }
 
@@ -386,20 +353,6 @@ class RevenueCatService {
     }
   }
 
-  // ============================================
-  // HELPER METHODS
-  // ============================================
-
-  /**
-   * Derive plan type from product identifier
-   * candle_master_pro_monthly → 'monthly'
-   * candle_master_pro_yearly → 'yearly'
-   */
-  private derivePlanType(productId: string): 'monthly' | 'yearly' | undefined {
-    if (productId.includes('monthly')) return 'monthly';
-    if (productId.includes('yearly') || productId.includes('annual')) return 'yearly';
-    return undefined;
-  }
 }
 
 // Export singleton instance

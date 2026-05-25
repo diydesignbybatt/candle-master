@@ -204,6 +204,6 @@ export const useSubscription = (userId: string | null = null) => {
     linkUser,
     unlinkUser,
     subscriptionStatus,
-    expirationDate: subscriptionStatus?.expirationDate,
+    purchaseDate: subscriptionStatus?.purchaseDate,
   };
 };
