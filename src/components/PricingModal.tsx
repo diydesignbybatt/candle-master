@@ -62,9 +62,23 @@ export const PricingModal: React.FC<PricingModalProps> = ({
   const currency = detectCurrency();
   const { price, period } = PRICE_DISPLAY[currency];
 
+  React.useEffect(() => {
+    if (!isOpen) return;
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', handleKey);
+    return () => document.removeEventListener('keydown', handleKey);
+  }, [isOpen, onClose]);
+
   const handlePurchase = async () => {
     if (isLoading || isPro) return;
-    await onPurchase();
+    try {
+      await onPurchase();
+    } catch (err) {
+      console.error('[PricingModal] Purchase error:', err);
+      // Don't re-throw — let the parent handle UI state via isLoading + isPro props
+    }
   };
 
   return (
@@ -82,6 +96,9 @@ export const PricingModal: React.FC<PricingModalProps> = ({
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.9, opacity: 0, y: 20 }}
             className="upgrade-modal pricing-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="pricing-modal-title"
             onClick={(e) => e.stopPropagation()}
           >
             <button
@@ -98,7 +115,7 @@ export const PricingModal: React.FC<PricingModalProps> = ({
 
             {isPro ? (
               <>
-                <h2 className="upgrade-modal-title">You're already PRO</h2>
+                <h2 id="pricing-modal-title" className="upgrade-modal-title">You're already PRO</h2>
                 <p className="upgrade-modal-subtitle">Thanks for supporting Candle Master</p>
                 <button
                   type="button"
@@ -111,7 +128,7 @@ export const PricingModal: React.FC<PricingModalProps> = ({
               </>
             ) : (
               <>
-                <h2 className="upgrade-modal-title">{HEADLINES[trigger]}</h2>
+                <h2 id="pricing-modal-title" className="upgrade-modal-title">{HEADLINES[trigger]}</h2>
                 <p className="upgrade-modal-subtitle">Lifetime Access</p>
 
                 {/* Single Lifetime card */}
@@ -170,9 +187,10 @@ export const PricingModal: React.FC<PricingModalProps> = ({
                         <Smartphone size={18} />
                         <span>Get on Play Store</span>
                       </a>
+                      {/* TODO: Replace with real App Store URL once iOS app is published */}
                       <a
                         className="pricing-store-btn pricing-store-btn-secondary"
-                        href="https://candlemaster.app"
+                        href="https://candlemaster.app" // placeholder — points to landing, not App Store
                         target="_blank"
                         rel="noopener noreferrer"
                       >
