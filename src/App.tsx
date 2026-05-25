@@ -37,7 +37,6 @@ const OnboardingTutorial = lazy(() => import('./components/OnboardingTutorial').
 const PositionSizeCalculator = lazy(() => import('./components/PositionSizeCalculator'));
 import { motion, AnimatePresence } from 'framer-motion';
 import { soundService, playSound } from './services/soundService';
-import { detectCurrency, PRICE_DISPLAY } from './services/stripeService';
 import { format } from 'date-fns';
 import { LogOut, Link, Flame, RefreshCw, Globe } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';

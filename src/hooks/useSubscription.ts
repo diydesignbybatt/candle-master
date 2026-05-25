@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { revenueCatService, type SubscriptionStatus, type Product } from '../services/revenueCatService';
-import { createCheckoutSession, checkSubscriptionStatus as checkStripeStatus, createPortalSession, STRIPE_PRICES, detectCurrency } from '../services/stripeService';
 
 // Subscription tiers
 export type SubscriptionTier = 'free' | 'pro';
