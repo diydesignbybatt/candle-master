@@ -13,28 +13,34 @@ export const ThankYouModal: React.FC<ThankYouModalProps> = ({
   onClose,
   autoCloseMs = 5000,
 }) => {
+  // Hold latest onClose in ref so timer/ESC effects don't restart on parent re-render
+  const onCloseRef = React.useRef(onClose);
+  React.useEffect(() => {
+    onCloseRef.current = onClose;
+  });
+
   // ESC key handler
   React.useEffect(() => {
     if (!isOpen) return;
     const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape') onCloseRef.current();
     };
     document.addEventListener('keydown', handleKey);
     return () => document.removeEventListener('keydown', handleKey);
-  }, [isOpen, onClose]);
+  }, [isOpen]); // onClose via ref
 
   // Auto-dismiss after autoCloseMs
   React.useEffect(() => {
     if (!isOpen) return;
     const timer = setTimeout(() => {
       try {
-        onClose();
+        onCloseRef.current();
       } catch (err) {
         console.error('[ThankYouModal] Auto-close error:', err);
       }
     }, autoCloseMs);
     return () => clearTimeout(timer);
-  }, [isOpen, autoCloseMs, onClose]);
+  }, [isOpen, autoCloseMs]); // onClose intentionally NOT in deps — accessed via ref
 
   return (
     <AnimatePresence>

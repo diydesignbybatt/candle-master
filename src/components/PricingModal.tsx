@@ -62,14 +62,20 @@ export const PricingModal: React.FC<PricingModalProps> = ({
   const currency = detectCurrency();
   const { price, period } = PRICE_DISPLAY[currency];
 
+  // Hold latest onClose in ref so ESC effect doesn't restart on parent re-render
+  const onCloseRef = React.useRef(onClose);
+  React.useEffect(() => {
+    onCloseRef.current = onClose;
+  });
+
   React.useEffect(() => {
     if (!isOpen) return;
     const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape') onCloseRef.current();
     };
     document.addEventListener('keydown', handleKey);
     return () => document.removeEventListener('keydown', handleKey);
-  }, [isOpen, onClose]);
+  }, [isOpen]); // onClose via ref
 
   const handlePurchase = async () => {
     if (isLoading || isPro) return;
