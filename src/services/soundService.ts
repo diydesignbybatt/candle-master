@@ -7,6 +7,12 @@
 type SoundType = 'trade-open' | 'profit' | 'loss' | 'click' | 'game-win' | 'game-lose';
 type MusicType = 'bgm-normal' | 'bgm-event';
 
+type WindowWithWebkitAudioContext = Window & {
+  webkitAudioContext?: typeof AudioContext;
+};
+
+const MUSIC_VOLUME_STORAGE_KEY = 'music_volume_percent';
+
 // BGM tracks
 const NORMAL_TRACKS = ['/sounds/bgm-1.mp3', '/sounds/bgm-3.mp3'];
 const BOSS_TRACKS = ['/sounds/boss-1.mp3', '/sounds/boss-2.mp3'];
@@ -18,6 +24,16 @@ const BOSS_TRACKS = ['/sounds/boss-1.mp3', '/sounds/boss-2.mp3'];
 function dbToGain(db: number): number {
   if (db <= -60) return 0; // ถือว่าเงียบ
   return Math.pow(10, db / 20);
+}
+
+function percentToDb(percent: number): number {
+  const normalized = Math.max(0, Math.min(100, percent));
+  if (normalized <= 0) return -60;
+  return 20 * Math.log10(normalized / 100);
+}
+
+function dbToPercent(db: number): number {
+  return Math.round(Math.max(0, Math.min(100, dbToGain(db) * 100)));
 }
 
 class SoundService {
@@ -59,6 +75,11 @@ class SoundService {
     const musicSaved = localStorage.getItem('music_enabled');
     this.musicEnabled = musicSaved !== null ? JSON.parse(musicSaved) : true;
 
+    const savedMusicVolume = Number(localStorage.getItem(MUSIC_VOLUME_STORAGE_KEY));
+    if (!Number.isNaN(savedMusicVolume)) {
+      this.musicVolumeDb = percentToDb(savedMusicVolume);
+    }
+
     // Preload all sounds (HTMLAudioElement fallback + save paths for AudioBuffer)
     this.loadSound('trade-open', '/sounds/tradeopen.mp3');
     this.loadSound('profit', '/sounds/profit.mp3');
@@ -78,7 +99,9 @@ class SoundService {
   private initAudioContext() {
     if (this.audioCtx) return;
     try {
-      this.audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const AudioContextCtor = window.AudioContext || (window as WindowWithWebkitAudioContext).webkitAudioContext;
+      if (!AudioContextCtor) return;
+      this.audioCtx = new AudioContextCtor();
 
       // SFX gain node
       this.sfxGain = this.audioCtx.createGain();
@@ -253,6 +276,9 @@ class SoundService {
     if (this.musicGain) {
       this.musicGain.gain.value = dbToGain(db);
     }
+    if (this.music && !this.musicGain) {
+      this.music.volume = dbToGain(db);
+    }
   }
 
   getSfxVolumeDb(): number {
@@ -261,6 +287,16 @@ class SoundService {
 
   getMusicVolumeDb(): number {
     return this.musicVolumeDb;
+  }
+
+  setMusicVolumePercent(percent: number) {
+    const normalized = Math.max(0, Math.min(100, percent));
+    localStorage.setItem(MUSIC_VOLUME_STORAGE_KEY, String(normalized));
+    this.setMusicVolumeDb(percentToDb(normalized));
+  }
+
+  getMusicVolumePercent(): number {
+    return dbToPercent(this.musicVolumeDb);
   }
 
   // --- Music methods ---
@@ -312,7 +348,11 @@ class SoundService {
   stopMusic() {
     this.clearFade();
     if (this.musicSource) {
-      try { this.musicSource.disconnect(); } catch (_) {}
+      try {
+        this.musicSource.disconnect();
+      } catch {
+        // Already disconnected.
+      }
       this.musicSource = null;
     }
     if (this.music) {

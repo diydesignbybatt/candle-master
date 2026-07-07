@@ -14,7 +14,7 @@ const ONBOARDING_SLIDES: OnboardingSlide[] = [
     id: 1,
     image: '/tutorial/001.webp',
     title: 'Welcome to Candle Master',
-    description: 'Master the art of blind trading with real historical market data.',
+    description: 'Practice chart reading with real historical market data in a no-real-money simulator.',
   },
   {
     id: 2,
@@ -32,7 +32,7 @@ const ONBOARDING_SLIDES: OnboardingSlide[] = [
     id: 4,
     image: '/tutorial/004.webp',
     title: 'Manage Positions',
-    description: 'Track your open positions and close them anytime to lock in profit or cut losses.',
+    description: 'Track your open positions and close them anytime to record the result of your decision.',
   },
   {
     id: 5,
@@ -43,8 +43,8 @@ const ONBOARDING_SLIDES: OnboardingSlide[] = [
   {
     id: 6,
     image: '/tutorial/006.webp',
-    title: 'Your Goal',
-    description: 'Make profit! But remember: 0.15% commission per trade. You need >0.3% profit just to break even.',
+    title: 'Read the Outcome',
+    description: 'Practice disciplined decisions. Commissions are simulated, so every entry and exit has a cost.',
   },
   {
     id: 7,
@@ -62,7 +62,7 @@ const ONBOARDING_SLIDES: OnboardingSlide[] = [
     id: 9,
     image: '/tutorial/009.webp',
     title: 'Are You Ready?',
-    description: 'Time to prove your trading skills. Can you become the next Candle Master?',
+    description: 'Time to practice your chart-reading discipline. Can you earn the Candle Master title?',
   },
 ];
 

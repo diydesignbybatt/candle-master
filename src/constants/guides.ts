@@ -597,7 +597,63 @@ export const TRADING_PLAN_GUIDES = [
 // GUIDE LOOKUP MAP
 // ============================================
 
-export const RISK_GUIDE_MAP: Record<string, any[]> = {
+export interface RiskGuide {
+  id: number;
+  icon: string;
+  title: string;
+  subtitle?: string;
+  content?: string | null;
+  bullets?: string[];
+  dosDonts?: {
+    dont: string;
+    do: string;
+  };
+  examples?: Array<{
+    ratio: string;
+    winRate: string;
+  }>;
+  leverageExamples?: Array<{
+    leverage: string;
+    impact: string;
+  }>;
+  warnings?: string[];
+  scaleExplanation?: {
+    scaleIn: {
+      label: string;
+      desc: string;
+      visual: string;
+    };
+    scaleOut: {
+      label: string;
+      desc: string;
+      visual: string;
+    };
+  };
+  benefits?: string[];
+  scaleExample?: {
+    title: string;
+    steps: Array<{
+      action: string;
+      percent: string;
+      price: string;
+    }>;
+    result: string;
+  };
+  pullbackInfo?: {
+    intro: string;
+    reasons: string[];
+  };
+  qualityChecklist?: string[];
+  redFlags?: string[];
+  rules?: {
+    never: string[];
+    always: string[];
+  };
+  keyPoint?: string;
+  proTips?: string[];
+}
+
+export const RISK_GUIDE_MAP: Record<string, RiskGuide[]> = {
   sizing: POSITION_SIZING_GUIDES,
   scaling: SCALE_IN_OUT_GUIDES,
   stoploss: STOP_LOSS_GUIDES,

@@ -24,6 +24,7 @@ export const TIER_LIMITS = {
 
 const GAMES_TODAY_KEY = 'candle_master_games_today';
 const GAMES_DATE_KEY = 'candle_master_games_date';
+const ENABLE_TEST_PRO_TOOLS = import.meta.env.DEV || import.meta.env.VITE_ENABLE_TEST_PRO === 'true';
 
 function getStorageKey(userId: string | null): string {
   return userId ? `candle_master_subscription_${userId}` : 'candle_master_subscription';
@@ -69,8 +70,10 @@ export const useSubscription = (userId: string | null = null) => {
         setProducts(availableProducts);
       } else {
         // Web fallback: localStorage only (testing helper)
-        const saved = localStorage.getItem(storageKey);
-        if (saved === 'pro') setTier('pro');
+        if (ENABLE_TEST_PRO_TOOLS) {
+          const saved = localStorage.getItem(storageKey);
+          if (saved === 'pro') setTier('pro');
+        }
       }
 
       // Daily game counter
@@ -115,7 +118,7 @@ export const useSubscription = (userId: string | null = null) => {
 
   /**
    * Purchase PRO Lifetime via RevenueCat (native only)
-   * Web users see "Get on App Store / Play Store" CTA instead
+   * Web users see mobile app-store availability messaging instead
    */
   const purchasePro = useCallback(async (productId?: string) => {
     if (!revenueCatService.isConfigured()) {
@@ -151,8 +154,10 @@ export const useSubscription = (userId: string | null = null) => {
         if (status.isPro) setTier('pro');
         return status.isPro;
       }
-      const saved = localStorage.getItem(storageKey);
-      if (saved === 'pro') { setTier('pro'); return true; }
+      if (ENABLE_TEST_PRO_TOOLS) {
+        const saved = localStorage.getItem(storageKey);
+        if (saved === 'pro') { setTier('pro'); return true; }
+      }
       return false;
     } finally {
       setIsLoading(false);
@@ -161,6 +166,7 @@ export const useSubscription = (userId: string | null = null) => {
 
   // Testing helpers — kept intentionally for closed testing period (remove before public release)
   const upgradeToPro = useCallback(() => {
+    if (!ENABLE_TEST_PRO_TOOLS) return;
     setTier('pro');
     localStorage.setItem(storageKey, 'pro');
   }, [storageKey]);

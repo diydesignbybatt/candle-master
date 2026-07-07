@@ -1,17 +1,16 @@
 /**
  * RevenueCat Service
  *
- * จัดการ In-App Purchases ผ่าน RevenueCat SDK
- * ใช้สำหรับ native Android (Google Play Billing) และ iOS (Apple IAP)
- * Web/PWA ใช้ Stripe แทน (ไม่ผ่าน RevenueCat)
+ * Handles native in-app purchases through RevenueCat.
+ * iOS uses Apple In-App Purchase. Android uses Google Play Billing.
+ * Web/PWA does not process payments.
  *
  * Setup Steps:
- * 1. สมัคร RevenueCat: https://app.revenuecat.com/signup
- * 2. สร้าง Project → เพิ่ม Native Android app (com.candlemaster.app)
- * 3. เชื่อม Google Play Console (Service Account JSON key)
- * 4. สร้าง Products ใน Play Console → Import เข้า RevenueCat
- * 5. สร้าง Entitlement "pro" → ผูก products → สร้าง Offering "default"
- * 6. Copy API Key (goog_xxx) มาใส่ด้านล่าง
+ * 1. Create a RevenueCat project.
+ * 2. Add the iOS app and configure Apple App Store Connect.
+ * 3. Add a non-consumable product: candle_master_pro_lifetime.
+ * 4. Attach it to the "pro" entitlement and the "default" offering.
+ * 5. Copy the iOS API key (apple_xxx) into the config below.
  */
 
 import { Capacitor } from '@capacitor/core';
@@ -29,11 +28,11 @@ const REVENUECAT_CONFIG = {
   },
   // Entitlement identifier ที่สร้างใน RevenueCat
   entitlements: {
-    pro: 'pro', // ชื่อ entitlement สำหรับ PRO subscription
+    pro: 'pro', // PRO lifetime unlock entitlement
   },
   // Product identifiers (ต้องตรงกับที่สร้างใน App Store / Play Store)
   products: {
-    lifetime: 'candle_master_pro_lifetime', // Google Play managed product (one-time purchase)
+    lifetime: 'candle_master_pro_lifetime', // One-time App Store / Play Store product
   },
 };
 
@@ -60,6 +59,16 @@ export interface PurchaseResult {
   error?: string;
 }
 
+function getErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : 'Purchase failed';
+}
+
+function isPurchaseCancelled(error: unknown): boolean {
+  if (!error || typeof error !== 'object') return false;
+  const maybePurchaseError = error as { code?: unknown; userCancelled?: unknown };
+  return maybePurchaseError.code === '1' || maybePurchaseError.userCancelled === true;
+}
+
 // ============================================
 // SERVICE CLASS
 // ============================================
@@ -68,7 +77,7 @@ class RevenueCatService {
 
   /**
    * Check if RevenueCat is configured (has API key for current platform)
-   * ถ้า return false → useSubscription จะ fallback ไป localStorage/Stripe
+   * If false, useSubscription falls back to free mode or dev-only test unlocks.
    */
   isConfigured(): boolean {
     const platform = Capacitor.getPlatform();
@@ -303,15 +312,15 @@ class RevenueCatService {
       console.log(`[RevenueCat] Purchase result — PRO: ${isPro}, product: ${productId}`);
 
       return { success: isPro };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('[RevenueCat] Purchase failed:', error);
 
       // Handle user cancellation gracefully
-      if (error?.code === '1' || error?.userCancelled) {
+      if (isPurchaseCancelled(error)) {
         return { success: false, error: 'Purchase cancelled' };
       }
 
-      return { success: false, error: error?.message || 'Purchase failed' };
+      return { success: false, error: getErrorMessage(error) };
     }
   }
 

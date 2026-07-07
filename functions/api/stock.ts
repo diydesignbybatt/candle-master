@@ -11,9 +11,7 @@
 import { getCorsHeaders } from './_shared/cors';
 import { isValidSymbol } from './_shared/validation';
 
-interface Env {
-  // Add environment variables here if needed
-}
+type Env = Record<string, never>;
 
 export const onRequestGet: PagesFunction<Env> = async (context) => {
   const corsHeaders = getCorsHeaders(context.request);

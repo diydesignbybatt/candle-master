@@ -35,19 +35,19 @@ const PRICE_DISPLAY = {
 } as const;
 
 const PRO_FEATURES: string[] = [
-  '250 trading days per game (vs 100 free)',
-  '500+ legendary stocks worldwide',
-  'Full Academy access',
+  '250 simulated trading days per session (vs 100 free)',
+  '500+ historical stock charts worldwide',
+  'Full Candle Academy access',
   'All chart themes',
-  'Crisis Event boss stages',
-  'Position Calculator',
-  'All future updates',
+  'Historical crisis event stages',
+  'Position Size Calculator',
+  'All future updates included',
 ];
 
 const HEADLINES: Record<UpgradeTrigger, string> = {
-  calc: 'Unlock Position Calculator with PRO',
-  learn: 'Unlock Full Academy with PRO',
-  general: 'Upgrade to PRO Lifetime',
+  calc: 'Unlock Position Size Calculator',
+  learn: 'Unlock Candle Academy',
+  general: 'Unlock Candle Master PRO',
 };
 
 export const PricingModal: React.FC<PricingModalProps> = ({
@@ -59,8 +59,14 @@ export const PricingModal: React.FC<PricingModalProps> = ({
   trigger = 'general',
 }) => {
   const isNative = Capacitor.isNativePlatform();
+  const platform = Capacitor.getPlatform();
   const currency = detectCurrency();
   const { price, period } = PRICE_DISPLAY[currency];
+  const purchaseLabel = platform === 'ios'
+    ? `Unlock with App Store ${price}`
+    : platform === 'android'
+      ? `Unlock with Play Store ${price}`
+      : `Unlock PRO ${price}`;
 
   // Hold latest onClose in ref so ESC effect doesn't restart on parent re-render
   const onCloseRef = React.useRef(onClose);
@@ -135,7 +141,7 @@ export const PricingModal: React.FC<PricingModalProps> = ({
             ) : (
               <>
                 <h2 id="pricing-modal-title" className="upgrade-modal-title">{HEADLINES[trigger]}</h2>
-                <p className="upgrade-modal-subtitle">Lifetime Access</p>
+                <p className="upgrade-modal-subtitle">Lifetime access, one-time purchase</p>
 
                 {/* Single Lifetime card */}
                 <div className="pricing-cards pricing-cards-single">
@@ -174,14 +180,14 @@ export const PricingModal: React.FC<PricingModalProps> = ({
                     ) : (
                       <>
                         <Sparkles size={18} />
-                        <span>Upgrade to PRO {price}</span>
+                        <span>{purchaseLabel}</span>
                       </>
                     )}
                   </button>
                 ) : (
                   <div className="pricing-store-buttons">
                     <p className="pricing-store-note">
-                      Buy lifetime PRO inside the mobile app:
+                      PRO unlock is handled inside the mobile app using official app-store purchase.
                     </p>
                     <div className="pricing-store-row">
                       <a
@@ -193,19 +199,20 @@ export const PricingModal: React.FC<PricingModalProps> = ({
                         <Smartphone size={18} />
                         <span>Get on Play Store</span>
                       </a>
-                      {/* TODO: Replace with real App Store URL once iOS app is published */}
-                      <a
-                        className="pricing-store-btn pricing-store-btn-secondary"
-                        href="https://candlemaster.app" // placeholder — points to landing, not App Store
-                        target="_blank"
-                        rel="noopener noreferrer"
+                      <button
+                        type="button"
+                        className="pricing-store-btn pricing-store-btn-secondary pricing-store-btn-disabled"
+                        disabled
                       >
                         <Smartphone size={18} />
-                        <span>Get on App Store</span>
-                      </a>
+                        <span>App Store Coming Soon</span>
+                      </button>
                     </div>
                   </div>
                 )}
+                <p className="pricing-compliance-note">
+                  Educational simulator only. No real money, prizes, brokerage, or financial advice.
+                </p>
               </>
             )}
 
@@ -349,6 +356,22 @@ const PRICING_MODAL_STYLES = `
 
   .pricing-store-btn-secondary:hover {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  .pricing-store-btn-disabled,
+  .pricing-store-btn-disabled:hover {
+    cursor: not-allowed;
+    opacity: 0.72;
+    transform: none;
+    box-shadow: none;
+  }
+
+  .pricing-compliance-note {
+    margin: 12px 0 0;
+    color: var(--color-text-secondary, #888);
+    font-size: 0.72rem;
+    line-height: 1.45;
+    text-align: center;
   }
 `;
 

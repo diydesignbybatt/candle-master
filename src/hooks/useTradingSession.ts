@@ -294,7 +294,7 @@ export const useTradingSession = (stock: StockData | null, isPro: boolean = fals
             return;
         }
         setCurrentIndex(prev => prev + 1);
-    }, [currentIndex, allData.length, isGameOver, positions.length, closeAllPositions, startIndex]);
+    }, [currentIndex, allData.length, isGameOver, positions.length, closeAllPositions, startIndex, maxMoves]);
 
     const stop = useCallback(() => {
         if (positions.length > 0) closeAllPositions();

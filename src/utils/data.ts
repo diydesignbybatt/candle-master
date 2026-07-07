@@ -39,7 +39,7 @@ export interface StockData {
 const generateMockHistory = (info: { symbol: string, name: string }): StockData => {
   const data: Candle[] = [];
   let currentClose = 50 + Math.random() * 100;
-  let currentDate = new Date('2010-01-01');
+  const currentDate = new Date('2010-01-01');
   const endDate = new Date('2023-12-31');
 
   while (currentDate <= endDate) {

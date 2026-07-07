@@ -20,7 +20,7 @@ export const WelcomeScreen: React.FC = () => {
     setError(null);
     try {
       await signInWithGoogle();
-    } catch (err) {
+    } catch {
       setError('Failed to sign in with Google. Please try again.');
     }
   };
@@ -29,7 +29,7 @@ export const WelcomeScreen: React.FC = () => {
     setError(null);
     try {
       await signInWithApple();
-    } catch (err) {
+    } catch {
       setError('Failed to sign in with Apple. Please try again.');
     }
   };
@@ -133,7 +133,7 @@ export const WelcomeScreen: React.FC = () => {
 
         {/* Guest Notice */}
         <p className="welcome-notice">
-          Guest mode won't sync PRO subscription across devices
+          Guest mode won't sync your PRO unlock across devices
         </p>
       </motion.div>
 

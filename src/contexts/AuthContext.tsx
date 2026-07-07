@@ -31,6 +31,21 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const AUTH_STORAGE_KEY = 'candle_master_auth';
 const WELCOME_SEEN_KEY = 'candle_master_welcome_seen';
 
+interface NativeGoogleSignInResult {
+  id?: string;
+  userId?: string;
+  email?: string;
+  name?: string;
+  givenName?: string;
+  imageUrl?: string;
+  user?: {
+    id?: string;
+    email?: string;
+    name?: string;
+    imageUrl?: string;
+  };
+}
+
 // Load saved auth state
 function getSavedAuth(): User | null {
   if (typeof window !== 'undefined') {
@@ -78,7 +93,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           scopes: ['profile', 'email'],
           grantOfflineAccess: true,
         });
-        const result = await (GoogleAuth as any).signIn();
+        const result = await GoogleAuth.signIn({ scopes: ['profile', 'email'] }) as NativeGoogleSignInResult;
 
         setUser({
           id: result.id || result.userId || result.user?.id || '',
@@ -131,8 +146,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           provider: 'apple',
         });
       } else {
-        // Web fallback - mock for development
-        console.log('Apple Sign-In not available on web. Using mock.');
+        if (!import.meta.env.DEV) {
+          throw new Error('Apple Sign-In is only available in the iOS app.');
+        }
+        // Web fallback - mock for local development only
+        console.log('Apple Sign-In not available on web. Using development mock.');
         setUser({
           id: 'apple_mock_' + Date.now(),
           email: 'demo@icloud.com',
@@ -183,7 +201,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   /**
    * Get Firebase ID token for authenticated API calls.
-   * Returns null for guest/native users (they don't use Stripe APIs).
+   * Returns null for guest/native users that do not call web auth APIs.
    * Firebase auto-refreshes expired tokens.
    */
   const getIdToken = useCallback(async (): Promise<string | null> => {

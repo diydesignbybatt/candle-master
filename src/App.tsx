@@ -18,6 +18,7 @@ import { appStyles, Colors, GLOBAL_STYLES, LOADING_STYLES, UI_STYLES, MODAL_STYL
 import { ACADEMY_PATTERNS, CHART_PATTERNS } from './constants/patterns';
 import type { ChartPattern } from './constants/patterns';
 import { RISK_CATEGORIES, RISK_GUIDE_MAP } from './constants/guides';
+import type { RiskGuide } from './constants/guides';
 import { getCharacterResult } from './constants/characters';
 import { Chart } from './components/Chart';
 import { fetchRandomStockData } from './utils/data';
@@ -49,6 +50,8 @@ const GUIDE_ICONS: Record<string, LucideIcon> = {
   AlertTriangle, HeartCrack, Sparkles, Landmark, ShieldCheck, Puzzle,
   Brain, Vault, ClipboardList, Layers, TrendingUp, TrendingDown, BarChart3, RefreshCw,
 };
+
+const ENABLE_TEST_PRO_TOOLS = import.meta.env.DEV || import.meta.env.VITE_ENABLE_TEST_PRO === 'true';
 
 interface TradeRecord {
   id: string;
@@ -94,6 +97,7 @@ const AppContent: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'trade' | 'calculator' | 'academy' | 'history' | 'profile'>('trade');
   const [soundEnabled, setSoundEnabled] = useState(soundService.isEnabled());
   const [musicEnabled, setMusicEnabled] = useState(soundService.isMusicEnabled());
+  const [musicVolume, setMusicVolume] = useState(soundService.getMusicVolumePercent());
   const [tradeAmount, setTradeAmount] = useState(20000);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [showNewGameConfirm, setShowNewGameConfirm] = useState(false);
@@ -170,6 +174,12 @@ const AppContent: React.FC = () => {
     }
   };
 
+  const handleMusicVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const nextVolume = Number(e.target.value);
+    setMusicVolume(nextVolume);
+    soundService.setMusicVolumePercent(nextVolume);
+  };
+
   // ฟังก์ชัน load stock (ใช้ saved session ถ้ามี หรือ fetch ใหม่)
   const loadNewStock = useCallback(async (forceNew: boolean = false) => {
     setIsLoading(true);
@@ -192,9 +202,10 @@ const AppContent: React.FC = () => {
   }, [isPro]);
 
   // Initial load — run once on mount
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     loadNewStock(false);
+    // Initial load must run only once. Later PRO upgrades are handled by the isPro transition effect below.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const {
@@ -743,8 +754,8 @@ const AppContent: React.FC = () => {
                 </div>
                 <div className="info-content">
                   <div className="info-item intro">
-                    <h3>🌍 Welcome to Real Market Trading</h3>
-                    <p>Candle Master is a stock trading simulator using <strong>real historical market data</strong> from around the world (1970-2025). You never know which period you'll face - just price, candlesticks, and daily timeframes.</p>
+                    <h3>Welcome to Market Simulator</h3>
+                    <p>Candle Master is an educational stock market simulator using <strong>real historical market data</strong> from around the world (1970-2025). There is no real money, brokerage, or financial advice - just price, candlesticks, and daily timeframes.</p>
                   </div>
                   <div className="info-item">
                     <h3>🎯 Your Mission</h3>
@@ -759,8 +770,8 @@ const AppContent: React.FC = () => {
                     <h3>⚠️ Reality Check</h3>
                     <ul>
                       <li><strong>0.15%</strong> commission fee per trade</li>
-                      <li>You need <strong>{'>'}0.3% profit</strong> per round-trip just to break even</li>
-                      <li>Real market conditions = Real challenges</li>
+                      <li>You need a <strong>{'>'}0.3% move</strong> per round-trip just to overcome simulated costs</li>
+                      <li>Historical market conditions create realistic practice scenarios</li>
                     </ul>
                   </div>
                   <div className="info-item">
@@ -772,8 +783,8 @@ const AppContent: React.FC = () => {
                   </div>
                   <div className="info-item challenge">
                     <h3>🏆 The Challenge</h3>
-                    <p>Can you survive the markets and grow your account? If you're truly skilled, you'll become the next <strong>Candle Master</strong>.</p>
-                    <p className="good-luck">Good luck, trader. 🍀</p>
+                    <p>Can you read the chart, manage risk, and finish the session with discipline? If you can, you'll become the next <strong>Candle Master</strong>.</p>
+                    <p className="good-luck">Good luck, trader.</p>
                   </div>
                 </div>
               </motion.div>
@@ -1252,7 +1263,7 @@ const AppContent: React.FC = () => {
                             }
                           }}
                         >
-                          {(RISK_GUIDE_MAP[riskCategory!] || []).map((guide: any) => (
+                          {(RISK_GUIDE_MAP[riskCategory!] || []).map((guide: RiskGuide) => (
                             <div key={guide.id} className="risk-guide-card">
                               <span className="risk-guide-icon">{(() => { const Icon = GUIDE_ICONS[guide.icon]; return Icon ? <Icon size={32} /> : guide.icon; })()}</span>
                               <h4 className="risk-guide-title">{guide.title}</h4>
@@ -1276,7 +1287,7 @@ const AppContent: React.FC = () => {
 
                               {guide.examples && (
                                 <div className="risk-examples">
-                                  {guide.examples.map((ex: any, i: number) => (
+                                  {guide.examples.map((ex, i: number) => (
                                     <div key={i} className="risk-example-row">
                                       <span className="ratio">{ex.ratio}</span>
                                       <span className="desc">{ex.winRate}</span>
@@ -1287,7 +1298,7 @@ const AppContent: React.FC = () => {
 
                               {guide.leverageExamples && (
                                 <div className="risk-leverage">
-                                  {guide.leverageExamples.map((ex: any, i: number) => (
+                                  {guide.leverageExamples.map((ex, i: number) => (
                                     <div key={i} className="risk-leverage-row">
                                       <span className="lev">{ex.leverage}</span>
                                       <span className="impact">{ex.impact}</span>
@@ -1332,7 +1343,7 @@ const AppContent: React.FC = () => {
                                 <div className="risk-scale-example">
                                   <p className="example-title">{guide.scaleExample.title}</p>
                                   <div className="example-steps">
-                                    {guide.scaleExample.steps.map((step: any, i: number) => (
+                                    {guide.scaleExample.steps.map((step, i: number) => (
                                       <div key={i} className="step-row">
                                         <span className="step-action">{step.action}</span>
                                         <span className="step-percent">{step.percent}</span>
@@ -1425,7 +1436,7 @@ const AppContent: React.FC = () => {
                       </div>
 
                       <div className="risk-carousel-dots">
-                        {(RISK_GUIDE_MAP[riskCategory!] || []).map((_: any, index: number) => (
+                        {(RISK_GUIDE_MAP[riskCategory!] || []).map((_, index: number) => (
                           <button
                             key={index}
                             className={`dot ${index === riskGuideIndex ? 'active' : ''}`}
@@ -1637,6 +1648,24 @@ const AppContent: React.FC = () => {
                     <div className="toggle-knob"></div>
                   </div>
                 </button>
+                <div className={`profile-volume-control ${musicEnabled ? '' : 'is-muted'}`}>
+                  <div className="volume-control-header">
+                    <Volume2 size={18} />
+                    <span>BGM Volume</span>
+                    <strong>{musicVolume}%</strong>
+                  </div>
+                  <input
+                    className="volume-slider"
+                    type="range"
+                    min="0"
+                    max="100"
+                    step="1"
+                    value={musicVolume}
+                    onChange={handleMusicVolumeChange}
+                    aria-label="Background music volume"
+                    style={{ ['--volume-percent' as string]: `${musicVolume}%` }}
+                  />
+                </div>
 
                 {/* PRO Subscription */}
                 {isPro ? (
@@ -1677,14 +1706,16 @@ const AppContent: React.FC = () => {
                 )}
 
                 {/* Test PRO Toggle — สำหรับทดสอบ ลบทิ้งตอน production */}
-                <button
-                  className={`profile-action-btn test-pro-toggle ${isPro ? 'test-pro-active' : ''}`}
-                  onClick={() => isPro ? resetToFree() : upgradeToPro()}
-                >
-                  <Zap size={20} />
-                  <span>{isPro ? 'Deactivate Test PRO' : 'Activate Test PRO'}</span>
-                  <span className="test-pro-label">FOR TEST</span>
-                </button>
+                {ENABLE_TEST_PRO_TOOLS && (
+                  <button
+                    className={`profile-action-btn test-pro-toggle ${isPro ? 'test-pro-active' : ''}`}
+                    onClick={() => isPro ? resetToFree() : upgradeToPro()}
+                  >
+                    <Zap size={20} />
+                    <span>{isPro ? 'Deactivate Test PRO' : 'Activate Test PRO'}</span>
+                    <span className="test-pro-label">FOR TEST</span>
+                  </button>
+                )}
 
                 <div className="theme-selector">
                   <div className="theme-selector-header">
@@ -1817,8 +1848,8 @@ const AppContent: React.FC = () => {
                 </div>
                 <div className="info-content">
                   <div className="info-item intro">
-                    <h3>🌍 Welcome to Real Market Trading</h3>
-                    <p>Candle Master is a stock trading simulator using <strong>real historical market data</strong> from around the world (1970-2025). You never know which period you'll face - just price, candlesticks, and daily timeframes.</p>
+                    <h3>Welcome to Market Simulator</h3>
+                    <p>Candle Master is an educational stock market simulator using <strong>real historical market data</strong> from around the world (1970-2025). There is no real money, brokerage, or financial advice - just price, candlesticks, and daily timeframes.</p>
                   </div>
                   <div className="info-item">
                     <h3>🎯 Your Mission</h3>
@@ -1833,8 +1864,8 @@ const AppContent: React.FC = () => {
                     <h3>⚠️ Reality Check</h3>
                     <ul>
                       <li><strong>0.15%</strong> commission fee per trade</li>
-                      <li>You need <strong>{'>'}0.3% profit</strong> per round-trip just to break even</li>
-                      <li>Real market conditions = Real challenges</li>
+                      <li>You need a <strong>{'>'}0.3% move</strong> per round-trip just to overcome simulated costs</li>
+                      <li>Historical market conditions create realistic practice scenarios</li>
                     </ul>
                   </div>
                   <div className="info-item">
@@ -1846,8 +1877,8 @@ const AppContent: React.FC = () => {
                   </div>
                   <div className="info-item challenge">
                     <h3>🏆 The Challenge</h3>
-                    <p>Can you survive the markets and grow your account? If you're truly skilled, you'll become the next <strong>Candle Master</strong>.</p>
-                    <p className="good-luck">Good luck, trader. 🍀</p>
+                    <p>Can you read the chart, manage risk, and finish the session with discipline? If you can, you'll become the next <strong>Candle Master</strong>.</p>
+                    <p className="good-luck">Good luck, trader.</p>
                   </div>
                 </div>
               </motion.div>

@@ -1219,6 +1219,92 @@ export const MODAL_STYLES = `
   .toggle-knob { width: 20px; height: 20px; background: #FFF; border-radius: 50%; position: absolute; top: 2px; left: 2px; transition: left 0.3s; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
   .toggle-switch.active .toggle-knob { left: 22px; }
 
+  .profile-volume-control {
+    width: 100%;
+    background: color-mix(in srgb, var(--bg-tertiary) 82%, #C5A059 18%);
+    border: 1px solid color-mix(in srgb, var(--color-border) 70%, #C5A059 30%);
+    border-radius: 0.75rem;
+    padding: 14px 16px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    transition: opacity 0.2s, border-color 0.2s, background 0.2s;
+  }
+
+  .profile-volume-control.is-muted {
+    opacity: 0.62;
+  }
+
+  .volume-control-header {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 10px;
+    color: var(--color-text);
+    font-size: 0.9rem;
+    font-weight: 700;
+  }
+
+  .volume-control-header svg {
+    color: #C5A059;
+  }
+
+  .volume-control-header strong {
+    min-width: 44px;
+    text-align: right;
+    font-size: 0.85rem;
+    color: var(--color-text-secondary);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .volume-slider {
+    --volume-percent: 100%;
+    width: 100%;
+    height: 28px;
+    appearance: none;
+    background: transparent;
+    cursor: pointer;
+  }
+
+  .volume-slider::-webkit-slider-runnable-track {
+    height: 8px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #C5A059 0%, #E6C775 var(--volume-percent), var(--color-border) var(--volume-percent), var(--color-border) 100%);
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.12);
+  }
+
+  .volume-slider::-webkit-slider-thumb {
+    appearance: none;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #fff;
+    border: 3px solid #C5A059;
+    margin-top: -7px;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.18);
+  }
+
+  .volume-slider::-moz-range-track {
+    height: 8px;
+    border-radius: 999px;
+    background: var(--color-border);
+  }
+
+  .volume-slider::-moz-range-progress {
+    height: 8px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #C5A059 0%, #E6C775 100%);
+  }
+
+  .volume-slider::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #fff;
+    border: 3px solid #C5A059;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.18);
+  }
+
   /* PRO Toggle Button */
   .profile-action-btn.pro-toggle.is-pro {
     background: linear-gradient(135deg, rgba(197, 160, 89, 0.15) 0%, rgba(230, 199, 117, 0.1) 100%);
